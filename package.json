@@ -1,0 +1,14 @@
+{
+  "name": "simple-time-tracker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@parcel/transformer-elm": "^2.2.1",
+    "elm": "^0.19.1-5",
+    "parcel": "^2.2.1"
+  },
+  "scripts": {
+    "start": "parcel src/index.html"
+  }
+}
