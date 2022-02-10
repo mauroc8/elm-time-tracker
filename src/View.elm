@@ -254,27 +254,39 @@ body ({ content, emphasis } as config) =
         (bodyContent config)
 
 
+bodyContent : { a | content : BodyContent, emphasis : Emphasis } -> Element msg
 bodyContent { content, emphasis } =
     case content of
         NoRecords ->
-            Element.el
-                ([ Element.centerX
-                 , Element.centerY
-                 , Font.color Colors.text.lighterGray
-                 , backgroundColor emphasis
-                 , Font.semiBold
-                 ]
-                    ++ fontSize fontSize16
-                )
-                (Element.text
+            emptyState
+                { emphasis = emphasis
+                , message =
                     "Press the Start button to create a record"
-                )
+                }
 
         NoSearchResults ->
-            Debug.todo ""
+            emptyState
+                { emphasis = emphasis
+                , message =
+                    "Nothing found"
+                }
 
         WithRecords records ->
             Debug.todo ""
+
+
+emptyState : { a | emphasis : Emphasis, message : String } -> Element msg
+emptyState { emphasis, message } =
+    Element.el
+        ([ Element.centerX
+         , Element.centerY
+         , Font.color Colors.text.lighterGray
+         , backgroundColor emphasis
+         , Font.semiBold
+         ]
+            ++ fontSize fontSize16
+        )
+        (Element.text message)
 
 
 

@@ -27,8 +27,11 @@ import View
 
 
 type alias Model =
-    { status : Status
-    , records : Records
+    { -- Entities
+      records : Records
+
+    -- UI
+    , status : Action
     , selectedRecord : Maybe Record.Id
     , searchQuery : String
 
@@ -37,7 +40,7 @@ type alias Model =
     , language : Lang
 
     -- Time
-    , now : Time.Posix
+    , currentTime : Time.Posix
     , timeZone : Time.Zone
 
     -- Responsiveness
@@ -51,13 +54,13 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { status = Idle
+    { status = NoAction
     , records = Records.empty
     , selectedRecord = Nothing
     , searchQuery = ""
     , unitedStatesDateNotation = False
     , language = Lang.English
-    , now = Time.millisToPosix 0
+    , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
     , windowWidth = 0
     , windowHeight = 0
@@ -70,7 +73,7 @@ setTimeZone timeZone model =
 
 
 setCurrentTime posixTime model =
-    { model | now = posixTime }
+    { model | currentTime = posixTime }
 
 
 setSearchQuery searchQuery model =
@@ -78,14 +81,14 @@ setSearchQuery searchQuery model =
 
 
 
---- Status
+--- Action
 
 
-type Status
-    = Idle
-    | CreatingRecord CreateForm
-    | EditingRecord EditForm
-    | ChangingSettings SettingsForm
+type Action
+    = NoAction
+    | CreateRecord CreateForm
+    | EditRecord EditForm
+    | ChangeSettings Settings
 
 
 
@@ -113,15 +116,16 @@ type alias EditForm =
 
 
 
---- Settings Form
+--- Settings
 
 
-type alias SettingsForm =
+type alias Settings =
     { unitedStatesDateNotation : Bool
     , language : Lang
     }
 
 
+defaultSettings : Settings
 defaultSettings =
     { unitedStatesDateNotation = False
     , language = Lang.English
@@ -219,7 +223,7 @@ rootAttributes =
 rootElement : Model -> Element Msg
 rootElement { status, searchQuery, records } =
     case status of
-        ChangingSettings settingsForm ->
+        ChangeSettings settingsForm ->
             View.settings
 
         _ ->
@@ -229,7 +233,7 @@ rootElement { status, searchQuery, records } =
                 ]
                 [ View.header
                     { emphasis =
-                        if status == Idle then
+                        if status == NoAction then
                             View.highlight
 
                         else
@@ -239,7 +243,7 @@ rootElement { status, searchQuery, records } =
                     }
                 , View.body
                     { emphasis =
-                        if status == Idle then
+                        if status == NoAction then
                             View.highlight
 
                         else
@@ -249,7 +253,15 @@ rootElement { status, searchQuery, records } =
                             View.bodyWithNoRecords
 
                         else
-                            View.bodyWithRecords records
+                            let
+                                searchResults =
+                                    Records.search searchQuery records
+                            in
+                            if searchResults == Records.empty then
+                                View.bodyWithNoSearchResults
+
+                            else
+                                View.bodyWithRecords searchResults
                     }
                 , View.footer
                 ]

@@ -2,6 +2,7 @@ module Record exposing
     ( Id
     , Record
     , RecordData
+    , description
     )
 
 import Calendar
@@ -28,3 +29,8 @@ type alias RecordData =
     , startDateTime : Time.Posix
     , durationInSeconds : Int
     }
+
+
+description : Record -> String
+description record =
+    record.description
