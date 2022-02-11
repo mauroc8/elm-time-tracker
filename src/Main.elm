@@ -58,8 +58,8 @@ initialModel =
     , records = Records.empty
     , selectedRecord = Nothing
     , searchQuery = ""
-    , unitedStatesDateNotation = False
-    , language = Lang.English
+    , unitedStatesDateNotation = defaultSettings.unitedStatesDateNotation
+    , language = defaultSettings.language
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
     , windowWidth = 0
@@ -78,6 +78,33 @@ setCurrentTime posixTime model =
 
 setSearchQuery searchQuery model =
     { model | searchQuery = searchQuery }
+
+
+setStatus status model =
+    { model | status = status }
+
+
+{-| Returns the unsaved settings of the "Settings" form, or
+the saved settings.
+-}
+appliedSettings : Model -> Settings
+appliedSettings model =
+    case model.status of
+        ChangeSettings settings ->
+            settings
+
+        _ ->
+            { unitedStatesDateNotation = model.unitedStatesDateNotation
+            , language = model.language
+            }
+
+
+setSettings : Settings -> Model -> Model
+setSettings settings model =
+    { model
+        | unitedStatesDateNotation = settings.unitedStatesDateNotation
+        , language = settings.language
+    }
 
 
 
@@ -167,6 +194,9 @@ type Msg
     | GotTimeZone Time.Zone
     | GotCurrentTime Time.Posix
     | SearchQueryChanged String
+    | PressedSettingsButton
+    | PressedSettingsCancelButton
+    | PressedSettingsDoneButton
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -186,6 +216,25 @@ update msg model =
 
         SearchQueryChanged searchQuery ->
             setSearchQuery searchQuery model
+                |> Out.withNoCmd
+
+        PressedSettingsButton ->
+            setStatus
+                (ChangeSettings
+                    { unitedStatesDateNotation = model.unitedStatesDateNotation
+                    , language = model.language
+                    }
+                )
+                model
+                |> Out.withNoCmd
+
+        PressedSettingsCancelButton ->
+            setStatus NoAction model
+                |> Out.withNoCmd
+
+        PressedSettingsDoneButton ->
+            setStatus NoAction model
+                |> setSettings (appliedSettings model)
                 |> Out.withNoCmd
 
 
@@ -225,6 +274,9 @@ rootElement { status, searchQuery, records } =
     case status of
         ChangeSettings settingsForm ->
             View.settings
+                { pressedCancelButton = PressedSettingsCancelButton
+                , pressedDoneButton = PressedSettingsDoneButton
+                }
 
         _ ->
             Element.column
@@ -239,7 +291,8 @@ rootElement { status, searchQuery, records } =
                         else
                             View.deemphasize
                     , searchQuery = searchQuery
-                    , onSearchQueryChange = SearchQueryChanged
+                    , searchQueryChanged = SearchQueryChanged
+                    , pressedSettingsButton = PressedSettingsButton
                     }
                 , View.body
                     { emphasis =

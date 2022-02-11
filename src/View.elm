@@ -32,6 +32,32 @@ import Records exposing (Records)
 
 
 
+--- Components
+
+
+linkLikeButton :
+    { onPress : msg
+    , label : String
+    , bold : Bool
+    }
+    -> Element msg
+linkLikeButton { onPress, label, bold } =
+    Input.button
+        ([ Font.color Colors.accent
+         , if bold then
+            Font.semiBold
+
+           else
+            Font.regular
+         ]
+            ++ fontSize fontSize16
+        )
+        { onPress = Just onPress
+        , label = Element.text label
+        }
+
+
+
 -- EMPHASIS
 
 
@@ -117,7 +143,8 @@ lineHeightAttr value =
 type alias HeaderConfig msg =
     { emphasis : Emphasis
     , searchQuery : String
-    , onSearchQueryChange : String -> msg
+    , searchQueryChanged : String -> msg
+    , pressedSettingsButton : msg
     }
 
 
@@ -135,18 +162,18 @@ header ({ emphasis } as config) =
         ]
 
 
-settingsButton { emphasis } =
+settingsButton { emphasis, pressedSettingsButton } =
     Input.button
         [ Font.color (interactionColor emphasis)
         , Border.width 1
         , Border.color Colors.transparent
         ]
-        { onPress = Nothing
+        { onPress = Just pressedSettingsButton
         , label = Icons.options
         }
 
 
-searchInput ({ emphasis, searchQuery, onSearchQueryChange } as config) =
+searchInput ({ emphasis, searchQuery, searchQueryChanged } as config) =
     Input.search
         ([ Background.color (dividerColor emphasis)
          , Border.rounded 8
@@ -159,7 +186,7 @@ searchInput ({ emphasis, searchQuery, onSearchQueryChange } as config) =
          ]
             ++ fontSize fontSize16
         )
-        { onChange = onSearchQueryChange
+        { onChange = searchQueryChanged
         , text = searchQuery
         , placeholder =
             Just <|
@@ -179,12 +206,12 @@ type SearchButtonConfig clearSearchMsg
     | Searching clearSearchMsg
 
 
-searchButtonConfig { searchQuery, onSearchQueryChange } =
+searchButtonConfig { searchQuery, searchQueryChanged } =
     if String.isEmpty searchQuery then
         NotSearching
 
     else
-        Searching (onSearchQueryChange "")
+        Searching (searchQueryChanged "")
 
 
 searchButton config =
@@ -246,8 +273,7 @@ type alias BodyConfig =
 
 body ({ content, emphasis } as config) =
     Element.el
-        [ Element.padding 16
-        , Element.width Element.fill
+        [ Element.width Element.fill
         , Element.height Element.fill
         , backgroundColor emphasis
         ]
@@ -277,16 +303,18 @@ bodyContent { content, emphasis } =
 
 emptyState : { a | emphasis : Emphasis, message : String } -> Element msg
 emptyState { emphasis, message } =
-    Element.el
-        ([ Element.centerX
-         , Element.centerY
+    Element.paragraph
+        ([ Element.centerY
+         , Element.width Element.fill
+         , Font.center
+         , Element.padding 16
          , Font.color Colors.text.lighterGray
          , backgroundColor emphasis
          , Font.semiBold
          ]
             ++ fontSize fontSize16
         )
-        (Element.text message)
+        [ Element.text message ]
 
 
 
@@ -305,7 +333,13 @@ footer =
 --- SETTINGS
 
 
-settings =
+settings :
+    { a
+        | pressedCancelButton : msg
+        , pressedDoneButton : msg
+    }
+    -> Element msg
+settings config =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -315,7 +349,7 @@ settings =
         ]
         [ settingsHeader
         , settingsBody
-        , settingsFooter
+        , settingsFooter config
         ]
 
 
@@ -370,11 +404,21 @@ settingsGroup children =
         )
 
 
-settingsFooter =
+settingsFooter { pressedCancelButton, pressedDoneButton } =
     Element.row
         [ Element.alignBottom
         , Element.width Element.fill
         ]
-        [ Element.text "Cancel"
-        , Element.el [ Element.alignRight ] (Element.text "Done")
+        [ linkLikeButton
+            { onPress = pressedCancelButton
+            , label = "Cancel"
+            , bold = False
+            }
+        , Element.el [ Element.alignRight ]
+            (linkLikeButton
+                { onPress = pressedDoneButton
+                , label = "Done"
+                , bold = True
+                }
+            )
         ]
