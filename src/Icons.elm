@@ -1,10 +1,12 @@
 module Icons exposing (..)
 
+import Colors
 import Element
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
 
+options : Element.Element msg
 options =
     svg
         [ width "13"
@@ -58,6 +60,7 @@ options =
         |> Element.html
 
 
+search : Element.Element msg
 search =
     svg
         [ width "14"
@@ -83,7 +86,8 @@ search =
         |> Element.html
 
 
-x =
+xButton : Element.Element msg
+xButton =
     svg
         [ width "16"
         , height "16"
@@ -92,7 +96,7 @@ x =
         ]
         [ Svg.path
             [ d "M12.5 3.5L3.5 12.5"
-            , stroke "#71A3F0"
+            , stroke "currentColor"
             , strokeLinecap "round"
             , strokeLinejoin "round"
             , strokeWidth "1.1"
@@ -100,10 +104,65 @@ x =
             []
         , Svg.path
             [ d "M12.5 12.5L3.5 3.5"
-            , stroke "#71A3F0"
+            , stroke "currentColor"
             , strokeLinecap "round"
             , strokeLinejoin "round"
             , strokeWidth "1.1"
+            ]
+            []
+        ]
+        |> Element.html
+
+
+playButton : Element.Element msg
+playButton =
+    svg
+        [ width "53"
+        , height "52"
+        , viewBox "0 0 53 52"
+        , fill "none"
+        ]
+        [ circle
+            [ cx "26.5"
+            , cy "26"
+            , r "25"
+            , fill "white"
+            , stroke (Colors.toCss Colors.lightGrayText)
+            , strokeWidth "2"
+            ]
+            []
+        , Svg.path
+            [ d "M40.5333 24.2876L22.5369 13.3009C22.2371 13.1109 21.8909 13.0069 21.5361 13.0003C21.1813 12.9937 20.8314 13.0847 20.5248 13.2634C20.2136 13.4342 19.9542 13.6856 19.7739 13.9914C19.5935 14.2971 19.4989 14.6458 19.5 15.0008V36.9992C19.4989 37.3542 19.5935 37.7029 19.7739 38.0086C19.9542 38.3144 20.2136 38.5658 20.5248 38.7366C20.8314 38.9153 21.1813 39.0063 21.5361 38.9997C21.8909 38.9931 22.2371 38.8891 22.5369 38.6991L40.5333 27.7124C40.8283 27.5344 41.0723 27.2832 41.2416 26.9832C41.411 26.6832 41.5 26.3445 41.5 26C41.5 25.6555 41.411 25.3168 41.2416 25.0168C41.0723 24.7168 40.8283 24.4656 40.5333 24.2876Z"
+            , fill (Colors.toCss Colors.accent)
+            ]
+            []
+        ]
+        |> Element.html
+
+
+stopButton =
+    svg
+        [ width "53"
+        , height "52"
+        , viewBox "0 0 53 52"
+        , fill "none"
+        ]
+        [ circle
+            [ cx "26.5"
+            , cy "26"
+            , r "25"
+            , fill "white"
+            , stroke (Colors.toCss Colors.lightGrayText)
+            , strokeWidth "2"
+            ]
+            []
+        , rect
+            [ x "16"
+            , y "15"
+            , width "22"
+            , height "22"
+            , rx "2"
+            , fill (Colors.toCss Colors.red)
             ]
             []
         ]

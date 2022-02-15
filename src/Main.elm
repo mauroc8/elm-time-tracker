@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Colors
 import DateTime
+import DefaultView
 import Dict exposing (Dict)
 import Element exposing (Attribute, Element)
 import Element.Background as Background
@@ -12,10 +13,11 @@ import Element.Input as Input
 import Html exposing (Html)
 import Html.Attributes
 import Icons
-import Lang exposing (Lang)
 import Platform exposing (Task)
 import Record exposing (Record)
-import Records exposing (Records)
+import RecordList exposing (Records)
+import Settings exposing (ChangeSettingsConfig, Language, Settings)
+import Sidebar
 import Task
 import Time
 import Utils.Out as Out
@@ -31,13 +33,13 @@ type alias Model =
       records : Records
 
     -- UI
-    , status : Action
+    , action : Status
     , selectedRecord : Maybe Record.Id
     , searchQuery : String
 
     -- Settings
     , unitedStatesDateNotation : Bool
-    , language : Lang
+    , language : Language
 
     -- Time
     , currentTime : Time.Posix
@@ -54,12 +56,12 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { status = NoAction
-    , records = Records.empty
+    { action = Idle
+    , records = RecordList.empty
     , selectedRecord = Nothing
     , searchQuery = ""
-    , unitedStatesDateNotation = defaultSettings.unitedStatesDateNotation
-    , language = defaultSettings.language
+    , unitedStatesDateNotation = Settings.defaultUnitedStatesDateNotation
+    , language = Settings.defaultLanguage
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
     , windowWidth = 0
@@ -80,8 +82,8 @@ setSearchQuery searchQuery model =
     { model | searchQuery = searchQuery }
 
 
-setStatus status model =
-    { model | status = status }
+setStatus action model =
+    { model | action = action }
 
 
 {-| Returns the unsaved settings of the "Settings" form, or
@@ -89,8 +91,8 @@ the saved settings.
 -}
 appliedSettings : Model -> Settings
 appliedSettings model =
-    case model.status of
-        ChangeSettings settings ->
+    case model.action of
+        ChangingSettings settings ->
             settings
 
         _ ->
@@ -108,14 +110,14 @@ setSettings settings model =
 
 
 
---- Action
+--- Status
 
 
-type Action
-    = NoAction
-    | CreateRecord CreateForm
-    | EditRecord EditForm
-    | ChangeSettings Settings
+type Status
+    = Idle
+    | CreatingRecord CreateForm
+    | EditingRecord EditForm
+    | ChangingSettings Settings
 
 
 
@@ -139,23 +141,6 @@ type alias EditForm =
     , end : String
     , duration : String
     , date : String
-    }
-
-
-
---- Settings
-
-
-type alias Settings =
-    { unitedStatesDateNotation : Bool
-    , language : Lang
-    }
-
-
-defaultSettings : Settings
-defaultSettings =
-    { unitedStatesDateNotation = False
-    , language = Lang.English
     }
 
 
@@ -220,7 +205,7 @@ update msg model =
 
         PressedSettingsButton ->
             setStatus
-                (ChangeSettings
+                (ChangingSettings
                     { unitedStatesDateNotation = model.unitedStatesDateNotation
                     , language = model.language
                     }
@@ -229,17 +214,27 @@ update msg model =
                 |> Out.withNoCmd
 
         PressedSettingsCancelButton ->
-            setStatus NoAction model
+            setStatus Idle model
                 |> Out.withNoCmd
 
         PressedSettingsDoneButton ->
-            setStatus NoAction model
+            setStatus Idle model
                 |> setSettings (appliedSettings model)
                 |> Out.withNoCmd
 
 
 
 --- VIEW
+
+
+{-| There are two main views.
+
+This type describes them.
+
+-}
+type Config msg
+    = ChangeSettings (ChangeSettingsConfig msg)
+    | Default (DefaultView.Config msg)
 
 
 view : Model -> Html Msg
@@ -250,7 +245,7 @@ view model =
             ]
         }
         rootAttributes
-        (rootElement model)
+        (rootElement (viewConfig model))
 
 
 focusStyle : Element.FocusStyle
@@ -269,52 +264,77 @@ rootAttributes =
     ]
 
 
-rootElement : Model -> Element Msg
-rootElement { status, searchQuery, records } =
-    case status of
-        ChangeSettings settingsForm ->
-            View.settings
-                { pressedCancelButton = PressedSettingsCancelButton
-                , pressedDoneButton = PressedSettingsDoneButton
+viewConfig : Model -> Config Msg
+viewConfig model =
+    case model.action of
+        ChangingSettings settings ->
+            ChangeSettings
+                { unitedStatesDateNotation = settings.unitedStatesDateNotation
+                , language = settings.language
+                , changedUnitedStatesDateNotation = always NoOp
+                , changedLanguage = always NoOp
+                , pressedSettingsCancelButton = PressedSettingsCancelButton
+                , pressedSettingsDoneButton = PressedSettingsDoneButton
                 }
 
         _ ->
-            Element.column
-                [ Element.width Element.fill
-                , Element.height Element.fill
-                ]
-                [ View.header
-                    { emphasis =
-                        if status == NoAction then
-                            View.highlight
+            Default
+                { emphasis =
+                    case model.action of
+                        Idle ->
+                            View.RecordList
 
-                        else
-                            View.deemphasize
-                    , searchQuery = searchQuery
-                    , searchQueryChanged = SearchQueryChanged
-                    , pressedSettingsButton = PressedSettingsButton
-                    }
-                , View.body
-                    { emphasis =
-                        if status == NoAction then
-                            View.highlight
+                        _ ->
+                            View.Sidebar
+                , searchQuery = model.searchQuery
+                , records = recordsConfig model
+                , sidebar = sidebarConfig model
+                , clickedSettings = PressedSettingsButton
+                , changedSearchQuery = SearchQueryChanged
+                }
 
-                        else
-                            View.deemphasize
-                    , content =
-                        if records == Records.empty then
-                            View.bodyWithNoRecords
 
-                        else
-                            let
-                                searchResults =
-                                    Records.search searchQuery records
-                            in
-                            if searchResults == Records.empty then
-                                View.bodyWithNoSearchResults
+recordsConfig : Model -> RecordList.Config Msg
+recordsConfig { records, searchQuery } =
+    let
+        searchResults =
+            RecordList.search searchQuery records
+    in
+    if records == RecordList.empty then
+        RecordList.EmptyRecords
 
-                            else
-                                View.bodyWithRecords searchResults
-                    }
-                , View.footer
-                ]
+    else if searchResults == RecordList.empty then
+        RecordList.NoSearchResults
+
+    else
+        searchResults
+            |> RecordList.toList
+            |> List.map recordConfig
+            |> RecordList.ManyRecords
+
+
+recordConfig : ( Int, Record ) -> Record.Config Msg
+recordConfig ( id, record ) =
+    { description = record.description
+    , date = "today"
+    , duration = "15 minutes"
+    , status =
+        Record.NotSelected
+            { select = always NoOp
+            }
+    }
+
+
+sidebarConfig : Model -> Sidebar.Config Msg
+sidebarConfig {} =
+    Sidebar.NotPlaying { start = NoOp }
+
+
+rootElement : Config Msg -> Element Msg
+rootElement config =
+    case config of
+        ChangeSettings settings ->
+            Settings.view settings
+
+        Default defaultViewConfig ->
+            DefaultView.view defaultViewConfig

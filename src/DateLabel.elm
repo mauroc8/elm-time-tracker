@@ -1,13 +1,8 @@
-module Lang exposing (Lang(..))
+module DateLabel exposing (..)
 
-import Calendar exposing (Date)
-import Clock exposing (Time)
+import Calendar
+import Settings exposing (Language(..))
 import Time
-
-
-type Lang
-    = English
-    | Spanish
 
 
 
@@ -19,12 +14,12 @@ type DateLabel
     | Tomorrow
     | Yesterday
     | LastWeekday Time.Weekday
-    | OtherDate Date
+    | OtherDate Calendar.Date
 
 
 relativeDateLabel :
-    { today : Date
-    , otherDate : Date
+    { today : Calendar.Date
+    , otherDate : Calendar.Date
     }
     -> DateLabel
 relativeDateLabel { today, otherDate } =
@@ -51,7 +46,7 @@ relativeDateLabel { today, otherDate } =
         OtherDate otherDate
 
 
-dateLabelToString : Lang -> DateLabel -> String
+dateLabelToString : Language -> DateLabel -> String
 dateLabelToString lang dateLabel =
     case ( lang, dateLabel ) of
         ( English, Today ) ->
@@ -83,7 +78,7 @@ dateLabelToString lang dateLabel =
 --- Weekday
 
 
-weekdayToString : Lang -> Time.Weekday -> String
+weekdayToString : Language -> Time.Weekday -> String
 weekdayToString lang weekday =
     case ( lang, weekday ) of
         ( English, Time.Mon ) ->
