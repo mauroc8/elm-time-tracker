@@ -3,7 +3,7 @@ module Record exposing
     , ConfigStatus(..)
     , Id
     , Record
-    , RecordData
+    , decode
     , view
     )
 
@@ -11,27 +11,50 @@ import Calendar
 import Clock
 import DateTime exposing (DateTime)
 import Element exposing (Element)
+import Json.Decode
 import Time
 
 
-type alias Record =
-    { description : String
-    , startDate : Calendar.Date
-    , startTime : Clock.Time
-    , durationInSeconds : Int
-    }
+posixDecoder =
+    Json.Decode.int |> Json.Decode.map Time.millisToPosix
+
+
+
+--- ID
 
 
 type Id
     = Id Int
 
 
-type alias RecordData =
+idDecoder =
+    Json.Decode.int |> Json.Decode.map Id
+
+
+
+--- RECORD
+
+
+type alias Record =
     { id : Id
     , description : String
     , startDateTime : Time.Posix
     , durationInSeconds : Int
     }
+
+
+decode : Json.Decode.Value -> Result Json.Decode.Error Record
+decode value =
+    Json.Decode.decodeValue decoder value
+
+
+decoder : Json.Decode.Decoder Record
+decoder =
+    Json.Decode.map4 Record
+        (Json.Decode.field "id" idDecoder)
+        (Json.Decode.field "description" Json.Decode.string)
+        (Json.Decode.field "startDateTime" posixDecoder)
+        (Json.Decode.field "durationInSecods" Json.Decode.int)
 
 
 

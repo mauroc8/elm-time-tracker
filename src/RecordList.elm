@@ -49,6 +49,8 @@ search query (Records records) =
         |> Records
 
 
+{-| TODO use Record.Id
+-}
 toList : Records -> List ( Int, Record )
 toList (Records records) =
     Dict.toList records

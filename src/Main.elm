@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Colors
+import CreateForm exposing (CreateForm)
 import DateTime
 import DefaultView
 import Dict exposing (Dict)
@@ -121,16 +122,6 @@ type Status
 
 
 
---- Create Form
-
-
-type alias CreateForm =
-    { start : Time.Posix
-    , description : String
-    }
-
-
-
 --- Edit Form
 
 
@@ -182,6 +173,8 @@ type Msg
     | PressedSettingsButton
     | PressedSettingsCancelButton
     | PressedSettingsDoneButton
+    | PressedStartButton
+    | GotStartButtonPressTime Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -220,6 +213,14 @@ update msg model =
         PressedSettingsDoneButton ->
             setStatus Idle model
                 |> setSettings (appliedSettings model)
+                |> Out.withNoCmd
+
+        PressedStartButton ->
+            Task.perform GotStartButtonPressTime Time.now
+                |> Out.withModel model
+
+        GotStartButtonPressTime time ->
+            setStatus (CreatingRecord (CreateForm.empty time)) model
                 |> Out.withNoCmd
 
 
@@ -327,7 +328,7 @@ recordConfig ( id, record ) =
 
 sidebarConfig : Model -> Sidebar.Config Msg
 sidebarConfig {} =
-    Sidebar.NotPlaying { start = NoOp }
+    Sidebar.Idle { pressedStart = PressedStartButton }
 
 
 rootElement : Config Msg -> Element Msg

@@ -1,5 +1,6 @@
 module Sidebar exposing (Config(..), view)
 
+import CreateForm
 import Element exposing (Element)
 import Icons
 import View
@@ -10,14 +11,9 @@ import View
 
 
 type Config msg
-    = NotPlaying { start : msg }
-    | Playing
-        { description : String
-        , elapsedTime : String
-        , changedDescription : String -> msg
-        , stop : msg
-        }
-    | Editing
+    = Idle { pressedStart : msg }
+    | CreatingRecord (CreateForm.Config msg)
+    | EditingRecord
         { description : String
         , changedDescription : String -> msg
         , startTime : String
@@ -36,11 +32,11 @@ type Config msg
 view : Config msg -> Element msg
 view config =
     case config of
-        NotPlaying { start } ->
+        Idle { pressedStart } ->
             View.button
                 [ Element.centerX
                 ]
-                { onPress = View.enabled start
+                { onPress = View.enabled pressedStart
                 , label = Icons.playButton
                 }
 
