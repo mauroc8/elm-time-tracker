@@ -1,5 +1,5 @@
 module Settings exposing
-    ( ChangeSettingsConfig
+    ( Config
     , Language(..)
     , Settings
     , defaultLanguage
@@ -13,6 +13,7 @@ import Element.Background as Background
 import Element.Border
 import Element.Font
 import Element.Region
+import Icons
 import View
 
 
@@ -49,7 +50,7 @@ defaultLanguage =
 --- View
 
 
-type alias ChangeSettingsConfig msg =
+type alias Config msg =
     { unitedStatesDateNotation : Bool
     , language : Language
     , changedUnitedStatesDateNotation : Bool -> msg
@@ -59,7 +60,7 @@ type alias ChangeSettingsConfig msg =
     }
 
 
-view : ChangeSettingsConfig msg -> Element msg
+view : Config msg -> Element msg
 view config =
     Element.column
         [ Element.width Element.fill
@@ -69,7 +70,7 @@ view config =
         , Background.color Colors.grayBackground
         ]
         [ settingsHeader
-        , settingsBody
+        , settingsBody config
         , settingsFooter config
         ]
 
@@ -85,14 +86,18 @@ settingsHeader =
         (Element.text "Settings")
 
 
-settingsBody : Element msg
-settingsBody =
+settingsBody : Config msg -> Element msg
+settingsBody config =
     Element.column
         [ Element.spacing 16
         , Element.width Element.fill
         ]
         [ settingsGroup
-            [ Element.text "USA date notation (mm/dd/yy)"
+            [ View.settingsToggle
+                { label = "USA date notation (mm/dd/yy)"
+                , checked = config.unitedStatesDateNotation
+                , onChange = config.changedUnitedStatesDateNotation
+                }
             ]
         , settingsGroup
             [ Element.text "English"
@@ -128,7 +133,7 @@ settingsGroup children =
         )
 
 
-settingsFooter : ChangeSettingsConfig msg -> Element msg
+settingsFooter : Config msg -> Element msg
 settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton } =
     Element.row
         [ Element.alignBottom

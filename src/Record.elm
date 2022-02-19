@@ -3,12 +3,14 @@ module Record exposing
     , ConfigStatus(..)
     , Id
     , Record
-    , decode
+    , decoder
+    , fromCreateForm
     , view
     )
 
 import Calendar
 import Clock
+import CreateForm
 import DateTime exposing (DateTime)
 import Element exposing (Element)
 import Json.Decode
@@ -43,11 +45,6 @@ type alias Record =
     }
 
 
-decode : Json.Decode.Value -> Result Json.Decode.Error Record
-decode value =
-    Json.Decode.decodeValue decoder value
-
-
 decoder : Json.Decode.Decoder Record
 decoder =
     Json.Decode.map4 Record
@@ -55,6 +52,15 @@ decoder =
         (Json.Decode.field "description" Json.Decode.string)
         (Json.Decode.field "startDateTime" posixDecoder)
         (Json.Decode.field "durationInSecods" Json.Decode.int)
+
+
+fromCreateForm : Time.Posix -> CreateForm.CreateForm -> Record
+fromCreateForm now { description, start } =
+    { id = Id (Time.posixToMillis now)
+    , description = description
+    , startDateTime = start
+    , durationInSeconds = (Time.posixToMillis now - Time.posixToMillis start) // 1000
+    }
 
 
 

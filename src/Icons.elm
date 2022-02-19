@@ -140,6 +140,7 @@ playButton =
         |> Element.html
 
 
+stopButton : Element.Element msg
 stopButton =
     svg
         [ width "53"
@@ -163,6 +164,64 @@ stopButton =
             , height "22"
             , rx "2"
             , fill (Colors.toCss Colors.red)
+            ]
+            []
+        ]
+        |> Element.html
+
+
+toggleOff : Element.Element msg
+toggleOff =
+    svg
+        [ width "16"
+        , height "16"
+        , viewBox "0 0 16 16"
+        , fill "none"
+        ]
+        [ Svg.path
+            [ d "M11 4H5C2.79086 4 1 5.79086 1 8C1 10.2091 2.79086 12 5 12H11C13.2091 12 15 10.2091 15 8C15 5.79086 13.2091 4 11 4Z"
+            , fill (Colors.toCss Colors.grayBackground)
+            , stroke (Colors.toCss Colors.blackishText)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M5 10C6.10457 10 7 9.10457 7 8C7 6.89543 6.10457 6 5 6C3.89543 6 3 6.89543 3 8C3 9.10457 3.89543 10 5 10Z"
+            , fill (Colors.toCss Colors.blackishText)
+            , stroke (Colors.toCss Colors.blackishText)
+            , strokeWidth "2"
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        ]
+        |> Element.html
+
+
+toggleOn : Element.Element msg
+toggleOn =
+    svg
+        [ width "16"
+        , height "16"
+        , viewBox "0 0 16 16"
+        , fill "none"
+        ]
+        [ Svg.path
+            [ d "M11 4H5C2.79086 4 1 5.79086 1 8C1 10.2091 2.79086 12 5 12H11C13.2091 12 15 10.2091 15 8C15 5.79086 13.2091 4 11 4Z"
+            , fill (Colors.toCss Colors.grayBackground)
+            , stroke (Colors.toCss Colors.blackishText)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M11 10C12.1046 10 13 9.10457 13 8C13 6.89543 12.1046 6 11 6C9.89543 6 9 6.89543 9 8C9 9.10457 9.89543 10 11 10Z"
+            , fill (Colors.toCss Colors.blackishText)
+            , stroke (Colors.toCss Colors.blackishText)
+            , strokeWidth "2"
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
             ]
             []
         ]

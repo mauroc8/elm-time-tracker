@@ -28,5 +28,5 @@ type alias Config msg =
     { description : String
     , elapsedTime : String
     , changedDescription : String -> msg
-    , stop : msg
+    , pressedStop : msg
     }

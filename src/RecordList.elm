@@ -2,6 +2,7 @@ module RecordList exposing
     ( Config(..)
     , Records
     , empty
+    , push
     , search
     , toList
     , view
@@ -13,6 +14,7 @@ import Element exposing (Element)
 import Element.Font
 import Levenshtein
 import Record exposing (Record)
+import Time
 import View exposing (Emphasis)
 
 
@@ -49,11 +51,16 @@ search query (Records records) =
         |> Records
 
 
-{-| TODO use Record.Id
--}
-toList : Records -> List ( Int, Record )
+toList : Records -> List Record
 toList (Records records) =
     Dict.toList records
+        |> List.map Tuple.second
+
+
+push : Record -> Records -> Records
+push record (Records records) =
+    Dict.insert (Time.posixToMillis record.startDateTime) record records
+        |> Records
 
 
 

@@ -17,8 +17,8 @@ import Icons
 import Platform exposing (Task)
 import Record exposing (Record)
 import RecordList exposing (Records)
-import Settings exposing (ChangeSettingsConfig, Language, Settings)
-import Sidebar
+import Settings exposing (Language, Settings)
+import Sidebar exposing (Config(..))
 import Task
 import Time
 import Utils.Out as Out
@@ -83,7 +83,7 @@ setSearchQuery searchQuery model =
     { model | searchQuery = searchQuery }
 
 
-setStatus action model =
+setAction action model =
     { model | action = action }
 
 
@@ -108,6 +108,79 @@ setSettings settings model =
         | unitedStatesDateNotation = settings.unitedStatesDateNotation
         , language = settings.language
     }
+
+
+
+---
+
+
+editUnitedStatesDateNotation : Bool -> Model -> Model
+editUnitedStatesDateNotation usaDateNotation model =
+    case model.action of
+        ChangingSettings settings ->
+            setAction
+                (ChangingSettings
+                    { settings
+                        | unitedStatesDateNotation = usaDateNotation
+                    }
+                )
+                model
+
+        _ ->
+            { model | unitedStatesDateNotation = usaDateNotation }
+
+
+editLanguage : Language -> Model -> Model
+editLanguage language model =
+    case model.action of
+        ChangingSettings settings ->
+            setAction
+                (ChangingSettings
+                    { settings
+                        | language = language
+                    }
+                )
+                model
+
+        _ ->
+            { model
+                | language = language
+            }
+
+
+stopCreatingRecord : Time.Posix -> Model -> Model
+stopCreatingRecord time model =
+    case model.action of
+        CreatingRecord createForm ->
+            model
+                |> pushRecord (Record.fromCreateForm time createForm)
+                |> setAction Idle
+
+        _ ->
+            model
+
+
+pushRecord : Record -> Model -> Model
+pushRecord record model =
+    { model
+        | records = RecordList.push record model.records
+    }
+
+
+changeCreateFormDescription : String -> Model -> Model
+changeCreateFormDescription description model =
+    case model.action of
+        CreatingRecord createForm ->
+            setAction
+                (CreatingRecord
+                    { createForm
+                        | description = description
+                    }
+                )
+                model
+
+        _ ->
+            model
 
 
 
@@ -175,6 +248,11 @@ type Msg
     | PressedSettingsDoneButton
     | PressedStartButton
     | GotStartButtonPressTime Time.Posix
+    | PressedStopButton
+    | GotStopButtonPressTime Time.Posix
+    | ChangedUnitedStatesDateNotation Bool
+    | ChangedLanguage Language
+    | ChangedCreateFormDescription String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -197,7 +275,7 @@ update msg model =
                 |> Out.withNoCmd
 
         PressedSettingsButton ->
-            setStatus
+            setAction
                 (ChangingSettings
                     { unitedStatesDateNotation = model.unitedStatesDateNotation
                     , language = model.language
@@ -207,11 +285,15 @@ update msg model =
                 |> Out.withNoCmd
 
         PressedSettingsCancelButton ->
-            setStatus Idle model
+            setAction
+                Idle
+                model
                 |> Out.withNoCmd
 
         PressedSettingsDoneButton ->
-            setStatus Idle model
+            setAction
+                Idle
+                model
                 |> setSettings (appliedSettings model)
                 |> Out.withNoCmd
 
@@ -220,7 +302,29 @@ update msg model =
                 |> Out.withModel model
 
         GotStartButtonPressTime time ->
-            setStatus (CreatingRecord (CreateForm.empty time)) model
+            setAction
+                (CreatingRecord (CreateForm.empty time))
+                model
+                |> Out.withNoCmd
+
+        PressedStopButton ->
+            Task.perform GotStopButtonPressTime Time.now
+                |> Out.withModel model
+
+        GotStopButtonPressTime time ->
+            stopCreatingRecord time model
+                |> Out.withNoCmd
+
+        ChangedUnitedStatesDateNotation unitedStatesDateNotation ->
+            editUnitedStatesDateNotation unitedStatesDateNotation model
+                |> Out.withNoCmd
+
+        ChangedLanguage language ->
+            editLanguage language model
+                |> Out.withNoCmd
+
+        ChangedCreateFormDescription description ->
+            changeCreateFormDescription description model
                 |> Out.withNoCmd
 
 
@@ -234,7 +338,7 @@ This type describes them.
 
 -}
 type Config msg
-    = ChangeSettings (ChangeSettingsConfig msg)
+    = ChangeSettings (Settings.Config msg)
     | Default (DefaultView.Config msg)
 
 
@@ -272,10 +376,26 @@ viewConfig model =
             ChangeSettings
                 { unitedStatesDateNotation = settings.unitedStatesDateNotation
                 , language = settings.language
-                , changedUnitedStatesDateNotation = always NoOp
-                , changedLanguage = always NoOp
+                , changedUnitedStatesDateNotation = ChangedUnitedStatesDateNotation
+                , changedLanguage = ChangedLanguage
                 , pressedSettingsCancelButton = PressedSettingsCancelButton
                 , pressedSettingsDoneButton = PressedSettingsDoneButton
+                }
+
+        CreatingRecord createForm ->
+            Default
+                { emphasis = View.Sidebar
+                , searchQuery = model.searchQuery
+                , records = recordsConfig model
+                , sidebar =
+                    Sidebar.CreatingRecord
+                        { description = createForm.description
+                        , elapsedTime = "1 second"
+                        , changedDescription = ChangedCreateFormDescription
+                        , pressedStop = PressedStopButton
+                        }
+                , clickedSettings = PressedSettingsButton
+                , changedSearchQuery = SearchQueryChanged
                 }
 
         _ ->
@@ -289,7 +409,7 @@ viewConfig model =
                             View.Sidebar
                 , searchQuery = model.searchQuery
                 , records = recordsConfig model
-                , sidebar = sidebarConfig model
+                , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
                 }
@@ -314,8 +434,8 @@ recordsConfig { records, searchQuery } =
             |> RecordList.ManyRecords
 
 
-recordConfig : ( Int, Record ) -> Record.Config Msg
-recordConfig ( id, record ) =
+recordConfig : Record -> Record.Config Msg
+recordConfig record =
     { description = record.description
     , date = "today"
     , duration = "15 minutes"
@@ -324,11 +444,6 @@ recordConfig ( id, record ) =
             { select = always NoOp
             }
     }
-
-
-sidebarConfig : Model -> Sidebar.Config Msg
-sidebarConfig {} =
-    Sidebar.Idle { pressedStart = PressedStartButton }
 
 
 rootElement : Config Msg -> Element Msg

@@ -37,7 +37,7 @@ view ({ emphasis, searchQuery, records, sidebar, clickedSettings, changedSearchQ
         ]
         [ -- Search
           searchSection config
-            |> withHeaderLayout
+            |> withHeaderLayout emphasis
             |> withHorizontalDivider emphasis
 
         -- RecordList
@@ -57,7 +57,6 @@ searchSection : Config msg -> Element msg
 searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings } as config) =
     Element.row
         [ Element.spacing 16
-        , View.recordListBackgroundColor emphasis
         , Element.width Element.fill
         ]
         [ settingsButton config
@@ -65,11 +64,12 @@ searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings } as
         ]
 
 
-withHeaderLayout : Element msg -> Element msg
-withHeaderLayout =
+withHeaderLayout : View.Emphasis -> Element msg -> Element msg
+withHeaderLayout emphasis =
     Element.el
         [ Element.padding 16
         , Element.width Element.fill
+        , View.recordListBackgroundColor emphasis
         ]
 
 
@@ -99,14 +99,20 @@ settingsButton :
     }
     -> Element msg
 settingsButton { emphasis, clickedSettings } =
-    Input.button
+    View.button
         ([ Font.color (View.recordListButtonColor emphasis)
          , Border.width 1
          , Border.color Colors.transparent
          ]
             ++ View.overflowClickableRegion 12
         )
-        { onPress = Just clickedSettings
+        { onPress =
+            case emphasis of
+                View.RecordList ->
+                    View.enabled clickedSettings
+
+                View.Sidebar ->
+                    View.disabled
         , label = Icons.options
         }
 

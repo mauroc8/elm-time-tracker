@@ -40,10 +40,13 @@ view config =
                 , label = Icons.playButton
                 }
 
-        _ ->
+        CreatingRecord { pressedStop } ->
             View.button
                 [ Element.centerX
                 ]
-                { onPress = View.disabled
+                { onPress = View.enabled pressedStop
                 , label = Icons.stopButton
                 }
+
+        EditingRecord {} ->
+            Element.none

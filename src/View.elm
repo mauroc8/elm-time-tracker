@@ -13,6 +13,7 @@ module View exposing
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListButtonColor
+    , settingsToggle
     , sidebarBackgroundColor
     )
 
@@ -174,7 +175,7 @@ overflowClickableRegion value =
 
 
 
---- Components
+--- Link
 
 
 {-| The buttons "Done" and "Cancel" that can be seen in settings and in edit mode.
@@ -199,6 +200,36 @@ linkLikeButton { onPress, label, bold } =
         )
         { onPress = Just onPress
         , label = Element.text label
+        }
+
+
+
+--- Toggle (checkbox)
+
+
+settingsToggle :
+    { checked : Bool
+    , onChange : Bool -> msg
+    , label : String
+    }
+    -> Element msg
+settingsToggle { checked, onChange, label } =
+    Input.checkbox
+        [ Element.width Element.fill ]
+        { onChange = onChange
+        , checked = checked
+        , label =
+            Input.labelLeft [ Element.width Element.fill ]
+                (Element.text label
+                    |> Element.el [ Element.centerY ]
+                )
+        , icon =
+            \value ->
+                if value then
+                    Icons.toggleOn
+
+                else
+                    Icons.toggleOff
         }
 
 
