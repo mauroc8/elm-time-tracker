@@ -1,5 +1,6 @@
 module View exposing
-    ( ButtonHandler
+    ( BackgroundColor(..)
+    , ButtonHandler
     , Emphasis(..)
     , button
     , disabled
@@ -7,12 +8,14 @@ module View exposing
     , fontSize14
     , fontSize16
     , fontSize24
-    , horizontalDivider
+    , horizontalDividerFromColor
+    , horizontalDividerFromEmphasis
     , linkLikeButton
     , overflowClickableRegion
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListButtonColor
+    , settingsBackgroundColor
     , settingsToggle
     , sidebarBackgroundColor
     )
@@ -33,7 +36,7 @@ import Icons
 
 
 
---- Type disabled
+--- Button
 
 
 {-| Not sure if necessary but I'm adding `aria-disabled` to buttons when `onPress = Nothing`
@@ -72,21 +75,71 @@ button :
     -> Element msg
 button attrs config =
     let
-        a11yAttrs =
+        ( extraAttrs, onPress ) =
             case config.onPress of
                 Disabled ->
-                    [ Element.htmlAttribute (Html.Attributes.attribute "aria-disabled" "true")
-                    , Element.htmlAttribute (Html.Attributes.style "cursor" "default")
-                    ]
+                    ( [ Element.htmlAttribute (Html.Attributes.attribute "aria-disabled" "true")
+                      , Element.htmlAttribute (Html.Attributes.style "cursor" "default")
+                      ]
+                    , Nothing
+                    )
 
-                Enabled _ ->
-                    []
+                Enabled msg ->
+                    ( [], Just msg )
     in
     Input.button
-        (attrs ++ a11yAttrs)
-        { onPress = toMaybe config.onPress
+        (attrs ++ extraAttrs)
+        { onPress = onPress
         , label = config.label
         }
+
+
+
+--- Background Color
+
+
+type BackgroundColor
+    = Gray
+    | White
+
+
+backgroundColor : BackgroundColor -> Attribute msg
+backgroundColor color =
+    Background.color <|
+        case color of
+            White ->
+                Colors.whiteBackground
+
+            Gray ->
+                Colors.grayBackground
+
+
+backgroundTransition : BackgroundColor -> Attribute msg
+backgroundTransition color =
+    let
+        easing =
+            case color of
+                Gray ->
+                    "ease-in"
+
+                White ->
+                    "ease-out"
+    in
+    Element.htmlAttribute <|
+        Html.Attributes.style "transition" <|
+            "background-color 0.23s "
+                ++ easing
+
+
+horizontalDividerFromColor : BackgroundColor -> Element msg
+horizontalDividerFromColor color =
+    Element.el
+        [ Element.width Element.fill
+        , Element.height <| Element.px 1
+        , backgroundColor color
+        , backgroundTransition color
+        ]
+        Element.none
 
 
 
@@ -104,14 +157,18 @@ type Emphasis
     | Sidebar
 
 
-horizontalDivider : Emphasis -> Element msg
-horizontalDivider emphasis =
-    Element.el
-        [ Element.width Element.fill
-        , Element.height <| Element.px 1
-        , Background.color (recordListAlternativeBackgroundColor emphasis)
-        ]
-        Element.none
+horizontalDividerFromEmphasis : Emphasis -> Element msg
+horizontalDividerFromEmphasis emphasis =
+    let
+        color =
+            case emphasis of
+                RecordList ->
+                    Gray
+
+                Sidebar ->
+                    White
+    in
+    horizontalDividerFromColor color
 
 
 recordListAlternativeBackgroundColor : Emphasis -> Element.Color
@@ -124,26 +181,36 @@ recordListAlternativeBackgroundColor emphasis =
             Colors.whiteBackground
 
 
-recordListBackgroundColor : Emphasis -> Element.Attr decorative msg
+recordListBackgroundColor : Emphasis -> List (Element.Attribute msg)
 recordListBackgroundColor emphasis =
-    Background.color <|
-        case emphasis of
-            RecordList ->
-                Colors.whiteBackground
+    let
+        color =
+            case emphasis of
+                RecordList ->
+                    White
 
-            Sidebar ->
-                Colors.grayBackground
+                Sidebar ->
+                    Gray
+    in
+    [ backgroundColor color
+    , backgroundTransition color
+    ]
 
 
-sidebarBackgroundColor : Emphasis -> Element.Attr decorative msg
+sidebarBackgroundColor : Emphasis -> List (Element.Attribute msg)
 sidebarBackgroundColor emphasis =
-    Background.color <|
-        case emphasis of
-            RecordList ->
-                Colors.grayBackground
+    let
+        color =
+            case emphasis of
+                RecordList ->
+                    Gray
 
-            Sidebar ->
-                Colors.whiteBackground
+                Sidebar ->
+                    White
+    in
+    [ backgroundColor color
+    , backgroundTransition color
+    ]
 
 
 recordListButtonColor : Emphasis -> Element.Color
@@ -154,6 +221,13 @@ recordListButtonColor emphasis =
 
         Sidebar ->
             Colors.grayText
+
+
+settingsBackgroundColor : List (Element.Attribute msg)
+settingsBackgroundColor =
+    [ backgroundColor Gray
+    , backgroundTransition Gray
+    ]
 
 
 
@@ -211,11 +285,12 @@ settingsToggle :
     { checked : Bool
     , onChange : Bool -> msg
     , label : String
+    , padding : Int
     }
     -> Element msg
-settingsToggle { checked, onChange, label } =
+settingsToggle { checked, onChange, label, padding } =
     Input.checkbox
-        [ Element.width Element.fill ]
+        [ Element.width Element.fill, Element.padding padding ]
         { onChange = onChange
         , checked = checked
         , label =

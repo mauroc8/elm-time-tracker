@@ -33,22 +33,28 @@ empty =
 
 search : String -> Records -> Records
 search query (Records records) =
+    records
+        |> Dict.filter
+            (\key record ->
+                record.description
+                    |> matchesSearchQuery query
+            )
+        |> Records
+
+
+matchesSearchQuery : String -> String -> Bool
+matchesSearchQuery query str =
     let
         queryLength =
             String.length query
     in
-    records
-        |> Dict.filter
-            (\key record ->
-                Levenshtein.distance
-                    query
-                    (String.left
-                        queryLength
-                        record.description
-                    )
-                    <= (queryLength // 3)
-            )
-        |> Records
+    Levenshtein.distance
+        query
+        (String.left
+            queryLength
+            str
+        )
+        <= (queryLength // 3)
 
 
 toList : Records -> List Record
@@ -91,7 +97,7 @@ view { emphasis } config =
         ManyRecords records ->
             records
                 |> List.map Record.view
-                |> List.intersperse (View.horizontalDivider emphasis)
+                |> List.intersperse (View.horizontalDividerFromEmphasis emphasis)
                 |> bodyWithRecordsLayout emphasis
 
 
@@ -114,15 +120,19 @@ emptyBodyLayout emphasis =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
-        , View.recordListBackgroundColor emphasis
         , Element.padding 16
         ]
 
 
 bodyWithRecordsLayout : Emphasis -> List (Element msg) -> Element msg
-bodyWithRecordsLayout emphasis =
+bodyWithRecordsLayout emphasis children =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
-        , View.recordListBackgroundColor emphasis
+        ]
+        [ Element.column
+            [ Element.width Element.fill
+            ]
+            children
+        , View.horizontalDividerFromEmphasis emphasis
         ]

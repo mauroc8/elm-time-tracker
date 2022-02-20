@@ -3,6 +3,7 @@ module Record exposing
     , ConfigStatus(..)
     , Id
     , Record
+    , config
     , decoder
     , fromCreateForm
     , view
@@ -69,8 +70,11 @@ fromCreateForm now { description, start } =
 
 view : Config msg -> Element msg
 view { description, date, duration, status } =
-    Element.column []
+    Element.column
+        [ Element.padding 16
+        ]
         [ Element.text description
+        , Element.text duration
         ]
 
 
@@ -82,14 +86,26 @@ type alias Config msg =
     }
 
 
+config : { a | selectRecord : Id -> msg } -> Record -> Config msg
+config { selectRecord } record =
+    { description = record.description
+    , date = "today"
+    , duration = "15 minutes"
+    , status =
+        NotSelected
+            { select = selectRecord
+            }
+    }
+
+
 type ConfigStatus msg
     = Selected
         { startTime : String
         , endTime : String
-        , clickedDeleteButton : Int -> msg
-        , clickedEditButton : Int -> msg
-        , clickedResumeButton : Int -> msg
+        , clickedDeleteButton : Id -> msg
+        , clickedEditButton : Id -> msg
+        , clickedResumeButton : Id -> msg
         }
     | NotSelected
-        { select : Int -> msg
+        { select : Id -> msg
         }

@@ -253,6 +253,7 @@ type Msg
     | ChangedUnitedStatesDateNotation Bool
     | ChangedLanguage Language
     | ChangedCreateFormDescription String
+    | SelectRecord Record.Id
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -327,6 +328,9 @@ update msg model =
             changeCreateFormDescription description model
                 |> Out.withNoCmd
 
+        SelectRecord id ->
+            Debug.todo "SelectRecord"
+
 
 
 --- VIEW
@@ -344,13 +348,17 @@ type Config msg
 
 view : Model -> Html Msg
 view model =
+    let
+        config =
+            viewConfig model
+    in
     Element.layoutWith
         { options =
             [ Element.focusStyle focusStyle
             ]
         }
-        rootAttributes
-        (rootElement (viewConfig model))
+        (rootAttributes config)
+        (rootElement config)
 
 
 focusStyle : Element.FocusStyle
@@ -361,12 +369,23 @@ focusStyle =
     }
 
 
-rootAttributes : List (Attribute msg)
-rootAttributes =
-    [ Element.width Element.fill
-    , Element.height Element.fill
-    , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
-    ]
+rootAttributes : Config msg -> List (Attribute msg)
+rootAttributes config =
+    let
+        shared =
+            [ Element.width Element.fill
+            , Element.height Element.fill
+            , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
+            ]
+    in
+    case config of
+        ChangeSettings _ ->
+            shared
+                ++ View.settingsBackgroundColor
+
+        Default { emphasis } ->
+            shared
+                ++ View.recordListBackgroundColor emphasis
 
 
 viewConfig : Model -> Config Msg
@@ -398,15 +417,19 @@ viewConfig model =
                 , changedSearchQuery = SearchQueryChanged
                 }
 
-        _ ->
+        EditingRecord editForm ->
             Default
-                { emphasis =
-                    case model.action of
-                        Idle ->
-                            View.RecordList
+                { emphasis = View.Sidebar
+                , searchQuery = model.searchQuery
+                , records = recordsConfig model
+                , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
+                , clickedSettings = PressedSettingsButton
+                , changedSearchQuery = SearchQueryChanged
+                }
 
-                        _ ->
-                            View.Sidebar
+        Idle ->
+            Default
+                { emphasis = View.RecordList
                 , searchQuery = model.searchQuery
                 , records = recordsConfig model
                 , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
@@ -430,20 +453,8 @@ recordsConfig { records, searchQuery } =
     else
         searchResults
             |> RecordList.toList
-            |> List.map recordConfig
+            |> List.map (Record.config { selectRecord = SelectRecord })
             |> RecordList.ManyRecords
-
-
-recordConfig : Record -> Record.Config Msg
-recordConfig record =
-    { description = record.description
-    , date = "today"
-    , duration = "15 minutes"
-    , status =
-        Record.NotSelected
-            { select = always NoOp
-            }
-    }
 
 
 rootElement : Config Msg -> Element Msg

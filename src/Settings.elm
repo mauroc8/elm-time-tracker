@@ -67,7 +67,6 @@ view config =
         , Element.height Element.fill
         , Element.padding 24
         , Element.spacing 24
-        , Background.color Colors.grayBackground
         ]
         [ settingsHeader
         , settingsBody config
@@ -97,6 +96,7 @@ settingsBody config =
                 { label = "USA date notation (mm/dd/yy)"
                 , checked = config.unitedStatesDateNotation
                 , onChange = config.changedUnitedStatesDateNotation
+                , padding = 16
                 }
             ]
         , settingsGroup
@@ -109,27 +109,14 @@ settingsBody config =
 settingsGroup : List (Element msg) -> Element msg
 settingsGroup children =
     Element.column
-        [ Element.Border.rounded 8
-        , Background.color Colors.whiteBackground
-        , Element.width Element.fill
-        ]
-        (List.map
-            (Element.el
-                ([ Element.padding 16
-                 , Element.width Element.fill
-                 ]
-                    ++ View.fontSize14
-                )
-            )
-            children
-            |> List.intersperse
-                (Element.el
-                    [ Element.width Element.fill
-                    , Element.height (Element.px 1)
-                    , Background.color Colors.grayBackground
-                    ]
-                    Element.none
-                )
+        ([ Element.Border.rounded 8
+         , Background.color Colors.whiteBackground
+         , Element.width Element.fill
+         ]
+            ++ View.fontSize14
+        )
+        (children
+            |> List.intersperse (View.horizontalDividerFromColor View.Gray)
         )
 
 

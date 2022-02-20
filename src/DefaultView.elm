@@ -69,7 +69,6 @@ withHeaderLayout emphasis =
     Element.el
         [ Element.padding 16
         , Element.width Element.fill
-        , View.recordListBackgroundColor emphasis
         ]
 
 
@@ -79,17 +78,18 @@ withHorizontalDivider emphasis el =
         [ Element.width Element.fill
         ]
         [ el
-        , View.horizontalDivider emphasis
+        , View.horizontalDividerFromEmphasis emphasis
         ]
 
 
 withFooterLayout : Emphasis -> Element msg -> Element msg
 withFooterLayout emphasis =
     Element.el
-        [ Element.width Element.fill
-        , Element.padding 24
-        , View.sidebarBackgroundColor emphasis
-        ]
+        ([ Element.width Element.fill
+         , Element.padding 24
+         ]
+            ++ View.sidebarBackgroundColor emphasis
+        )
 
 
 settingsButton :
