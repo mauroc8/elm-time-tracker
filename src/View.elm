@@ -5,6 +5,7 @@ module View exposing
     , button
     , disabled
     , enabled
+    , fontSize12
     , fontSize14
     , fontSize16
     , fontSize24
@@ -310,6 +311,11 @@ settingsToggle { checked, onChange, label, padding } =
 
 
 --- FONT SIZE
+
+
+fontSize12 : List (Attribute msg)
+fontSize12 =
+    fontSize { lineHeight = 9, value = 12 }
 
 
 fontSize14 : List (Attribute msg)

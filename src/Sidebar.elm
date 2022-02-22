@@ -2,6 +2,7 @@ module Sidebar exposing (Config(..), view)
 
 import CreateForm
 import Element exposing (Element)
+import Element.Input
 import Icons
 import View
 
@@ -40,13 +41,8 @@ view config =
                 , label = Icons.playButton
                 }
 
-        CreatingRecord { pressedStop } ->
-            View.button
-                [ Element.centerX
-                ]
-                { onPress = View.enabled pressedStop
-                , label = Icons.stopButton
-                }
+        CreatingRecord createFormConfig ->
+            CreateForm.view createFormConfig
 
         EditingRecord {} ->
             Element.none

@@ -61,6 +61,7 @@ toList : Records -> List Record
 toList (Records records) =
     Dict.toList records
         |> List.map Tuple.second
+        |> List.reverse
 
 
 push : Record -> Records -> Records
@@ -129,6 +130,7 @@ bodyWithRecordsLayout emphasis children =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
+        , Element.scrollbarY
         ]
         [ Element.column
             [ Element.width Element.fill
