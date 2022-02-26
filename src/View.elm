@@ -10,13 +10,13 @@ module View exposing
     , fontSize14
     , fontSize16
     , fontSize24
-    , horizontalDividerFromColor
-    , horizontalDividerFromEmphasis
+    , horizontalDivider
     , linkLikeButton
     , overflowClickableRegion
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListButtonColor
+    , recordListHorizontalDivider
     , settingsBackgroundColor
     , settingsToggle
     , sidebarBackgroundColor
@@ -133,13 +133,19 @@ backgroundTransition color =
                 ++ easing
 
 
-horizontalDividerFromColor : BackgroundColor -> Element msg
-horizontalDividerFromColor color =
+horizontalDivider : BackgroundColor -> Element msg
+horizontalDivider bgColor =
     Element.el
         [ Element.width Element.fill
         , Element.height <| Element.px 1
-        , backgroundColor color
-        , backgroundTransition color
+        , Background.color <|
+            case bgColor of
+                White ->
+                    Colors.grayBackground
+
+                Gray ->
+                    Colors.darkGrayBackground
+        , backgroundTransition bgColor
         ]
         Element.none
 
@@ -153,24 +159,26 @@ background. The other section will have a gray background.
 
 Some buttons in the de-emphasized section will be disabled.
 
+NOTE: Move to DefaultView.elm?
+
 -}
 type Emphasis
     = RecordList
     | Sidebar
 
 
-horizontalDividerFromEmphasis : Emphasis -> Element msg
-horizontalDividerFromEmphasis emphasis =
+recordListHorizontalDivider : Emphasis -> Element msg
+recordListHorizontalDivider emphasis =
     let
-        color =
+        bgColor =
             case emphasis of
                 RecordList ->
-                    Gray
+                    White
 
                 Sidebar ->
-                    White
+                    Gray
     in
-    horizontalDividerFromColor color
+    horizontalDivider bgColor
 
 
 recordListAlternativeBackgroundColor : Emphasis -> Element.Color
@@ -340,9 +348,8 @@ fontSize24 =
 
 
 fontSize :
-    { a
-        | lineHeight : Int
-        , value : Int
+    { lineHeight : Int
+    , value : Int
     }
     -> List (Attribute msg)
 fontSize { lineHeight, value } =

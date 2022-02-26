@@ -37,13 +37,17 @@ empty =
 
 search : String -> RecordList -> RecordList
 search query (RecordList records) =
-    records
-        |> Dict.filter
-            (\key record ->
-                record.description
-                    |> matchesSearchQuery query
-            )
-        |> RecordList
+    if query == "" then
+        RecordList records
+
+    else
+        records
+            |> Dict.filter
+                (\_ record ->
+                    record.description
+                        |> matchesSearchQuery query
+                )
+            |> RecordList
 
 
 matchesSearchQuery : String -> String -> Bool
@@ -117,7 +121,7 @@ view { emphasis } config =
         ManyRecords records ->
             records
                 |> List.map Record.view
-                |> List.intersperse (View.horizontalDividerFromEmphasis emphasis)
+                |> List.intersperse (View.recordListHorizontalDivider emphasis)
                 |> bodyWithRecordsLayout emphasis
 
 
@@ -155,5 +159,5 @@ bodyWithRecordsLayout emphasis children =
             [ Element.width Element.fill
             ]
             children
-        , View.horizontalDividerFromEmphasis emphasis
+        , View.recordListHorizontalDivider emphasis
         ]

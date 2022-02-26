@@ -226,3 +226,94 @@ toggleOn =
             []
         ]
         |> Element.html
+
+
+play =
+    svg
+        [ width "12"
+        , height "14"
+        , viewBox "0 0 12 14"
+        , fill "none"
+        ]
+        [ Svg.path
+            [ d "M10.7563 6.57445L1.7625 1.07445C1.68679 1.02775 1.59999 1.00209 1.51106 1.00012C1.42212 0.998155 1.33427 1.01995 1.25657 1.06326C1.17887 1.10657 1.11413 1.16982 1.06903 1.2465C1.02393 1.32317 1.0001 1.41049 1 1.49945V12.4995C1.0001 12.5884 1.02393 12.6757 1.06903 12.7524C1.11413 12.8291 1.17887 12.8923 1.25657 12.9356C1.33427 12.979 1.42212 13.0007 1.51106 12.9988C1.59999 12.9968 1.68679 12.9712 1.7625 12.9245L10.7563 7.42445C10.8301 7.38078 10.8913 7.31862 10.9338 7.24409C10.9763 7.16957 10.9987 7.08525 10.9987 6.99945C10.9987 6.91365 10.9763 6.82934 10.9338 6.75481C10.8913 6.68028 10.8301 6.61812 10.7563 6.57445V6.57445Z"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        ]
+        |> Element.html
+
+
+edit =
+    svg
+        [ width "13"
+        , height "13"
+        , viewBox "0 0 13 13"
+        , fill "none"
+        ]
+        [ Svg.path
+            [ d "M4.50001 12.2929H1.5C1.3674 12.2929 1.24022 12.2402 1.14645 12.1465C1.05268 12.0527 1 11.9255 1 11.7929V8.99917C0.999775 8.93424 1.01236 8.86991 1.03702 8.80985C1.06169 8.74979 1.09796 8.69519 1.14375 8.64916L8.64376 1.14916C8.69028 1.10192 8.74574 1.0644 8.8069 1.0388C8.86806 1.01319 8.9337 1 9.00001 1C9.06631 1 9.13196 1.01319 9.19312 1.0388C9.25428 1.0644 9.30973 1.10192 9.35626 1.14916L12.1438 3.93666C12.191 3.98319 12.2285 4.03865 12.2541 4.09981C12.2797 4.16097 12.2929 4.22661 12.2929 4.29291C12.2929 4.35922 12.2797 4.42486 12.2541 4.48602C12.2285 4.54718 12.191 4.60264 12.1438 4.64916L4.50001 12.2929Z"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M7 2.79291L10.5 6.29291"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M12 12.2929H4.5"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        ]
+        |> Element.html
+
+
+trash =
+    svg [ width "12", height "13", viewBox "0 0 12 13", fill "none" ]
+        [ Svg.path
+            [ d "M11.5 2.5H0.5"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M4.5 5.5V9.5"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M7.5 5.5V9.5"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M10.5 2.5V12C10.5 12.1326 10.4473 12.2598 10.3536 12.3536C10.2598 12.4473 10.1326 12.5 10 12.5H2C1.86739 12.5 1.74021 12.4473 1.64645 12.3536C1.55268 12.2598 1.5 12.1326 1.5 12V2.5"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M8.5 2.5V1.5C8.5 1.23478 8.39464 0.98043 8.20711 0.792893C8.01957 0.605357 7.76522 0.5 7.5 0.5H4.5C4.23478 0.5 3.98043 0.605357 3.79289 0.792893C3.60536 0.98043 3.5 1.23478 3.5 1.5V2.5"
+            , stroke (Colors.toCss Colors.accent)
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        ]
+        |> Element.html

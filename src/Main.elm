@@ -1,6 +1,8 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom
+import Browser.Events
 import Colors
 import CreateForm exposing (CreateForm)
 import DateTime
@@ -72,6 +74,7 @@ type alias Model =
     -- Time
     , currentTime : Time.Posix
     , timeZone : Time.Zone
+    , visibility : Browser.Events.Visibility
 
     -- Responsiveness
     , windowWidth : Int
@@ -92,6 +95,7 @@ initialModel =
     , language = Settings.defaultLanguage
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
+    , visibility = Browser.Events.Visible
     , windowWidth = 0
     , windowHeight = 0
     , lastSaved = Time.millisToPosix 0
@@ -131,7 +135,7 @@ the saved settings.
 -}
 appliedSettings : Model -> Settings
 appliedSettings model =
-    actionToSettings model.action
+    getActionSettings model.action
         |> Maybe.withDefault
             { unitedStatesDateNotation = model.unitedStatesDateNotation
             , language = model.language
@@ -174,6 +178,15 @@ editLanguage language model =
             { model
                 | language = language
             }
+
+
+startCreatingRecord time model =
+    model
+        |> setAction (CreatingRecord (CreateForm.empty time))
+        |> Out.withCmd
+            (Browser.Dom.focus CreateForm.descriptionInputId
+                |> Task.attempt (\_ -> ToDo)
+            )
 
 
 stopCreatingRecord : Time.Posix -> Model -> Model
@@ -222,7 +235,8 @@ type Action
     | ChangingSettings Settings
 
 
-actionToSettings action =
+getActionSettings : Action -> Maybe Settings
+getActionSettings action =
     case action of
         ChangingSettings settings ->
             Just settings
@@ -269,6 +283,7 @@ type Msg
     | ClickedEditButton Record.Id
     | ClickedResumeButton Record.Id
     | GotResumeButtonTime Record.Id Time.Posix
+    | VisibilityChanged Browser.Events.Visibility
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -318,23 +333,23 @@ update msg model =
                 |> Out.withModel model
 
         GotStartButtonPressTime time ->
-            setAction
-                (CreatingRecord (CreateForm.empty time))
-                model
-                |> Out.withNoCmd
-                |> Out.mapModel (setCurrentTime time)
+            model
+                |> setCurrentTime time
+                |> startCreatingRecord time
 
         PressedStopButton ->
             Task.perform GotStopButtonPressTime Time.now
                 |> Out.withModel model
 
         GotStopButtonPressTime time ->
-            stopCreatingRecord time model
+            model
+                |> stopCreatingRecord time
+                |> setCurrentTime time
                 |> Out.withNoCmd
-                |> Out.mapModel (setCurrentTime time)
 
         ChangedUnitedStatesDateNotation unitedStatesDateNotation ->
-            editUnitedStatesDateNotation unitedStatesDateNotation model
+            model
+                |> editUnitedStatesDateNotation unitedStatesDateNotation
                 |> Out.withNoCmd
 
         ChangedLanguage language ->
@@ -379,8 +394,12 @@ update msg model =
                         , start = time
                         }
             }
+                |> setCurrentTime time
                 |> Out.withNoCmd
-                |> Out.mapModel (setCurrentTime time)
+
+        VisibilityChanged visibility ->
+            { model | visibility = visibility }
+                |> Out.withNoCmd
 
 
 
@@ -389,22 +408,23 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.action of
-        CreatingRecord { start } ->
-            Time.every
-                (if
-                    Utils.Duration.fromTimeDifference start model.currentTime
-                        |> Utils.Duration.lessThan (Utils.Duration.fromSeconds 60)
-                 then
-                    1000
+    Sub.batch
+        [ if model.visibility == Browser.Events.Visible then
+            case model.action of
+                CreatingRecord createForm ->
+                    CreateForm.subscriptions
+                        { currentTime = model.currentTime
+                        , gotCurrentTime = GotCurrentTime
+                        }
+                        createForm
 
-                 else
-                    1000 * 60
-                )
-                GotCurrentTime
+                _ ->
+                    Sub.none
 
-        _ ->
+          else
             Sub.none
+        , Browser.Events.onVisibilityChange VisibilityChanged
+        ]
 
 
 
@@ -530,7 +550,7 @@ viewConfig model =
 
 
 recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesDateNotation } =
+recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesDateNotation, timeZone } =
     let
         searchResults =
             RecordList.search searchQuery records
@@ -553,6 +573,7 @@ recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesD
                     , clickedResumeButton = ClickedResumeButton
                     , currentTime = currentTime
                     , unitedStatesDateNotation = unitedStatesDateNotation
+                    , timeZone = timeZone
                     }
                 )
             |> RecordList.ManyRecords

@@ -13,6 +13,11 @@ grayBackground =
     Element.rgb255 240 240 240
 
 
+darkGrayBackground : Color
+darkGrayBackground =
+    Element.rgb255 228 228 228
+
+
 blackText : Color
 blackText =
     Element.rgb255 0 0 0

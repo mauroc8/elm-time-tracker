@@ -1,4 +1,4 @@
-module CreateForm exposing (Config, CreateForm, empty, view)
+module CreateForm exposing (Config, CreateForm, descriptionInputId, duration, empty, subscriptions, view)
 
 import Colors
 import Element exposing (Element)
@@ -6,8 +6,10 @@ import Element.Background
 import Element.Border
 import Element.Font exposing (Font)
 import Element.Input
+import Html.Attributes
 import Icons
 import Time
+import Utils.Duration
 import View
 
 
@@ -26,6 +28,11 @@ empty time =
     { start = time
     , description = ""
     }
+
+
+duration : { currentTime : Time.Posix } -> CreateForm -> Utils.Duration.Duration
+duration { currentTime } { start } =
+    Utils.Duration.fromTimeDifference start currentTime
 
 
 
@@ -74,8 +81,12 @@ view config =
                     }
                  , Element.Border.color Colors.accent
                  , Element.Border.rounded 0
+
+                 -- Focus
+                 , Element.htmlAttribute <|
+                    Html.Attributes.id descriptionInputId
                  ]
-                    ++ font Colors.blackishText
+                    ++ font Colors.blackText
                 )
                 { onChange = config.changedDescription
                 , text = config.description
@@ -101,3 +112,23 @@ view config =
             , label = Icons.stopButton
             }
         ]
+
+
+descriptionInputId =
+    "create-form-description-input"
+
+
+subscriptions :
+    { currentTime : Time.Posix
+    , gotCurrentTime : Time.Posix -> msg
+    }
+    -> CreateForm
+    -> Sub msg
+subscriptions { currentTime, gotCurrentTime } createForm =
+    Time.every
+        (Utils.Duration.secondsNeededToChangeTheResultOfToString
+            (duration { currentTime = currentTime } createForm)
+            |> (*) 1000
+            |> toFloat
+        )
+        gotCurrentTime

@@ -116,7 +116,7 @@ settingsGroup children =
             ++ View.fontSize14
         )
         (children
-            |> List.intersperse (View.horizontalDividerFromColor View.Gray)
+            |> List.intersperse (View.horizontalDivider View.Gray)
         )
 
 

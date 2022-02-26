@@ -1,16 +1,18 @@
-module Utils.Date exposing (toString)
+module Utils.Date exposing (relativeDateLabel, toZonedPosix)
 
 import Calendar
+import Clock
+import DateTime
 import Time
 
 
-toString :
+relativeDateLabel :
     { today : Calendar.Date
     , date : Calendar.Date
     , unitedStatesDateNotation : Bool
     }
     -> String
-toString { today, date, unitedStatesDateNotation } =
+relativeDateLabel { today, date, unitedStatesDateNotation } =
     if today == date then
         "today"
 
@@ -122,3 +124,15 @@ monthToString month =
 
         Time.Dec ->
             "12"
+
+
+toZonedPosix : Time.Zone -> Time.Posix -> Time.Posix
+toZonedPosix zone posix =
+    let
+        offset =
+            DateTime.getTimezoneOffset zone posix
+
+        millis =
+            Time.posixToMillis posix
+    in
+    Time.millisToPosix (millis + offset)

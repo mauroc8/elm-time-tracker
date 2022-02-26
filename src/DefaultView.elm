@@ -78,7 +78,7 @@ withHorizontalDivider emphasis el =
         [ Element.width Element.fill
         ]
         [ el
-        , View.horizontalDividerFromEmphasis emphasis
+        , View.recordListHorizontalDivider emphasis
         ]
 
 

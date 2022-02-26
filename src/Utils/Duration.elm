@@ -3,6 +3,7 @@ module Utils.Duration exposing
     , fromSeconds
     , fromTimeDifference
     , lessThan
+    , secondsNeededToChangeTheResultOfToString
     , toString
     )
 
@@ -108,3 +109,17 @@ minutesToString h =
 
         _ ->
             Just (String.fromInt h ++ " minutes")
+
+
+{-| Given a `duration`, this function returns the amount of seconds that need to be added
+to that duration such that `toString duration /= toString addedDuration`.
+-}
+secondsNeededToChangeTheResultOfToString : Duration -> Int
+secondsNeededToChangeTheResultOfToString (DurationInSeconds duration) =
+    if duration < 60 then
+        -- The result of toString changes every second in the first minute
+        1
+
+    else
+        -- But then it changes every minute
+        60 - (duration |> modBy 60)
