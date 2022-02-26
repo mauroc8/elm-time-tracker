@@ -6,6 +6,7 @@ module View exposing
     , disabled
     , enabled
     , fontSize12
+    , fontSize13
     , fontSize14
     , fontSize16
     , fontSize24
@@ -318,6 +319,11 @@ fontSize12 =
     fontSize { lineHeight = 9, value = 12 }
 
 
+fontSize13 : List (Attribute msg)
+fontSize13 =
+    fontSize { lineHeight = 11, value = 13 }
+
+
 fontSize14 : List (Attribute msg)
 fontSize14 =
     fontSize { lineHeight = 10, value = 14 }
@@ -338,7 +344,7 @@ fontSize :
         | lineHeight : Int
         , value : Int
     }
-    -> List (Element.Attr () msg)
+    -> List (Attribute msg)
 fontSize { lineHeight, value } =
     [ Font.size value
     , lineHeightAttr lineHeight

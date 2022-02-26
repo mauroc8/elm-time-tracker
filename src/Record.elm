@@ -11,11 +11,17 @@ module Record exposing
 
 import Calendar
 import Clock
+import Colors
 import CreateForm
 import DateTime exposing (DateTime)
 import Element exposing (Element)
+import Element.Font
+import Html.Attributes exposing (start)
 import Json.Decode
 import Time
+import Utils.Date
+import Utils.Duration
+import View
 
 
 posixDecoder =
@@ -72,9 +78,35 @@ view : Config msg -> Element msg
 view { description, date, duration, status } =
     Element.column
         [ Element.padding 16
+        , Element.spacing 10
+        , Element.width Element.fill
         ]
-        [ Element.text description
+        [ Element.row
+            [ Element.spacing 10
+            , Element.width Element.fill
+            ]
+            [ Element.text description
+                |> Element.el
+                    ([ Element.Font.semiBold
+                     , Element.Font.color Colors.blackText
+                     , Element.clip
+                     , Element.width Element.fill
+                     ]
+                        ++ View.fontSize16
+                    )
+            , Element.text date
+                |> Element.el
+                    ([ Element.Font.color Colors.grayText
+                     ]
+                        ++ View.fontSize13
+                    )
+            ]
         , Element.text duration
+            |> Element.el
+                ([ Element.Font.color Colors.grayText
+                 ]
+                    ++ View.fontSize12
+                )
         ]
 
 
@@ -86,15 +118,49 @@ type alias Config msg =
     }
 
 
-config : { a | selectRecord : Id -> msg } -> Record -> Config msg
-config { selectRecord } record =
+config :
+    { a
+        | selectedRecordId : Maybe Id
+        , selectRecord : Id -> msg
+        , clickedDeleteButton : Id -> msg
+        , clickedEditButton : Id -> msg
+        , clickedResumeButton : Id -> msg
+        , currentTime : Time.Posix
+        , unitedStatesDateNotation : Bool
+    }
+    -> Record
+    -> Config msg
+config viewConfig record =
+    let
+        { selectedRecordId, selectRecord, clickedDeleteButton, clickedEditButton, clickedResumeButton, currentTime, unitedStatesDateNotation } =
+            viewConfig
+    in
     { description = record.description
-    , date = "today"
-    , duration = "15 minutes"
-    , status =
-        NotSelected
-            { select = selectRecord
+    , date =
+        Utils.Date.toString
+            { today = Calendar.fromPosix currentTime
+            , date = Calendar.fromPosix record.startDateTime
+            , unitedStatesDateNotation = unitedStatesDateNotation
             }
+    , duration =
+        Utils.Duration.fromTimeDifference
+            currentTime
+            record.startDateTime
+            |> Utils.Duration.toString
+    , status =
+        if selectedRecordId == Just record.id then
+            Selected
+                { startTime = "12:45"
+                , endTime = "11:15"
+                , clickedDeleteButton = clickedDeleteButton
+                , clickedEditButton = clickedEditButton
+                , clickedResumeButton = clickedResumeButton
+                }
+
+        else
+            NotSelected
+                { select = selectRecord
+                }
     }
 
 

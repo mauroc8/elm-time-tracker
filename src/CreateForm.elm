@@ -93,7 +93,7 @@ view config =
                  ]
                     ++ View.fontSize12
                 )
-                (Element.text "12 seconds")
+                (Element.text config.elapsedTime)
             ]
         , View.button
             []

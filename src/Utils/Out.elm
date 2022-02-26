@@ -9,9 +9,13 @@ module Utils.Out exposing
     , withNoCmd
     )
 
-{-| This package provides functions to create update tuples
-(tuples with type `( model, Cmd msg )`) and pipeline-friendly
-functions to manipulate update tuples.
+{-| This module provides:
+
+1.  Functions to create "update tuples"
+2.  Pipeline-friendly functions to manipulate "update tuples"
+
+I call "update tuple" to a tuple with type `( model, Cmd msg )`.
+
 -}
 
 

@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Browser
 import Colors
@@ -16,13 +16,40 @@ import Html.Attributes
 import Icons
 import Platform exposing (Task)
 import Record exposing (Record)
-import RecordList exposing (Records)
+import RecordList exposing (RecordList)
 import Settings exposing (Language, Settings)
 import Sidebar exposing (Config(..))
 import Task
 import Time
+import Utils.Duration
 import Utils.Out as Out
 import View
+
+
+
+--- MAIN
+
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = \_ -> init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( initialModel
+    , Cmd.batch
+        [ Time.here
+            |> Task.perform GotTimeZone
+        , Time.now
+            |> Task.perform GotCurrentTime
+        ]
+    )
 
 
 
@@ -31,10 +58,10 @@ import View
 
 type alias Model =
     { -- Entities
-      records : Records
+      records : RecordList
 
     -- UI
-    , action : Status
+    , action : Action
     , selectedRecord : Maybe Record.Id
     , searchQuery : String
 
@@ -71,35 +98,24 @@ initialModel =
     }
 
 
+setTimeZone : Time.Zone -> Model -> Model
 setTimeZone timeZone model =
     { model | timeZone = timeZone }
 
 
+setCurrentTime : Time.Posix -> Model -> Model
 setCurrentTime posixTime model =
     { model | currentTime = posixTime }
 
 
+setSearchQuery : String -> Model -> Model
 setSearchQuery searchQuery model =
     { model | searchQuery = searchQuery }
 
 
+setAction : Action -> Model -> Model
 setAction action model =
     { model | action = action }
-
-
-{-| Returns the unsaved settings of the "Settings" form, or
-the saved settings.
--}
-appliedSettings : Model -> Settings
-appliedSettings model =
-    case model.action of
-        ChangingSettings settings ->
-            settings
-
-        _ ->
-            { unitedStatesDateNotation = model.unitedStatesDateNotation
-            , language = model.language
-            }
 
 
 setSettings : Settings -> Model -> Model
@@ -108,6 +124,18 @@ setSettings settings model =
         | unitedStatesDateNotation = settings.unitedStatesDateNotation
         , language = settings.language
     }
+
+
+{-| Returns the unsaved settings of the "Settings" form, or
+the saved settings.
+-}
+appliedSettings : Model -> Settings
+appliedSettings model =
+    actionToSettings model.action
+        |> Maybe.withDefault
+            { unitedStatesDateNotation = model.unitedStatesDateNotation
+            , language = model.language
+            }
 
 
 
@@ -184,14 +212,23 @@ changeCreateFormDescription description model =
 
 
 
---- Status
+--- Action
 
 
-type Status
+type Action
     = Idle
     | CreatingRecord CreateForm
     | EditingRecord EditForm
     | ChangingSettings Settings
+
+
+actionToSettings action =
+    case action of
+        ChangingSettings settings ->
+            Just settings
+
+        _ ->
+            Nothing
 
 
 
@@ -209,37 +246,11 @@ type alias EditForm =
 
 
 
---- MAIN
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = \_ -> init
-        , view = view
-        , update = update
-        , subscriptions = \_ -> Sub.none
-        }
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( initialModel
-    , Cmd.batch
-        [ Time.here
-            |> Task.perform GotTimeZone
-        , Time.now
-            |> Task.perform GotCurrentTime
-        ]
-    )
-
-
-
 --- UPDATE
 
 
 type Msg
-    = NoOp
+    = ToDo
     | GotTimeZone Time.Zone
     | GotCurrentTime Time.Posix
     | SearchQueryChanged String
@@ -254,12 +265,16 @@ type Msg
     | ChangedLanguage Language
     | ChangedCreateFormDescription String
     | SelectRecord Record.Id
+    | ClickedDeleteButton Record.Id
+    | ClickedEditButton Record.Id
+    | ClickedResumeButton Record.Id
+    | GotResumeButtonTime Record.Id Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
+        ToDo ->
             model
                 |> Out.withNoCmd
 
@@ -307,6 +322,7 @@ update msg model =
                 (CreatingRecord (CreateForm.empty time))
                 model
                 |> Out.withNoCmd
+                |> Out.mapModel (setCurrentTime time)
 
         PressedStopButton ->
             Task.perform GotStopButtonPressTime Time.now
@@ -315,6 +331,7 @@ update msg model =
         GotStopButtonPressTime time ->
             stopCreatingRecord time model
                 |> Out.withNoCmd
+                |> Out.mapModel (setCurrentTime time)
 
         ChangedUnitedStatesDateNotation unitedStatesDateNotation ->
             editUnitedStatesDateNotation unitedStatesDateNotation model
@@ -329,7 +346,65 @@ update msg model =
                 |> Out.withNoCmd
 
         SelectRecord id ->
-            Debug.todo "SelectRecord"
+            { model | selectedRecord = Just id }
+                |> Out.withNoCmd
+
+        ClickedDeleteButton id ->
+            { model | records = RecordList.delete id model.records }
+                |> Out.withNoCmd
+
+        ClickedEditButton id ->
+            { model
+                | action =
+                    EditingRecord
+                        { id = id
+                        , description = ""
+                        , start = ""
+                        , end = ""
+                        , duration = ""
+                        , date = ""
+                        }
+            }
+                |> Out.withNoCmd
+
+        ClickedResumeButton id ->
+            Task.perform (GotResumeButtonTime id) Time.now
+                |> Out.withModel model
+
+        GotResumeButtonTime id time ->
+            { model
+                | action =
+                    CreatingRecord
+                        { description = ""
+                        , start = time
+                        }
+            }
+                |> Out.withNoCmd
+                |> Out.mapModel (setCurrentTime time)
+
+
+
+--- Subscriptions
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.action of
+        CreatingRecord { start } ->
+            Time.every
+                (if
+                    Utils.Duration.fromTimeDifference start model.currentTime
+                        |> Utils.Duration.lessThan (Utils.Duration.fromSeconds 60)
+                 then
+                    1000
+
+                 else
+                    1000 * 60
+                )
+                GotCurrentTime
+
+        _ ->
+            Sub.none
 
 
 
@@ -388,6 +463,20 @@ rootAttributes config =
                 ++ View.recordListBackgroundColor emphasis
 
 
+rootElement : Config Msg -> Element Msg
+rootElement config =
+    case config of
+        ChangeSettings settings ->
+            Settings.view settings
+
+        Default defaultViewConfig ->
+            DefaultView.view defaultViewConfig
+
+
+
+-- Config
+
+
 viewConfig : Model -> Config Msg
 viewConfig model =
     case model.action of
@@ -409,7 +498,9 @@ viewConfig model =
                 , sidebar =
                     Sidebar.CreatingRecord
                         { description = createForm.description
-                        , elapsedTime = "1 second"
+                        , elapsedTime =
+                            Utils.Duration.fromTimeDifference model.currentTime createForm.start
+                                |> Utils.Duration.toString
                         , changedDescription = ChangedCreateFormDescription
                         , pressedStop = PressedStopButton
                         }
@@ -439,7 +530,7 @@ viewConfig model =
 
 
 recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery } =
+recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesDateNotation } =
     let
         searchResults =
             RecordList.search searchQuery records
@@ -453,15 +544,15 @@ recordsConfig { records, searchQuery } =
     else
         searchResults
             |> RecordList.toList
-            |> List.map (Record.config { selectRecord = SelectRecord })
+            |> List.map
+                (Record.config
+                    { selectedRecordId = selectedRecord
+                    , selectRecord = SelectRecord
+                    , clickedDeleteButton = ClickedDeleteButton
+                    , clickedEditButton = ClickedEditButton
+                    , clickedResumeButton = ClickedResumeButton
+                    , currentTime = currentTime
+                    , unitedStatesDateNotation = unitedStatesDateNotation
+                    }
+                )
             |> RecordList.ManyRecords
-
-
-rootElement : Config Msg -> Element Msg
-rootElement config =
-    case config of
-        ChangeSettings settings ->
-            Settings.view settings
-
-        Default defaultViewConfig ->
-            DefaultView.view defaultViewConfig

@@ -1,6 +1,7 @@
 module RecordList exposing
     ( Config(..)
-    , Records
+    , RecordList
+    , delete
     , empty
     , push
     , search
@@ -10,6 +11,7 @@ module RecordList exposing
 
 import Colors
 import Dict exposing (Dict)
+import Dict.Extra
 import Element exposing (Element)
 import Element.Font
 import Levenshtein
@@ -22,24 +24,26 @@ import View exposing (Emphasis)
 --- Records
 
 
-type Records
-    = Records (Dict Int Record)
+{-| A list of records ordered by start time.
+-}
+type RecordList
+    = RecordList (Dict Int Record)
 
 
-empty : Records
+empty : RecordList
 empty =
-    Records Dict.empty
+    RecordList Dict.empty
 
 
-search : String -> Records -> Records
-search query (Records records) =
+search : String -> RecordList -> RecordList
+search query (RecordList records) =
     records
         |> Dict.filter
             (\key record ->
                 record.description
                     |> matchesSearchQuery query
             )
-        |> Records
+        |> RecordList
 
 
 matchesSearchQuery : String -> String -> Bool
@@ -57,17 +61,32 @@ matchesSearchQuery query str =
         <= (queryLength // 3)
 
 
-toList : Records -> List Record
-toList (Records records) =
+toList : RecordList -> List Record
+toList (RecordList records) =
     Dict.toList records
         |> List.map Tuple.second
         |> List.reverse
 
 
-push : Record -> Records -> Records
-push record (Records records) =
+push : Record -> RecordList -> RecordList
+push record (RecordList records) =
     Dict.insert (Time.posixToMillis record.startDateTime) record records
-        |> Records
+        |> RecordList
+
+
+delete : Record.Id -> RecordList -> RecordList
+delete id (RecordList records) =
+    Dict.filter (\_ record -> record.id /= id)
+        records
+        |> RecordList
+
+
+findById : Record.Id -> RecordList -> Maybe Record
+findById id (RecordList records) =
+    Dict.Extra.find
+        (\_ record -> record.id == id)
+        records
+        |> Maybe.map Tuple.second
 
 
 
