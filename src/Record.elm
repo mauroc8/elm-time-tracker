@@ -21,9 +21,11 @@ import Html.Events
 import Html.Events.Extra.Pointer
 import Icons
 import Json.Decode
+import Text
 import Time
 import Utils.Date
 import Utils.Duration
+import Utils.Events
 import Utils.Time
 import View
 
@@ -101,16 +103,9 @@ endTime zone record =
 --- VIEW
 
 
-view : Config msg -> Element msg
-view { description, date, duration, status } =
+view : View.Emphasis -> Config msg -> Element msg
+view emphasis { description, date, duration, status, language } =
     let
-        ( nonemptyDescription, descriptionColor ) =
-            if String.trim description == "" then
-                ( "no description", Colors.lighterGrayText )
-
-            else
-                ( description, Colors.blackText )
-
         wrapper children =
             case status of
                 NotSelected { select } ->
@@ -119,7 +114,7 @@ view { description, date, duration, status } =
                         , Element.spacing 10
                         , Element.width Element.fill
                         , Element.htmlAttribute <|
-                            Html.Events.Extra.Pointer.onDown (\_ -> select)
+                            Utils.Events.onPointerDown select
                         ]
                         children
 
@@ -130,7 +125,12 @@ view { description, date, duration, status } =
                         , Element.width Element.fill
                         ]
                         (children
-                            ++ [ extraView selectedConfig ]
+                            ++ [ viewExtras
+                                    { language = language
+                                    , emphasis = emphasis
+                                    }
+                                    selectedConfig
+                               ]
                         )
     in
     wrapper
@@ -138,58 +138,70 @@ view { description, date, duration, status } =
             [ Element.spacing 10
             , Element.width Element.fill
             ]
-            [ Element.text nonemptyDescription
+            [ let
+                ( nonemptyDescription, descriptionColor ) =
+                    if String.trim description == "" then
+                        ( Text.NoDescription, Colors.lighterGrayText )
+
+                    else
+                        ( Text.Unlocalized description, Colors.blackText )
+              in
+              Text.text16 language nonemptyDescription
                 |> Element.el
-                    ([ Element.Font.semiBold
-                     , Element.Font.color descriptionColor
-                     , Element.clip
-                     , Element.width Element.fill
-                     ]
-                        ++ View.fontSize16
-                    )
-            , Element.text date
+                    [ Element.Font.semiBold
+                    , Element.Font.color descriptionColor
+                    , Element.width Element.fill
+                    ]
+            , Text.text13 language (Text.Unlocalized date)
                 |> Element.el
-                    ([ Element.Font.color Colors.grayText
-                     ]
-                        ++ View.fontSize13
-                    )
+                    [ Element.Font.color Colors.grayText
+                    ]
             ]
-        , Element.text duration
+        , Text.text12 language (Text.Unlocalized duration)
             |> Element.el
-                ([ Element.Font.color Colors.grayText
-                 ]
-                    ++ View.fontSize12
-                )
+                [ Element.Font.color Colors.grayText
+                ]
         ]
 
 
-extraView : SelectedConfig msg -> Element msg
-extraView selectedConfig =
+viewExtras { language, emphasis } selectedConfig =
     Element.row
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-        [ Element.text
-            (selectedConfig.startTime
-                ++ " • "
-                ++ selectedConfig.endTime
+        [ Text.text12
+            language
+            (Text.Unlocalized <|
+                selectedConfig.startTime
+                    ++ " • "
+                    ++ selectedConfig.endTime
             )
             |> Element.el
-                ([ Element.Font.color Colors.grayText
-                 , Element.alignBottom
-                 ]
-                    ++ View.fontSize12
-                )
+                [ Element.Font.color Colors.grayText
+                , Element.alignBottom
+                ]
         , Element.row
             [ Element.alignRight
             , Element.spacing 16
             , Element.alignBottom
             ]
-            [ Icons.play
+            [ View.recordListButton
+                { emphasis = emphasis
+                , onClick = selectedConfig.clickedResumeButton
+                , label = Icons.play
+                }
                 |> Element.el []
-            , Icons.edit
+            , View.recordListButton
+                { emphasis = emphasis
+                , onClick = selectedConfig.clickedEditButton
+                , label = Icons.edit
+                }
                 |> Element.el []
-            , Icons.trash
+            , View.recordListButton
+                { emphasis = emphasis
+                , onClick = selectedConfig.clickedDeleteButton
+                , label = Icons.trash
+                }
                 |> Element.el []
             ]
         ]
@@ -200,25 +212,26 @@ type alias Config msg =
     , date : String
     , duration : String
     , status : ConfigStatus msg
+    , language : Text.Language
     }
 
 
 config :
-    { a
-        | selectedRecordId : Maybe Id
-        , selectRecord : Id -> msg
-        , clickedDeleteButton : Id -> msg
-        , clickedEditButton : Id -> msg
-        , clickedResumeButton : Id -> msg
-        , currentTime : Time.Posix
-        , unitedStatesDateNotation : Bool
-        , timeZone : Time.Zone
+    { selectedRecordId : Maybe Id
+    , selectRecord : Id -> msg
+    , clickedDeleteButton : Id -> msg
+    , clickedEditButton : Id -> msg
+    , clickedResumeButton : Id -> msg
+    , currentTime : Time.Posix
+    , unitedStatesDateNotation : Bool
+    , timeZone : Time.Zone
+    , language : Text.Language
     }
     -> Record
     -> Config msg
 config viewConfig record =
     let
-        { selectedRecordId, selectRecord, clickedDeleteButton } =
+        { selectedRecordId, selectRecord, clickedDeleteButton, language } =
             viewConfig
 
         { clickedEditButton, timeZone, clickedResumeButton, currentTime, unitedStatesDateNotation } =
@@ -248,6 +261,7 @@ config viewConfig record =
             NotSelected
                 { select = selectRecord record.id
                 }
+    , language = language
     }
 
 

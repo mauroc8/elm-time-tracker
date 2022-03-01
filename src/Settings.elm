@@ -1,8 +1,6 @@
 module Settings exposing
     ( Config
-    , Language(..)
     , Settings
-    , defaultLanguage
     , defaultUnitedStatesDateNotation
     , view
     )
@@ -12,8 +10,10 @@ import Element exposing (Element)
 import Element.Background as Background
 import Element.Border
 import Element.Font
+import Element.Input
 import Element.Region
 import Icons
+import Text
 import View
 
 
@@ -23,7 +23,7 @@ import View
 
 type alias Settings =
     { unitedStatesDateNotation : Bool
-    , language : Language
+    , language : Text.Language
     }
 
 
@@ -33,28 +33,14 @@ defaultUnitedStatesDateNotation =
 
 
 
---- Language
-
-
-type Language
-    = English
-    | Spanish
-
-
-defaultLanguage : Language
-defaultLanguage =
-    English
-
-
-
 --- View
 
 
 type alias Config msg =
     { unitedStatesDateNotation : Bool
-    , language : Language
+    , language : Text.Language
     , changedUnitedStatesDateNotation : Bool -> msg
-    , changedLanguage : Language -> msg
+    , changedLanguage : Text.Language -> msg
     , pressedSettingsCancelButton : msg
     , pressedSettingsDoneButton : msg
     }
@@ -68,21 +54,19 @@ view config =
         , Element.padding 24
         , Element.spacing 24
         ]
-        [ settingsHeader
+        [ settingsHeader config.language
         , settingsBody config
         , settingsFooter config
         ]
 
 
-settingsHeader : Element msg
-settingsHeader =
+settingsHeader : Text.Language -> Element msg
+settingsHeader language =
     Element.el
-        ([ Element.Region.heading 1
-         , Element.Font.semiBold
-         ]
-            ++ View.fontSize24
-        )
-        (Element.text "Settings")
+        [ Element.Region.heading 1
+        , Element.Font.semiBold
+        ]
+        (Text.text24 language Text.SettingsHeading)
 
 
 settingsBody : Config msg -> Element msg
@@ -91,50 +75,96 @@ settingsBody config =
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-        [ settingsGroup
-            [ View.settingsToggle
-                { label = "USA date notation (mm/dd/yy)"
+        [ Element.el
+            [ Element.Border.rounded 8
+            , Background.color Colors.whiteBackground
+            , Element.width Element.fill
+            ]
+            (View.settingsToggle
+                { label = Text.UsaDateNotation
+                , language = config.language
                 , checked = config.unitedStatesDateNotation
                 , onChange = config.changedUnitedStatesDateNotation
                 , padding = 16
                 }
+            )
+        , Element.Input.radio
+            [ Background.color Colors.whiteBackground
+            , Element.Border.rounded 8
+            , Element.width Element.fill
             ]
-        , settingsGroup
-            [ Element.text "English"
-            , Element.text "Español"
-            ]
+            { onChange = config.changedLanguage
+            , selected = Just config.language
+            , label =
+                Element.Input.labelHidden <|
+                    Text.toString config.language Text.LanguageLabel
+            , options =
+                let
+                    customRadio text optionState =
+                        Element.row
+                            [ Element.width Element.fill
+                            , Element.padding 16
+                            ]
+                            [ Text.text14 config.language text
+                                |> Element.el [ Element.width Element.fill ]
+                            , case optionState of
+                                Element.Input.Idle ->
+                                    Element.none
+                                        |> Element.el [ Element.height (Element.px 16) ]
+
+                                Element.Input.Focused ->
+                                    Icons.check16
+                                        |> Element.el [ Element.Font.color Colors.accent ]
+
+                                Element.Input.Selected ->
+                                    Icons.check16
+                                        |> Element.el [ Element.Font.color Colors.blackishText ]
+                            ]
+
+                    customRadioWithDivider text optionState =
+                        Element.column
+                            [ Element.width Element.fill
+                            ]
+                            [ customRadio text optionState
+                            , View.horizontalDivider View.White
+                            ]
+                in
+                [ Element.Input.optionWith Text.English (customRadioWithDivider Text.EnglishLanguage)
+                , Element.Input.optionWith Text.Spanish (customRadio Text.SpanishLanguage)
+                ]
+            }
         ]
 
 
 settingsGroup : List (Element msg) -> Element msg
 settingsGroup children =
     Element.column
-        ([ Element.Border.rounded 8
-         , Background.color Colors.whiteBackground
-         , Element.width Element.fill
-         ]
-            ++ View.fontSize14
-        )
+        [ Element.Border.rounded 8
+        , Background.color Colors.whiteBackground
+        , Element.width Element.fill
+        ]
         (children
-            |> List.intersperse (View.horizontalDivider View.Gray)
+            |> List.intersperse (View.horizontalDivider View.White)
         )
 
 
 settingsFooter : Config msg -> Element msg
-settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton } =
+settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton, language } =
     Element.row
         [ Element.alignBottom
         , Element.width Element.fill
         ]
         [ View.linkLikeButton
             { onPress = pressedSettingsCancelButton
-            , label = "Cancel"
+            , label = Text.Cancel
+            , language = language
             , bold = False
             }
         , Element.el [ Element.alignRight ]
             (View.linkLikeButton
                 { onPress = pressedSettingsDoneButton
-                , label = "Done"
+                , label = Text.Save
+                , language = language
                 , bold = True
                 }
             )

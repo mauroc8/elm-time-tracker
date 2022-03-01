@@ -3,19 +3,15 @@ module View exposing
     , ButtonHandler
     , Emphasis(..)
     , button
+    , columnWithHorizontalDivider
     , disabled
     , enabled
-    , fontSize12
-    , fontSize13
-    , fontSize14
-    , fontSize16
-    , fontSize24
     , horizontalDivider
     , linkLikeButton
     , overflowClickableRegion
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
-    , recordListButtonColor
+    , recordListButton
     , recordListHorizontalDivider
     , settingsBackgroundColor
     , settingsToggle
@@ -35,6 +31,7 @@ import Element.Region
 import Html exposing (Html)
 import Html.Attributes
 import Icons
+import Text exposing (Language)
 
 
 
@@ -150,6 +147,39 @@ horizontalDivider bgColor =
         Element.none
 
 
+columnWithHorizontalDivider : BackgroundColor -> List (Element.Attribute msg) -> List (Element msg) -> Element msg
+columnWithHorizontalDivider bgColor attrs children =
+    Element.column
+        ([ Element.width Element.fill
+         , Element.spacing 1
+         , Background.color <|
+            -- Divider color
+            case bgColor of
+                White ->
+                    Colors.grayBackground
+
+                Gray ->
+                    Colors.darkGrayBackground
+         ]
+            ++ attrs
+        )
+        (children
+            |> List.map
+                (Element.el
+                    [ Element.width Element.fill
+                    , Background.color <|
+                        -- Background color
+                        case bgColor of
+                            White ->
+                                Colors.whiteBackground
+
+                            Gray ->
+                                Colors.grayBackground
+                    ]
+                )
+        )
+
+
 
 --- EMPHASIS
 
@@ -223,6 +253,33 @@ sidebarBackgroundColor emphasis =
     ]
 
 
+{-| A button in the "RecordList" area of the UI (the search bar + the list of records)
+-}
+recordListButton :
+    { emphasis : Emphasis
+    , onClick : msg
+    , label : Element msg
+    }
+    -> Element msg
+recordListButton { emphasis, onClick, label } =
+    button
+        ([ Font.color (recordListButtonColor emphasis)
+         , Border.width 1
+         , Border.color Colors.transparent
+         ]
+            ++ overflowClickableRegion 12
+        )
+        { onPress =
+            case emphasis of
+                RecordList ->
+                    enabled onClick
+
+                Sidebar ->
+                    disabled
+        , label = label
+        }
+
+
 recordListButtonColor : Emphasis -> Element.Color
 recordListButtonColor emphasis =
     case emphasis of
@@ -248,7 +305,7 @@ settingsBackgroundColor =
 
 This makes buttons easier to click on mobile devices.
 
-Shouldn't use this on elements with padding.
+Shouldn't use this on elements with padding or "width fill".
 
 -}
 overflowClickableRegion : Int -> List (Attribute msg)
@@ -266,11 +323,12 @@ overflowClickableRegion value =
 -}
 linkLikeButton :
     { onPress : msg
-    , label : String
     , bold : Bool
+    , label : Text.Text
+    , language : Text.Language
     }
     -> Element msg
-linkLikeButton { onPress, label, bold } =
+linkLikeButton { onPress, label, language, bold } =
     Input.button
         ([ Font.color Colors.accent
          , if bold then
@@ -280,10 +338,9 @@ linkLikeButton { onPress, label, bold } =
             Font.regular
          ]
             ++ overflowClickableRegion 16
-            ++ fontSize16
         )
         { onPress = Just onPress
-        , label = Element.text label
+        , label = Text.text16 language label
         }
 
 
@@ -294,18 +351,19 @@ linkLikeButton { onPress, label, bold } =
 settingsToggle :
     { checked : Bool
     , onChange : Bool -> msg
-    , label : String
+    , label : Text.Text
+    , language : Text.Language
     , padding : Int
     }
     -> Element msg
-settingsToggle { checked, onChange, label, padding } =
+settingsToggle { checked, onChange, label, language, padding } =
     Input.checkbox
         [ Element.width Element.fill, Element.padding padding ]
         { onChange = onChange
         , checked = checked
         , label =
             Input.labelLeft [ Element.width Element.fill ]
-                (Element.text label
+                (Text.text14 language label
                     |> Element.el [ Element.centerY ]
                 )
         , icon =
@@ -316,52 +374,3 @@ settingsToggle { checked, onChange, label, padding } =
                 else
                     Icons.toggleOff
         }
-
-
-
---- FONT SIZE
-
-
-fontSize12 : List (Attribute msg)
-fontSize12 =
-    fontSize { lineHeight = 9, value = 12 }
-
-
-fontSize13 : List (Attribute msg)
-fontSize13 =
-    fontSize { lineHeight = 11, value = 13 }
-
-
-fontSize14 : List (Attribute msg)
-fontSize14 =
-    fontSize { lineHeight = 10, value = 14 }
-
-
-fontSize16 : List (Attribute msg)
-fontSize16 =
-    fontSize { lineHeight = 12, value = 16 }
-
-
-fontSize24 : List (Attribute msg)
-fontSize24 =
-    fontSize { lineHeight = 19, value = 24 }
-
-
-fontSize :
-    { lineHeight : Int
-    , value : Int
-    }
-    -> List (Attribute msg)
-fontSize { lineHeight, value } =
-    [ Font.size value
-    , lineHeightAttr lineHeight
-    ]
-
-
-lineHeightAttr : Int -> Attribute msg
-lineHeightAttr value =
-    Element.htmlAttribute
-        (Html.Attributes.style
-            "line-height"
-            (String.fromInt value ++ "px")
-        )

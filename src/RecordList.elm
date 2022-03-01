@@ -3,6 +3,7 @@ module RecordList exposing
     , RecordList
     , delete
     , empty
+    , getById
     , push
     , search
     , toList
@@ -16,6 +17,7 @@ import Element exposing (Element)
 import Element.Font
 import Levenshtein
 import Record exposing (Record)
+import Text
 import Time
 import View exposing (Emphasis)
 
@@ -103,40 +105,40 @@ type Config msg
     | ManyRecords (List (Record.Config msg))
 
 
-view : { a | emphasis : Emphasis } -> Config msg -> Element msg
-view { emphasis } config =
+view : { a | language : Text.Language, emphasis : Emphasis } -> Config msg -> Element msg
+view { emphasis, language } config =
     case config of
         EmptyRecords ->
             emptyState
-                { message = "Press the Start button to create a record"
+                { message = Text.PressTheStartButtonToCreateARecord
+                , language = language
                 }
                 |> emptyBodyLayout emphasis
 
         NoSearchResults ->
             emptyState
-                { message = "Nothing found"
+                { message = Text.NothingFound
+                , language = language
                 }
                 |> emptyBodyLayout emphasis
 
         ManyRecords records ->
             records
-                |> List.map Record.view
+                |> List.map (Record.view emphasis)
                 |> List.intersperse (View.recordListHorizontalDivider emphasis)
                 |> bodyWithRecordsLayout emphasis
 
 
-emptyState : { a | message : String } -> Element msg
-emptyState { message } =
+emptyState : { language : Text.Language, message : Text.Text } -> Element msg
+emptyState { language, message } =
     Element.paragraph
-        ([ Element.centerY
-         , Element.width Element.fill
-         , Element.Font.center
-         , Element.Font.color Colors.lighterGrayText
-         , Element.Font.semiBold
-         ]
-            ++ View.fontSize16
-        )
-        [ Element.text message ]
+        [ Element.centerY
+        , Element.width Element.fill
+        , Element.Font.center
+        , Element.Font.color Colors.lighterGrayText
+        , Element.Font.semiBold
+        ]
+        [ Text.text16 language message ]
 
 
 emptyBodyLayout : Emphasis -> Element msg -> Element msg
@@ -161,3 +163,9 @@ bodyWithRecordsLayout emphasis children =
             children
         , View.recordListHorizontalDivider emphasis
         ]
+
+
+getById : Record.Id -> RecordList -> Maybe Record.Record
+getById id (RecordList records) =
+    Dict.Extra.find (\_ record -> record.id == id) records
+        |> Maybe.map Tuple.second

@@ -19,9 +19,10 @@ import Icons
 import Platform exposing (Task)
 import Record exposing (Record)
 import RecordList exposing (RecordList)
-import Settings exposing (Language, Settings)
+import Settings exposing (Settings)
 import Sidebar exposing (Config(..))
 import Task
+import Text exposing (Language)
 import Time
 import Utils.Duration
 import Utils.Out as Out
@@ -92,7 +93,7 @@ initialModel =
     , selectedRecord = Nothing
     , searchQuery = ""
     , unitedStatesDateNotation = Settings.defaultUnitedStatesDateNotation
-    , language = Settings.defaultLanguage
+    , language = Text.defaultLanguage
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
     , visibility = Browser.Events.Visible
@@ -128,6 +129,11 @@ setSettings settings model =
         | unitedStatesDateNotation = settings.unitedStatesDateNotation
         , language = settings.language
     }
+
+
+selectRecord : Record.Id -> Model -> Model
+selectRecord id model =
+    { model | selectedRecord = Just id }
 
 
 {-| Returns the unsaved settings of the "Settings" form, or
@@ -180,9 +186,9 @@ editLanguage language model =
             }
 
 
-startCreatingRecord time model =
+startCreatingRecord description time model =
     model
-        |> setAction (CreatingRecord (CreateForm.empty time))
+        |> setAction (CreatingRecord (CreateForm.new description time))
         |> Out.withCmd
             (Browser.Dom.focus CreateForm.descriptionInputId
                 |> Task.attempt (\_ -> ToDo)
@@ -193,9 +199,14 @@ stopCreatingRecord : Time.Posix -> Model -> Model
 stopCreatingRecord time model =
     case model.action of
         CreatingRecord createForm ->
+            let
+                record =
+                    Record.fromCreateForm time createForm
+            in
             model
-                |> pushRecord (Record.fromCreateForm time createForm)
+                |> pushRecord record
                 |> setAction Idle
+                |> selectRecord record.id
 
         _ ->
             model
@@ -265,25 +276,31 @@ type alias EditForm =
 
 type Msg
     = ToDo
+      -- Context
     | GotTimeZone Time.Zone
     | GotCurrentTime Time.Posix
+    | VisibilityChanged Browser.Events.Visibility
+      -- Search bar
     | SearchQueryChanged String
     | PressedSettingsButton
+      -- Settings
     | PressedSettingsCancelButton
     | PressedSettingsDoneButton
+    | ChangedUnitedStatesDateNotation Bool
+    | ChangedLanguage Language
+      -- Create record
     | PressedStartButton
     | GotStartButtonPressTime Time.Posix
     | PressedStopButton
     | GotStopButtonPressTime Time.Posix
-    | ChangedUnitedStatesDateNotation Bool
-    | ChangedLanguage Language
     | ChangedCreateFormDescription String
+    | PressedEscapeInCreateRecord
+      -- Record List
     | SelectRecord Record.Id
     | ClickedDeleteButton Record.Id
     | ClickedEditButton Record.Id
     | ClickedResumeButton Record.Id
     | GotResumeButtonTime Record.Id Time.Posix
-    | VisibilityChanged Browser.Events.Visibility
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -293,6 +310,7 @@ update msg model =
             model
                 |> Out.withNoCmd
 
+        -- Context
         GotTimeZone zone ->
             setTimeZone zone model
                 |> Out.withNoCmd
@@ -301,6 +319,11 @@ update msg model =
             setCurrentTime posixTime model
                 |> Out.withNoCmd
 
+        VisibilityChanged visibility ->
+            { model | visibility = visibility }
+                |> Out.withNoCmd
+
+        -- Search bar
         SearchQueryChanged searchQuery ->
             setSearchQuery searchQuery model
                 |> Out.withNoCmd
@@ -315,6 +338,7 @@ update msg model =
                 model
                 |> Out.withNoCmd
 
+        -- Settings
         PressedSettingsCancelButton ->
             setAction
                 Idle
@@ -328,6 +352,16 @@ update msg model =
                 |> setSettings (appliedSettings model)
                 |> Out.withNoCmd
 
+        ChangedUnitedStatesDateNotation unitedStatesDateNotation ->
+            model
+                |> editUnitedStatesDateNotation unitedStatesDateNotation
+                |> Out.withNoCmd
+
+        ChangedLanguage language ->
+            editLanguage language model
+                |> Out.withNoCmd
+
+        -- Create record
         PressedStartButton ->
             Task.perform GotStartButtonPressTime Time.now
                 |> Out.withModel model
@@ -335,7 +369,7 @@ update msg model =
         GotStartButtonPressTime time ->
             model
                 |> setCurrentTime time
-                |> startCreatingRecord time
+                |> startCreatingRecord "" time
 
         PressedStopButton ->
             Task.perform GotStopButtonPressTime Time.now
@@ -347,19 +381,16 @@ update msg model =
                 |> setCurrentTime time
                 |> Out.withNoCmd
 
-        ChangedUnitedStatesDateNotation unitedStatesDateNotation ->
-            model
-                |> editUnitedStatesDateNotation unitedStatesDateNotation
-                |> Out.withNoCmd
-
-        ChangedLanguage language ->
-            editLanguage language model
-                |> Out.withNoCmd
-
         ChangedCreateFormDescription description ->
             changeCreateFormDescription description model
                 |> Out.withNoCmd
 
+        PressedEscapeInCreateRecord ->
+            model
+                |> setAction Idle
+                |> Out.withNoCmd
+
+        -- Record List
         SelectRecord id ->
             { model | selectedRecord = Just id }
                 |> Out.withNoCmd
@@ -387,19 +418,14 @@ update msg model =
                 |> Out.withModel model
 
         GotResumeButtonTime id time ->
-            { model
-                | action =
-                    CreatingRecord
-                        { description = ""
-                        , start = time
-                        }
-            }
-                |> setCurrentTime time
-                |> Out.withNoCmd
+            case RecordList.getById id model.records of
+                Just record ->
+                    model
+                        |> setCurrentTime time
+                        |> startCreatingRecord record.description time
 
-        VisibilityChanged visibility ->
-            { model | visibility = visibility }
-                |> Out.withNoCmd
+                Nothing ->
+                    model |> Out.withNoCmd
 
 
 
@@ -523,9 +549,12 @@ viewConfig model =
                                 |> Utils.Duration.toString
                         , changedDescription = ChangedCreateFormDescription
                         , pressedStop = PressedStopButton
+                        , pressedEscape = PressedEscapeInCreateRecord
+                        , language = model.language
                         }
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
+                , language = model.language
                 }
 
         EditingRecord editForm ->
@@ -536,6 +565,7 @@ viewConfig model =
                 , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
+                , language = model.language
                 }
 
         Idle ->
@@ -546,11 +576,12 @@ viewConfig model =
                 , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
+                , language = model.language
                 }
 
 
 recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesDateNotation, timeZone } =
+recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesDateNotation, timeZone, language } =
     let
         searchResults =
             RecordList.search searchQuery records
@@ -574,6 +605,7 @@ recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesD
                     , currentTime = currentTime
                     , unitedStatesDateNotation = unitedStatesDateNotation
                     , timeZone = timeZone
+                    , language = language
                     }
                 )
             |> RecordList.ManyRecords

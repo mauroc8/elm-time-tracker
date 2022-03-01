@@ -1,7 +1,7 @@
 module DateLabel exposing (..)
 
 import Calendar
-import Settings exposing (Language(..))
+import Text exposing (Language(..))
 import Time
 
 

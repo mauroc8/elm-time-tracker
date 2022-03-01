@@ -1,4 +1,4 @@
-module CreateForm exposing (Config, CreateForm, descriptionInputId, duration, empty, subscriptions, view)
+module CreateForm exposing (Config, CreateForm, descriptionInputId, duration, new, subscriptions, view)
 
 import Colors
 import Element exposing (Element)
@@ -7,9 +7,12 @@ import Element.Border
 import Element.Font exposing (Font)
 import Element.Input
 import Html.Attributes
+import Html.Events
 import Icons
+import Text
 import Time
 import Utils.Duration
+import Utils.Events
 import View
 
 
@@ -23,10 +26,10 @@ type alias CreateForm =
     }
 
 
-empty : Time.Posix -> CreateForm
-empty time =
+new : String -> Time.Posix -> CreateForm
+new description time =
     { start = time
-    , description = ""
+    , description = description
     }
 
 
@@ -44,6 +47,8 @@ type alias Config msg =
     , elapsedTime : String
     , changedDescription : String -> msg
     , pressedStop : msg
+    , pressedEscape : msg
+    , language : Text.Language
     }
 
 
@@ -54,7 +59,6 @@ view config =
             [ Element.Font.semiBold
             , Element.Font.color color
             ]
-                ++ View.fontSize16
     in
     Element.row
         [ Element.spacing 24
@@ -85,6 +89,10 @@ view config =
                  -- Focus
                  , Element.htmlAttribute <|
                     Html.Attributes.id descriptionInputId
+
+                 -- Key events
+                 , Utils.Events.onEnter config.pressedStop
+                 , Utils.Events.onEscape config.pressedEscape
                  ]
                     ++ font Colors.blackText
                 )
@@ -94,17 +102,15 @@ view config =
                     Just
                         (Element.Input.placeholder
                             (font Colors.lightGrayText)
-                            (Element.text "what are you working on?")
+                            (Text.text16 config.language Text.WhatAreYouWorkingOn)
                         )
                 , label =
-                    Element.Input.labelHidden "Description"
+                    Element.Input.labelHidden (Text.toString config.language Text.DescriptionLabel)
                 }
             , Element.el
-                ([ Element.Font.color Colors.blackishText
-                 ]
-                    ++ View.fontSize12
-                )
-                (Element.text config.elapsedTime)
+                [ Element.Font.color Colors.blackishText
+                ]
+                (Text.text12 config.language (Text.Unlocalized config.elapsedTime))
             ]
         , View.button
             []
@@ -114,6 +120,7 @@ view config =
         ]
 
 
+descriptionInputId : String
 descriptionInputId =
     "create-form-description-input"
 

@@ -14,8 +14,9 @@ import Html exposing (Html)
 import Html.Attributes
 import Icons
 import RecordList
-import Settings exposing (Language)
+import Settings
 import Sidebar
+import Text exposing (Language)
 import View exposing (Emphasis)
 
 
@@ -26,6 +27,7 @@ type alias Config msg =
     , sidebar : Sidebar.Config msg
     , clickedSettings : msg
     , changedSearchQuery : String -> msg
+    , language : Text.Language
     }
 
 
@@ -99,20 +101,9 @@ settingsButton :
     }
     -> Element msg
 settingsButton { emphasis, clickedSettings } =
-    View.button
-        ([ Font.color (View.recordListButtonColor emphasis)
-         , Border.width 1
-         , Border.color Colors.transparent
-         ]
-            ++ View.overflowClickableRegion 12
-        )
-        { onPress =
-            case emphasis of
-                View.RecordList ->
-                    View.enabled clickedSettings
-
-                View.Sidebar ->
-                    View.disabled
+    View.recordListButton
+        { emphasis = emphasis
+        , onClick = clickedSettings
         , label = Icons.options
         }
 
@@ -122,9 +113,10 @@ searchInput :
         | emphasis : Emphasis
         , searchQuery : String
         , changedSearchQuery : String -> msg
+        , language : Text.Language
     }
     -> Element msg
-searchInput ({ emphasis, searchQuery, changedSearchQuery } as config) =
+searchInput ({ emphasis, searchQuery, changedSearchQuery, language } as config) =
     let
         padding =
             10
@@ -139,35 +131,31 @@ searchInput ({ emphasis, searchQuery, changedSearchQuery } as config) =
             34
     in
     Input.search
-        ([ Background.color (View.recordListAlternativeBackgroundColor emphasis)
-         , Border.rounded 8
-         , Font.color Colors.blackText
-         , Border.width 0
-         , Element.inFront searchIcon
-         , Element.paddingEach
+        [ Background.color (View.recordListAlternativeBackgroundColor emphasis)
+        , Border.rounded 8
+        , Font.color Colors.blackText
+        , Border.width 0
+        , Element.inFront searchIcon
+        , Element.paddingEach
             { top = actualPadding
             , left = paddedSearchIconWidth
             , right = actualPadding
             , bottom = actualPadding
             }
-         , Border.width border
-         , Border.color Colors.transparent
-         , Element.inFront (clearButton (searchButtonConfig config))
-         ]
-            ++ View.fontSize16
-        )
+        , Border.width border
+        , Border.color Colors.transparent
+        , Element.inFront (clearButton (searchButtonConfig config))
+        , Font.size 16
+        ]
         { onChange = changedSearchQuery
         , text = searchQuery
         , placeholder =
             Just <|
                 Input.placeholder
-                    ([ Font.color Colors.lightGrayText
-                     ]
-                        ++ View.fontSize16
-                    )
-                    (Element.text "Search…")
+                    [ Font.color Colors.lightGrayText ]
+                    (Text.text16 language Text.SearchPlaceholder)
         , label =
-            Input.labelHidden "Search"
+            Input.labelHidden (Text.toString language Text.Search)
         }
 
 
