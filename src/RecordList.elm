@@ -3,6 +3,7 @@ module RecordList exposing
     , RecordList
     , delete
     , empty
+    , fromList
     , getById
     , push
     , search
@@ -35,6 +36,13 @@ type RecordList
 empty : RecordList
 empty =
     RecordList Dict.empty
+
+
+fromList : List Record -> RecordList
+fromList list =
+    Dict.fromList
+        (List.map (\record -> ( Time.posixToMillis record.startDateTime, record )) list)
+        |> RecordList
 
 
 search : String -> RecordList -> RecordList

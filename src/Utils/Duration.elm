@@ -2,12 +2,12 @@ module Utils.Duration exposing
     ( Duration
     , fromSeconds
     , fromTimeDifference
-    , lessThan
     , secondsNeededToChangeTheResultOfToString
-    , toString
+    , toText
     )
 
 import DateTime exposing (DateTime)
+import Text
 import Time
 
 
@@ -38,19 +38,12 @@ fromSeconds s =
     DurationInSeconds s
 
 
-{-| The args are reversed, use it in a pipeline.
--}
-lessThan : Duration -> Duration -> Bool
-lessThan (DurationInSeconds duration0) (DurationInSeconds duration1) =
-    duration1 < duration0
-
-
 
 ---
 
 
-toString : Duration -> String
-toString (DurationInSeconds totalSeconds) =
+toText : Duration -> Text.Text
+toText (DurationInSeconds totalSeconds) =
     let
         totalMinutes =
             totalSeconds // 60
@@ -72,43 +65,65 @@ toString (DurationInSeconds totalSeconds) =
     in
     case ( hours, minutes, seconds ) of
         ( 0, 0, 1 ) ->
-            "1 second"
+            Text.JoinWords
+                [ Text.Integer 1
+                , Text.Second
+                ]
 
         ( 0, 0, s ) ->
-            String.fromInt s ++ " seconds"
+            Text.JoinWords
+                [ Text.Integer s
+                , Text.Seconds
+                ]
 
         ( h, m, _ ) ->
             [ hoursToString h
             , minutesToString m
             ]
                 |> List.filterMap identity
-                |> String.join " "
+                |> Text.JoinWords
 
 
-hoursToString : Int -> Maybe String
+hoursToString : Int -> Maybe Text.Text
 hoursToString h =
     case h of
         0 ->
             Nothing
 
         1 ->
-            Just "1 hour"
+            Text.JoinWords
+                [ Text.Integer 1
+                , Text.Hour
+                ]
+                |> Just
 
         _ ->
-            Just (String.fromInt h ++ " hours")
+            Text.JoinWords
+                [ Text.Integer h
+                , Text.Hours
+                ]
+                |> Just
 
 
-minutesToString : Int -> Maybe String
-minutesToString h =
-    case h of
+minutesToString : Int -> Maybe Text.Text
+minutesToString m =
+    case m of
         0 ->
             Nothing
 
         1 ->
-            Just "1 minute"
+            Text.JoinWords
+                [ Text.Integer 1
+                , Text.Minute
+                ]
+                |> Just
 
         _ ->
-            Just (String.fromInt h ++ " minutes")
+            Text.JoinWords
+                [ Text.Integer m
+                , Text.Minutes
+                ]
+                |> Just
 
 
 {-| Given a `duration`, this function returns the amount of seconds that need to be added

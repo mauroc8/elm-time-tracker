@@ -144,7 +144,7 @@ view emphasis { description, date, duration, status, language } =
                         ( Text.NoDescription, Colors.lighterGrayText )
 
                     else
-                        ( Text.Unlocalized description, Colors.blackText )
+                        ( Text.Text description, Colors.blackText )
               in
               Text.text16 language nonemptyDescription
                 |> Element.el
@@ -152,12 +152,12 @@ view emphasis { description, date, duration, status, language } =
                     , Element.Font.color descriptionColor
                     , Element.width Element.fill
                     ]
-            , Text.text13 language (Text.Unlocalized date)
+            , Text.text13 language date
                 |> Element.el
                     [ Element.Font.color Colors.grayText
                     ]
             ]
-        , Text.text12 language (Text.Unlocalized duration)
+        , Text.text12 language duration
             |> Element.el
                 [ Element.Font.color Colors.grayText
                 ]
@@ -171,10 +171,11 @@ viewExtras { language, emphasis } selectedConfig =
         ]
         [ Text.text12
             language
-            (Text.Unlocalized <|
-                selectedConfig.startTime
-                    ++ " • "
-                    ++ selectedConfig.endTime
+            (Text.JoinWords
+                [ selectedConfig.startTime
+                , Text.Text "•"
+                , selectedConfig.endTime
+                ]
             )
             |> Element.el
                 [ Element.Font.color Colors.grayText
@@ -209,8 +210,8 @@ viewExtras { language, emphasis } selectedConfig =
 
 type alias Config msg =
     { description : String
-    , date : String
-    , duration : String
+    , date : Text.Text
+    , duration : Text.Text
     , status : ConfigStatus msg
     , language : Text.Language
     }
@@ -221,7 +222,7 @@ config :
     , selectRecord : Id -> msg
     , clickedDeleteButton : Id -> msg
     , clickedEditButton : Id -> msg
-    , clickedResumeButton : Id -> msg
+    , clickedResumeButton : String -> msg
     , currentTime : Time.Posix
     , unitedStatesDateNotation : Bool
     , timeZone : Time.Zone
@@ -246,15 +247,19 @@ config viewConfig record =
             }
     , duration =
         Utils.Duration.fromSeconds record.durationInSeconds
-            |> Utils.Duration.toString
+            |> Utils.Duration.toText
     , status =
         if selectedRecordId == Just record.id then
             Selected
-                { startTime = Utils.Time.toStringWithAmPm (startTime timeZone record)
-                , endTime = Utils.Time.toStringWithAmPm (endTime timeZone record)
+                { startTime =
+                    Utils.Time.toStringWithAmPm (startTime timeZone record)
+                        |> Text.Text
+                , endTime =
+                    Utils.Time.toStringWithAmPm (endTime timeZone record)
+                        |> Text.Text
                 , clickedDeleteButton = clickedDeleteButton record.id
                 , clickedEditButton = clickedEditButton record.id
-                , clickedResumeButton = clickedResumeButton record.id
+                , clickedResumeButton = clickedResumeButton record.description
                 }
 
         else
@@ -273,8 +278,8 @@ type ConfigStatus msg
 
 
 type alias SelectedConfig msg =
-    { startTime : String
-    , endTime : String
+    { startTime : Text.Text
+    , endTime : Text.Text
     , clickedDeleteButton : msg
     , clickedEditButton : msg
     , clickedResumeButton : msg

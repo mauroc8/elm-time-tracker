@@ -3,6 +3,7 @@ module Utils.Date exposing (relativeDateLabel, toZonedPosix)
 import Calendar
 import Clock
 import DateTime
+import Text
 import Time
 
 
@@ -11,16 +12,16 @@ relativeDateLabel :
     , date : Calendar.Date
     , unitedStatesDateNotation : Bool
     }
-    -> String
+    -> Text.Text
 relativeDateLabel { today, date, unitedStatesDateNotation } =
     if today == date then
-        "today"
+        Text.Today
 
     else if Calendar.decrementDay today == date then
-        "yesterday"
+        Text.Yesterday
 
     else if Calendar.incrementDay today == date then
-        "tomorrow"
+        Text.Tomorrow
 
     else if
         let
@@ -30,100 +31,24 @@ relativeDateLabel { today, date, unitedStatesDateNotation } =
         diff > 0 && diff <= 4
     then
         Calendar.getWeekday date
-            |> weekdayToString
+            |> Text.Weekday
 
     else
         let
             day =
                 Calendar.getDay date
-                    |> String.fromInt
 
             month =
                 Calendar.getMonth date
-                    |> monthToString
 
             year =
                 Calendar.getYear date
-                    |> String.fromInt
         in
         if unitedStatesDateNotation then
-            String.join "/"
-                [ month
-                , day
-                , year
-                ]
+            Text.UsaDate month day year
 
         else
-            String.join "/"
-                [ day
-                , month
-                , year
-                ]
-
-
-weekdayToString : Time.Weekday -> String
-weekdayToString weekday =
-    case weekday of
-        Time.Mon ->
-            "monday"
-
-        Time.Tue ->
-            "tuesday"
-
-        Time.Wed ->
-            "wednesday"
-
-        Time.Thu ->
-            "thursday"
-
-        Time.Fri ->
-            "friday"
-
-        Time.Sat ->
-            "saturday"
-
-        Time.Sun ->
-            "sunday"
-
-
-monthToString : Time.Month -> String
-monthToString month =
-    case month of
-        Time.Jan ->
-            "1"
-
-        Time.Feb ->
-            "2"
-
-        Time.Mar ->
-            "3"
-
-        Time.Apr ->
-            "4"
-
-        Time.May ->
-            "5"
-
-        Time.Jun ->
-            "6"
-
-        Time.Jul ->
-            "7"
-
-        Time.Aug ->
-            "8"
-
-        Time.Sep ->
-            "9"
-
-        Time.Oct ->
-            "10"
-
-        Time.Nov ->
-            "11"
-
-        Time.Dec ->
-            "12"
+            Text.InternationalDate day month year
 
 
 toZonedPosix : Time.Zone -> Time.Posix -> Time.Posix

@@ -299,8 +299,8 @@ type Msg
     | SelectRecord Record.Id
     | ClickedDeleteButton Record.Id
     | ClickedEditButton Record.Id
-    | ClickedResumeButton Record.Id
-    | GotResumeButtonTime Record.Id Time.Posix
+    | ClickedResumeButton String
+    | GotResumeButtonTime String Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -413,19 +413,14 @@ update msg model =
             }
                 |> Out.withNoCmd
 
-        ClickedResumeButton id ->
-            Task.perform (GotResumeButtonTime id) Time.now
+        ClickedResumeButton description ->
+            Task.perform (GotResumeButtonTime description) Time.now
                 |> Out.withModel model
 
-        GotResumeButtonTime id time ->
-            case RecordList.getById id model.records of
-                Just record ->
-                    model
-                        |> setCurrentTime time
-                        |> startCreatingRecord record.description time
-
-                Nothing ->
-                    model |> Out.withNoCmd
+        GotResumeButtonTime description time ->
+            model
+                |> setCurrentTime time
+                |> startCreatingRecord description time
 
 
 
@@ -546,7 +541,7 @@ viewConfig model =
                         { description = createForm.description
                         , elapsedTime =
                             Utils.Duration.fromTimeDifference model.currentTime createForm.start
-                                |> Utils.Duration.toString
+                                |> Utils.Duration.toText
                         , changedDescription = ChangedCreateFormDescription
                         , pressedStop = PressedStopButton
                         , pressedEscape = PressedEscapeInCreateRecord

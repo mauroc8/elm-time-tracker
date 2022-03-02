@@ -1,4 +1,14 @@
-module CreateForm exposing (Config, CreateForm, descriptionInputId, duration, new, subscriptions, view)
+module CreateForm exposing
+    ( Config
+    , CreateForm
+    , decoder
+    , descriptionInputId
+    , duration
+    , encoder
+    , new
+    , subscriptions
+    , view
+    )
 
 import Colors
 import Element exposing (Element)
@@ -9,6 +19,8 @@ import Element.Input
 import Html.Attributes
 import Html.Events
 import Icons
+import Json.Decode
+import Json.Encode
 import Text
 import Time
 import Utils.Duration
@@ -38,14 +50,42 @@ duration { currentTime } { start } =
     Utils.Duration.fromTimeDifference start currentTime
 
 
+decoder : Json.Decode.Decoder CreateForm
+decoder =
+    Json.Decode.map2 CreateForm
+        (Json.Decode.field "start" decodePosix)
+        (Json.Decode.field "description" Json.Decode.string)
+
+
+decodePosix : Json.Decode.Decoder Time.Posix
+decodePosix =
+    Json.Decode.int
+        |> Json.Decode.map Time.millisToPosix
+
+
+
+---
+
+
+encoder createForm =
+    Json.Encode.object
+        [ ( "start", encodePosix createForm.start )
+        , ( "description", Json.Encode.string createForm.description )
+        ]
+
+
+encodePosix posix =
+    Json.Encode.int (Time.posixToMillis posix)
+
+
 
 --- VIEW
 
 
 type alias Config msg =
     { description : String
-    , elapsedTime : String
     , changedDescription : String -> msg
+    , elapsedTime : Text.Text
     , pressedStop : msg
     , pressedEscape : msg
     , language : Text.Language
@@ -110,7 +150,7 @@ view config =
             , Element.el
                 [ Element.Font.color Colors.blackishText
                 ]
-                (Text.text12 config.language (Text.Unlocalized config.elapsedTime))
+                (Text.text12 config.language config.elapsedTime)
             ]
         , View.button
             []

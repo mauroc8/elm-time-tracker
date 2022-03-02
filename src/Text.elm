@@ -13,6 +13,7 @@ module Text exposing
 import Element exposing (Attribute, Element)
 import Element.Font as Font
 import Html.Attributes
+import Time
 
 
 
@@ -53,10 +54,24 @@ type
     | SearchPlaceholder
     | Search
     | NoDescription
-      -- Other
-    | Unlocalized String
-      -- Date and Time
-    | Prepend String Text
+      -- Operators
+    | Text String
+    | Integer Int
+    | JoinWords (List Text)
+      -- Duration
+    | Second
+    | Seconds
+    | Hour
+    | Hours
+    | Minute
+    | Minutes
+      -- Date
+    | Today
+    | Yesterday
+    | Tomorrow
+    | Weekday Time.Weekday
+    | InternationalDate Int Time.Month Int
+    | UsaDate Time.Month Int Int
 
 
 toString : Language -> Text -> String
@@ -141,12 +156,182 @@ toString lang text =
         ( NoDescription, Spanish ) ->
             "descripción vacía"
 
-        -- Other
-        ( Unlocalized str, _ ) ->
+        -- Operators
+        ( Text str, _ ) ->
             str
 
-        ( Prepend str text_, _ ) ->
-            str ++ toString lang text_
+        ( Integer int, _ ) ->
+            String.fromInt int
+
+        ( JoinWords words, _ ) ->
+            String.join " "
+                (List.map (toString lang) words)
+
+        -- Duration
+        ( Second, English ) ->
+            "second"
+
+        ( Second, Spanish ) ->
+            "segundo"
+
+        ( Seconds, English ) ->
+            "seconds"
+
+        ( Seconds, Spanish ) ->
+            "segundos"
+
+        ( Hour, English ) ->
+            "hour"
+
+        ( Hours, English ) ->
+            "hours"
+
+        ( Hour, Spanish ) ->
+            "hora"
+
+        ( Hours, Spanish ) ->
+            "horas"
+
+        ( Minute, English ) ->
+            "minute"
+
+        ( Minutes, English ) ->
+            "minutes"
+
+        ( Minute, Spanish ) ->
+            "minuto"
+
+        ( Minutes, Spanish ) ->
+            "minutos"
+
+        -- Date
+        ( Today, English ) ->
+            "today"
+
+        ( Today, Spanish ) ->
+            "hoy"
+
+        ( Yesterday, English ) ->
+            "yesterday"
+
+        ( Yesterday, Spanish ) ->
+            "ayer"
+
+        ( Tomorrow, English ) ->
+            "tomorrow"
+
+        ( Tomorrow, Spanish ) ->
+            "mañana"
+
+        ( Weekday wkd, English ) ->
+            weekdayToEnglish wkd
+
+        ( Weekday wkd, Spanish ) ->
+            weekdayToSpanish wkd
+
+        ( InternationalDate day month year, _ ) ->
+            String.join "/"
+                [ String.fromInt day
+                , monthToString month
+                , String.fromInt year
+                ]
+
+        ( UsaDate month day year, _ ) ->
+            String.join "/"
+                [ monthToString month
+                , String.fromInt day
+                , String.fromInt year
+                ]
+
+
+weekdayToEnglish : Time.Weekday -> String
+weekdayToEnglish weekday =
+    case weekday of
+        Time.Mon ->
+            "monday"
+
+        Time.Tue ->
+            "tuesday"
+
+        Time.Wed ->
+            "wednesday"
+
+        Time.Thu ->
+            "thursday"
+
+        Time.Fri ->
+            "friday"
+
+        Time.Sat ->
+            "saturday"
+
+        Time.Sun ->
+            "sunday"
+
+
+weekdayToSpanish : Time.Weekday -> String
+weekdayToSpanish weekday =
+    case weekday of
+        Time.Mon ->
+            "lunes"
+
+        Time.Tue ->
+            "martes"
+
+        Time.Wed ->
+            "miércoles"
+
+        Time.Thu ->
+            "jueves"
+
+        Time.Fri ->
+            "viernes"
+
+        Time.Sat ->
+            "sábado"
+
+        Time.Sun ->
+            "domingo"
+
+
+monthToString : Time.Month -> String
+monthToString month =
+    case month of
+        Time.Jan ->
+            "1"
+
+        Time.Feb ->
+            "2"
+
+        Time.Mar ->
+            "3"
+
+        Time.Apr ->
+            "4"
+
+        Time.May ->
+            "5"
+
+        Time.Jun ->
+            "6"
+
+        Time.Jul ->
+            "7"
+
+        Time.Aug ->
+            "8"
+
+        Time.Sep ->
+            "9"
+
+        Time.Oct ->
+            "10"
+
+        Time.Nov ->
+            "11"
+
+        Time.Dec ->
+            "12"
 
 
 
