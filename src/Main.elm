@@ -16,6 +16,8 @@ import Element.Input as Input
 import Html exposing (Html)
 import Html.Attributes
 import Icons
+import Json.Decode
+import LocalStorage
 import Platform exposing (Task)
 import Record exposing (Record)
 import RecordList exposing (RecordList)
@@ -24,6 +26,7 @@ import Sidebar exposing (Config(..))
 import Task
 import Text exposing (Language)
 import Time
+import Utils.Date
 import Utils.Duration
 import Utils.Out as Out
 import View
@@ -33,10 +36,14 @@ import View
 --- MAIN
 
 
-main : Program () Model Msg
+main : Program Json.Decode.Value Model Msg
 main =
     Browser.element
-        { init = \_ -> init
+        { init =
+            \flags ->
+                init
+                    |> Out.mapModel (loadCreateForm flags)
+                    |> Out.mapModel (loadRecordList flags)
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -55,6 +62,34 @@ init =
     )
 
 
+loadCreateForm : Json.Decode.Value -> Model -> Model
+loadCreateForm flags model =
+    let
+        savedCreateForm =
+            LocalStorage.load
+                { store = LocalStorage.createForm
+                , flags = flags
+                }
+    in
+    savedCreateForm
+        |> Result.map (\createForm -> { model | action = CreatingRecord createForm })
+        |> Result.withDefault model
+
+
+loadRecordList : Json.Decode.Value -> Model -> Model
+loadRecordList flags model =
+    let
+        savedRecordList =
+            LocalStorage.load
+                { store = LocalStorage.recordList
+                , flags = flags
+                }
+    in
+    savedRecordList
+        |> Result.map (\recordList -> { model | records = recordList })
+        |> Result.withDefault model
+
+
 
 --- Model
 
@@ -69,7 +104,7 @@ type alias Model =
     , searchQuery : String
 
     -- Settings
-    , unitedStatesDateNotation : Bool
+    , dateNotation : Utils.Date.Notation
     , language : Language
 
     -- Time
@@ -92,7 +127,7 @@ initialModel =
     , records = RecordList.empty
     , selectedRecord = Nothing
     , searchQuery = ""
-    , unitedStatesDateNotation = Settings.defaultUnitedStatesDateNotation
+    , dateNotation = Utils.Date.westernNotation
     , language = Text.defaultLanguage
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
@@ -126,7 +161,7 @@ setAction action model =
 setSettings : Settings -> Model -> Model
 setSettings settings model =
     { model
-        | unitedStatesDateNotation = settings.unitedStatesDateNotation
+        | dateNotation = settings.dateNotation
         , language = settings.language
     }
 
@@ -143,7 +178,7 @@ appliedSettings : Model -> Settings
 appliedSettings model =
     getActionSettings model.action
         |> Maybe.withDefault
-            { unitedStatesDateNotation = model.unitedStatesDateNotation
+            { dateNotation = model.dateNotation
             , language = model.language
             }
 
@@ -152,20 +187,20 @@ appliedSettings model =
 ---
 
 
-editUnitedStatesDateNotation : Bool -> Model -> Model
-editUnitedStatesDateNotation usaDateNotation model =
+editDateNotation : Utils.Date.Notation -> Model -> Model
+editDateNotation dateNotation model =
     case model.action of
         ChangingSettings settings ->
             setAction
                 (ChangingSettings
                     { settings
-                        | unitedStatesDateNotation = usaDateNotation
+                        | dateNotation = dateNotation
                     }
                 )
                 model
 
         _ ->
-            { model | unitedStatesDateNotation = usaDateNotation }
+            { model | dateNotation = dateNotation }
 
 
 editLanguage : Language -> Model -> Model
@@ -186,6 +221,7 @@ editLanguage language model =
             }
 
 
+startCreatingRecord : String -> Time.Posix -> Model -> ( Model, Cmd Msg )
 startCreatingRecord description time model =
     model
         |> setAction (CreatingRecord (CreateForm.new description time))
@@ -286,7 +322,7 @@ type Msg
       -- Settings
     | PressedSettingsCancelButton
     | PressedSettingsDoneButton
-    | ChangedUnitedStatesDateNotation Bool
+    | ChangedDateNotation Utils.Date.Notation
     | ChangedLanguage Language
       -- Create record
     | PressedStartButton
@@ -331,7 +367,7 @@ update msg model =
         PressedSettingsButton ->
             setAction
                 (ChangingSettings
-                    { unitedStatesDateNotation = model.unitedStatesDateNotation
+                    { dateNotation = model.dateNotation
                     , language = model.language
                     }
                 )
@@ -340,9 +376,7 @@ update msg model =
 
         -- Settings
         PressedSettingsCancelButton ->
-            setAction
-                Idle
-                model
+            setAction Idle model
                 |> Out.withNoCmd
 
         PressedSettingsDoneButton ->
@@ -352,9 +386,9 @@ update msg model =
                 |> setSettings (appliedSettings model)
                 |> Out.withNoCmd
 
-        ChangedUnitedStatesDateNotation unitedStatesDateNotation ->
+        ChangedDateNotation dateNotation ->
             model
-                |> editUnitedStatesDateNotation unitedStatesDateNotation
+                |> editDateNotation dateNotation
                 |> Out.withNoCmd
 
         ChangedLanguage language ->
@@ -370,6 +404,7 @@ update msg model =
             model
                 |> setCurrentTime time
                 |> startCreatingRecord "" time
+                |> Out.addCmd saveCreateForm
 
         PressedStopButton ->
             Task.perform GotStopButtonPressTime Time.now
@@ -380,15 +415,19 @@ update msg model =
                 |> stopCreatingRecord time
                 |> setCurrentTime time
                 |> Out.withNoCmd
+                |> Out.addCmd saveCreateForm
+                |> Out.addCmd saveRecords
 
         ChangedCreateFormDescription description ->
             changeCreateFormDescription description model
                 |> Out.withNoCmd
+                |> Out.addCmd saveCreateForm
 
         PressedEscapeInCreateRecord ->
             model
                 |> setAction Idle
                 |> Out.withNoCmd
+                |> Out.addCmd saveCreateForm
 
         -- Record List
         SelectRecord id ->
@@ -398,6 +437,7 @@ update msg model =
         ClickedDeleteButton id ->
             { model | records = RecordList.delete id model.records }
                 |> Out.withNoCmd
+                |> Out.addCmd saveRecords
 
         ClickedEditButton id ->
             { model
@@ -421,6 +461,22 @@ update msg model =
             model
                 |> setCurrentTime time
                 |> startCreatingRecord description time
+                |> Out.addCmd saveCreateForm
+
+
+saveCreateForm : Model -> Cmd msg
+saveCreateForm model =
+    case model.action of
+        CreatingRecord createForm ->
+            LocalStorage.save LocalStorage.createForm createForm
+
+        _ ->
+            LocalStorage.clear LocalStorage.createForm
+
+
+saveRecords : Model -> Cmd msg
+saveRecords model =
+    LocalStorage.save LocalStorage.recordList model.records
 
 
 
@@ -523,9 +579,9 @@ viewConfig model =
     case model.action of
         ChangingSettings settings ->
             ChangeSettings
-                { unitedStatesDateNotation = settings.unitedStatesDateNotation
+                { dateNotation = settings.dateNotation
                 , language = settings.language
-                , changedUnitedStatesDateNotation = ChangedUnitedStatesDateNotation
+                , changedDateNotation = ChangedDateNotation
                 , changedLanguage = ChangedLanguage
                 , pressedSettingsCancelButton = PressedSettingsCancelButton
                 , pressedSettingsDoneButton = PressedSettingsDoneButton
@@ -576,7 +632,7 @@ viewConfig model =
 
 
 recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesDateNotation, timeZone, language } =
+recordsConfig { records, searchQuery, selectedRecord, currentTime, dateNotation, timeZone, language } =
     let
         searchResults =
             RecordList.search searchQuery records
@@ -598,7 +654,7 @@ recordsConfig { records, searchQuery, selectedRecord, currentTime, unitedStatesD
                     , clickedEditButton = ClickedEditButton
                     , clickedResumeButton = ClickedResumeButton
                     , currentTime = currentTime
-                    , unitedStatesDateNotation = unitedStatesDateNotation
+                    , dateNotation = dateNotation
                     , timeZone = timeZone
                     , language = language
                     }

@@ -2,6 +2,8 @@ module Text exposing
     ( Language(..)
     , Text(..)
     , defaultLanguage
+    , encodeLanguage
+    , languageDecoder
     , text12
     , text13
     , text14
@@ -13,7 +15,10 @@ module Text exposing
 import Element exposing (Attribute, Element)
 import Element.Font as Font
 import Html.Attributes
+import Json.Decode
+import Json.Encode
 import Time
+import Utils
 
 
 
@@ -28,6 +33,29 @@ type Language
 defaultLanguage : Language
 defaultLanguage =
     English
+
+
+languageToString : Language -> String
+languageToString lang =
+    case lang of
+        English ->
+            "English"
+
+        Spanish ->
+            "Spanish"
+
+
+encodeLanguage : Language -> Json.Encode.Value
+encodeLanguage lang =
+    Json.Encode.string (languageToString lang)
+
+
+languageDecoder : Json.Decode.Decoder Language
+languageDecoder =
+    Json.Decode.oneOf
+        [ Utils.decodeLiteral English (languageToString English)
+        , Utils.decodeLiteral Spanish (languageToString Spanish)
+        ]
 
 
 
@@ -88,7 +116,7 @@ toString lang text =
             "USA date format (mm/dd/yyyy)"
 
         ( UsaDateNotation, Spanish ) ->
-            "Ver fechas como en EEUU (mm/dd/yyyy)"
+            "Fechas en formato de EEUU (mm/dd/yyyy)"
 
         ( LanguageLabel, English ) ->
             "Language"

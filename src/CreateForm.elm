@@ -4,7 +4,7 @@ module CreateForm exposing
     , decoder
     , descriptionInputId
     , duration
-    , encoder
+    , encode
     , new
     , subscriptions
     , view
@@ -67,7 +67,7 @@ decodePosix =
 ---
 
 
-encoder createForm =
+encode createForm =
     Json.Encode.object
         [ ( "start", encodePosix createForm.start )
         , ( "description", Json.Encode.string createForm.description )

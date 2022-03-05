@@ -1,10 +1,11 @@
 module RecordList exposing
     ( Config(..)
     , RecordList
+    , decoder
     , delete
     , empty
+    , encode
     , fromList
-    , getById
     , push
     , search
     , toList
@@ -16,6 +17,8 @@ import Dict exposing (Dict)
 import Dict.Extra
 import Element exposing (Element)
 import Element.Font
+import Json.Decode
+import Json.Encode
 import Levenshtein
 import Record exposing (Record)
 import Text
@@ -60,6 +63,25 @@ search query (RecordList records) =
             |> RecordList
 
 
+decoder : Json.Decode.Decoder RecordList
+decoder =
+    Json.Decode.list Record.decoder
+        |> Json.Decode.map fromList
+
+
+encode : RecordList -> Json.Encode.Value
+encode recordList =
+    recordList
+        |> toList
+        -- No more than 100 records are allowed (for performance reasons) TODO: Check if 100 is too low
+        |> List.take 100
+        |> Json.Encode.list Record.encode
+
+
+
+---
+
+
 matchesSearchQuery : String -> String -> Bool
 matchesSearchQuery query str =
     let
@@ -93,14 +115,6 @@ delete id (RecordList records) =
     Dict.filter (\_ record -> record.id /= id)
         records
         |> RecordList
-
-
-findById : Record.Id -> RecordList -> Maybe Record
-findById id (RecordList records) =
-    Dict.Extra.find
-        (\_ record -> record.id == id)
-        records
-        |> Maybe.map Tuple.second
 
 
 
@@ -171,9 +185,3 @@ bodyWithRecordsLayout emphasis children =
             children
         , View.recordListHorizontalDivider emphasis
         ]
-
-
-getById : Record.Id -> RecordList -> Maybe Record.Record
-getById id (RecordList records) =
-    Dict.Extra.find (\_ record -> record.id == id) records
-        |> Maybe.map Tuple.second

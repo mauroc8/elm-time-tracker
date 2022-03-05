@@ -5,6 +5,7 @@ module Record exposing
     , Record
     , config
     , decoder
+    , encode
     , fromCreateForm
     , view
     )
@@ -21,6 +22,7 @@ import Html.Events
 import Html.Events.Extra.Pointer
 import Icons
 import Json.Decode
+import Json.Encode
 import Text
 import Time
 import Utils.Date
@@ -35,6 +37,11 @@ posixDecoder =
     Json.Decode.int |> Json.Decode.map Time.millisToPosix
 
 
+decodePosix : Time.Posix -> Json.Encode.Value
+decodePosix posix =
+    Json.Encode.int (Time.posixToMillis posix)
+
+
 
 --- ID
 
@@ -46,6 +53,11 @@ type Id
 idDecoder : Json.Decode.Decoder Id
 idDecoder =
     Json.Decode.int |> Json.Decode.map Id
+
+
+encodeId : Id -> Json.Encode.Value
+encodeId (Id id) =
+    Json.Encode.int id
 
 
 
@@ -97,6 +109,16 @@ endTime zone record =
                 * 1000
             )
         )
+
+
+encode : Record -> Json.Encode.Value
+encode record =
+    Json.Encode.object
+        [ ( "id", encodeId record.id )
+        , ( "description", Json.Encode.string record.description )
+        , ( "startDateTime", decodePosix record.startDateTime )
+        , ( "durationInSecods", Json.Encode.int record.durationInSeconds )
+        ]
 
 
 
@@ -224,7 +246,7 @@ config :
     , clickedEditButton : Id -> msg
     , clickedResumeButton : String -> msg
     , currentTime : Time.Posix
-    , unitedStatesDateNotation : Bool
+    , dateNotation : Utils.Date.Notation
     , timeZone : Time.Zone
     , language : Text.Language
     }
@@ -235,7 +257,7 @@ config viewConfig record =
         { selectedRecordId, selectRecord, clickedDeleteButton, language } =
             viewConfig
 
-        { clickedEditButton, timeZone, clickedResumeButton, currentTime, unitedStatesDateNotation } =
+        { clickedEditButton, timeZone, clickedResumeButton, currentTime, dateNotation } =
             viewConfig
     in
     { description = record.description
@@ -243,7 +265,7 @@ config viewConfig record =
         Utils.Date.relativeDateLabel
             { today = Calendar.fromPosix (Utils.Date.toZonedPosix timeZone currentTime)
             , date = Calendar.fromPosix (Utils.Date.toZonedPosix timeZone record.startDateTime)
-            , unitedStatesDateNotation = unitedStatesDateNotation
+            , dateNotation = dateNotation
             }
     , duration =
         Utils.Duration.fromSeconds record.durationInSeconds

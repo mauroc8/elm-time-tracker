@@ -1,7 +1,8 @@
 module Settings exposing
     ( Config
     , Settings
-    , defaultUnitedStatesDateNotation
+    , decoder
+    , encode
     , view
     )
 
@@ -13,7 +14,10 @@ import Element.Font
 import Element.Input
 import Element.Region
 import Icons
+import Json.Decode
+import Json.Encode
 import Text
+import Utils.Date
 import View
 
 
@@ -22,14 +26,24 @@ import View
 
 
 type alias Settings =
-    { unitedStatesDateNotation : Bool
+    { dateNotation : Utils.Date.Notation
     , language : Text.Language
     }
 
 
-defaultUnitedStatesDateNotation : Bool
-defaultUnitedStatesDateNotation =
-    False
+decoder : Json.Decode.Decoder Settings
+decoder =
+    Json.Decode.map2 Settings
+        (Json.Decode.field "dateNotation" Utils.Date.notationDecoder)
+        (Json.Decode.field "language" Text.languageDecoder)
+
+
+encode : Settings -> Json.Decode.Value
+encode { dateNotation, language } =
+    Json.Encode.object
+        [ ( "dateNotation", Utils.Date.encodeNotation dateNotation )
+        , ( "language", Text.encodeLanguage language )
+        ]
 
 
 
@@ -37,9 +51,9 @@ defaultUnitedStatesDateNotation =
 
 
 type alias Config msg =
-    { unitedStatesDateNotation : Bool
+    { dateNotation : Utils.Date.Notation
     , language : Text.Language
-    , changedUnitedStatesDateNotation : Bool -> msg
+    , changedDateNotation : Utils.Date.Notation -> msg
     , changedLanguage : Text.Language -> msg
     , pressedSettingsCancelButton : msg
     , pressedSettingsDoneButton : msg
@@ -83,8 +97,15 @@ settingsBody config =
             (View.settingsToggle
                 { label = Text.UsaDateNotation
                 , language = config.language
-                , checked = config.unitedStatesDateNotation
-                , onChange = config.changedUnitedStatesDateNotation
+                , checked = config.dateNotation == Utils.Date.unitedStatesNotation
+                , onChange =
+                    \val ->
+                        config.changedDateNotation <|
+                            if val then
+                                Utils.Date.unitedStatesNotation
+
+                            else
+                                Utils.Date.westernNotation
                 , padding = 16
                 }
             )
