@@ -85,7 +85,7 @@ type
       -- Operators
     | Text String
     | Integer Int
-    | JoinWords (List Text)
+    | Words (List Text)
       -- Duration
     | Second
     | Seconds
@@ -93,6 +93,8 @@ type
     | Hours
     | Minute
     | Minutes
+    | Day
+    | Days
       -- Date
     | Today
     | Yesterday
@@ -191,7 +193,7 @@ toString lang text =
         ( Integer int, _ ) ->
             String.fromInt int
 
-        ( JoinWords words, _ ) ->
+        ( Words words, _ ) ->
             String.join " "
                 (List.map (toString lang) words)
 
@@ -231,6 +233,18 @@ toString lang text =
 
         ( Minutes, Spanish ) ->
             "minutos"
+
+        ( Day, English ) ->
+            "day"
+
+        ( Day, Spanish ) ->
+            "día"
+
+        ( Days, English ) ->
+            "days"
+
+        ( Days, Spanish ) ->
+            "días"
 
         -- Date
         ( Today, English ) ->

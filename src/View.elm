@@ -2,10 +2,12 @@ module View exposing
     ( BackgroundColor(..)
     , ButtonHandler
     , Emphasis(..)
+    , Viewport(..)
     , button
     , columnWithHorizontalDivider
     , disabled
     , enabled
+    , fromScreenWidth
     , horizontalDivider
     , linkLikeButton
     , overflowClickableRegion
@@ -19,6 +21,7 @@ module View exposing
     )
 
 import Browser
+import Browser.Dom
 import Colors
 import DateTime
 import Dict exposing (Dict)
@@ -374,3 +377,21 @@ settingsToggle { checked, onChange, label, language, padding } =
                 else
                     Icons.toggleOff
         }
+
+
+
+--- Viewport
+
+
+type Viewport
+    = Desktop
+    | Mobile
+
+
+fromScreenWidth : Int -> Viewport
+fromScreenWidth screenWidth =
+    if screenWidth < 600 then
+        Mobile
+
+    else
+        Desktop

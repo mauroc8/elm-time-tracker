@@ -26,6 +26,7 @@ import Sidebar exposing (Config(..))
 import Task
 import Text exposing (Language)
 import Time
+import Utils
 import Utils.Date
 import Utils.Duration
 import Utils.Out as Out
@@ -39,55 +40,28 @@ import View
 main : Program Json.Decode.Value Model Msg
 main =
     Browser.element
-        { init =
-            \flags ->
-                init
-                    |> Out.mapModel (loadCreateForm flags)
-                    |> Out.mapModel (loadRecordList flags)
+        { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
         }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Json.Decode.Value -> ( Model, Cmd Msg )
+init flags =
     ( initialModel
+        |> loadCreateForm flags
+        |> loadRecordList flags
+        |> loadSettings flags
     , Cmd.batch
         [ Time.here
             |> Task.perform GotTimeZone
         , Time.now
             |> Task.perform GotCurrentTime
+        , Browser.Dom.getViewport
+            |> Task.perform GotViewport
         ]
     )
-
-
-loadCreateForm : Json.Decode.Value -> Model -> Model
-loadCreateForm flags model =
-    let
-        savedCreateForm =
-            LocalStorage.load
-                { store = LocalStorage.createForm
-                , flags = flags
-                }
-    in
-    savedCreateForm
-        |> Result.map (\createForm -> { model | action = CreatingRecord createForm })
-        |> Result.withDefault model
-
-
-loadRecordList : Json.Decode.Value -> Model -> Model
-loadRecordList flags model =
-    let
-        savedRecordList =
-            LocalStorage.load
-                { store = LocalStorage.recordList
-                , flags = flags
-                }
-    in
-    savedRecordList
-        |> Result.map (\recordList -> { model | records = recordList })
-        |> Result.withDefault model
 
 
 
@@ -113,8 +87,7 @@ type alias Model =
     , visibility : Browser.Events.Visibility
 
     -- Responsiveness
-    , windowWidth : Int
-    , windowHeight : Int
+    , viewport : View.Viewport
 
     -- Autosave
     , lastSaved : Time.Posix
@@ -132,8 +105,7 @@ initialModel =
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
     , visibility = Browser.Events.Visible
-    , windowWidth = 0
-    , windowHeight = 0
+    , viewport = View.Mobile
     , lastSaved = Time.millisToPosix 0
     }
 
@@ -146,6 +118,11 @@ setTimeZone timeZone model =
 setCurrentTime : Time.Posix -> Model -> Model
 setCurrentTime posixTime model =
     { model | currentTime = posixTime }
+
+
+setViewport : { screenWidth : Int } -> Model -> Model
+setViewport { screenWidth } model =
+    { model | viewport = View.fromScreenWidth screenWidth }
 
 
 setSearchQuery : String -> Model -> Model
@@ -169,22 +146,6 @@ setSettings settings model =
 selectRecord : Record.Id -> Model -> Model
 selectRecord id model =
     { model | selectedRecord = Just id }
-
-
-{-| Returns the unsaved settings of the "Settings" form, or
-the saved settings.
--}
-appliedSettings : Model -> Settings
-appliedSettings model =
-    getActionSettings model.action
-        |> Maybe.withDefault
-            { dateNotation = model.dateNotation
-            , language = model.language
-            }
-
-
-
----
 
 
 editDateNotation : Utils.Date.Notation -> Model -> Model
@@ -226,8 +187,9 @@ startCreatingRecord description time model =
     model
         |> setAction (CreatingRecord (CreateForm.new description time))
         |> Out.withCmd
-            (Browser.Dom.focus CreateForm.descriptionInputId
-                |> Task.attempt (\_ -> ToDo)
+            (\_ ->
+                Browser.Dom.focus CreateForm.descriptionInputId
+                    |> Task.attempt FocusedCreateFormDescriptionInput
             )
 
 
@@ -271,6 +233,90 @@ changeCreateFormDescription description model =
             model
 
 
+loadCreateForm : Json.Decode.Value -> Model -> Model
+loadCreateForm flags model =
+    LocalStorage.load
+        { store = LocalStorage.createForm
+        , flags = flags
+        }
+        |> Result.map (\createForm -> { model | action = CreatingRecord createForm })
+        |> Result.withDefault model
+
+
+loadRecordList : Json.Decode.Value -> Model -> Model
+loadRecordList flags model =
+    LocalStorage.load
+        { store = LocalStorage.recordList
+        , flags = flags
+        }
+        |> Result.map (\recordList -> { model | records = recordList })
+        |> Result.mapError (Utils.debugLog "loadRecordList")
+        |> Result.withDefault model
+
+
+loadSettings : Json.Decode.Value -> Model -> Model
+loadSettings flags model =
+    LocalStorage.load
+        { store = LocalStorage.settings
+        , flags = flags
+        }
+        |> Result.map (\settings -> setSettings settings model)
+        |> Result.mapError (Utils.debugLog "loadSettings")
+        |> Result.withDefault model
+
+
+
+---
+
+
+saveCreateForm : Model -> Cmd Msg
+saveCreateForm model =
+    case model.action of
+        CreatingRecord createForm ->
+            LocalStorage.save
+                { store = LocalStorage.createForm
+                , value = createForm
+                }
+
+        _ ->
+            LocalStorage.clear
+                LocalStorage.createForm
+
+
+saveRecords : Model -> Cmd msg
+saveRecords model =
+    LocalStorage.save
+        { store = LocalStorage.recordList
+        , value = model.records
+        }
+
+
+saveSettings : Model -> Cmd msg
+saveSettings model =
+    LocalStorage.save
+        { store = LocalStorage.settings
+        , value = savedSettings model
+        }
+
+
+{-| Returns the saved settings
+-}
+savedSettings : Model -> Settings
+savedSettings model =
+    { dateNotation = model.dateNotation
+    , language = model.language
+    }
+
+
+{-| Returns the unsaved settings of the "Settings" form, or
+the saved settings.
+-}
+appliedSettings : Model -> Settings
+appliedSettings model =
+    getActionSettings model.action
+        |> Maybe.withDefault (savedSettings model)
+
+
 
 --- Action
 
@@ -311,11 +357,12 @@ type alias EditForm =
 
 
 type Msg
-    = ToDo
-      -- Context
-    | GotTimeZone Time.Zone
+    = -- Context
+      GotTimeZone Time.Zone
     | GotCurrentTime Time.Posix
+    | GotViewport Browser.Dom.Viewport
     | VisibilityChanged Browser.Events.Visibility
+    | ViewportWidthChanged Int
       -- Search bar
     | SearchQueryChanged String
     | PressedSettingsButton
@@ -328,9 +375,11 @@ type Msg
     | PressedStartButton
     | GotStartButtonPressTime Time.Posix
     | PressedStopButton
-    | GotStopButtonPressTime Time.Posix
+    | GotStopTime Time.Posix
     | ChangedCreateFormDescription String
+    | PressedEnterInCreateRecord
     | PressedEscapeInCreateRecord
+    | FocusedCreateFormDescriptionInput (Result Browser.Dom.Error ())
       -- Record List
     | SelectRecord Record.Id
     | ClickedDeleteButton Record.Id
@@ -342,10 +391,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ToDo ->
-            model
-                |> Out.withNoCmd
-
         -- Context
         GotTimeZone zone ->
             setTimeZone zone model
@@ -355,8 +400,16 @@ update msg model =
             setCurrentTime posixTime model
                 |> Out.withNoCmd
 
+        GotViewport viewport ->
+            setViewport { screenWidth = round viewport.scene.width } model
+                |> Out.withNoCmd
+
         VisibilityChanged visibility ->
             { model | visibility = visibility }
+                |> Out.withNoCmd
+
+        ViewportWidthChanged width ->
+            setViewport { screenWidth = width } model
                 |> Out.withNoCmd
 
         -- Search bar
@@ -380,11 +433,9 @@ update msg model =
                 |> Out.withNoCmd
 
         PressedSettingsDoneButton ->
-            setAction
-                Idle
-                model
+            setAction Idle model
                 |> setSettings (appliedSettings model)
-                |> Out.withNoCmd
+                |> Out.withCmd saveSettings
 
         ChangedDateNotation dateNotation ->
             model
@@ -407,10 +458,10 @@ update msg model =
                 |> Out.addCmd saveCreateForm
 
         PressedStopButton ->
-            Task.perform GotStopButtonPressTime Time.now
+            stop
                 |> Out.withModel model
 
-        GotStopButtonPressTime time ->
+        GotStopTime time ->
             model
                 |> stopCreatingRecord time
                 |> setCurrentTime time
@@ -420,14 +471,20 @@ update msg model =
 
         ChangedCreateFormDescription description ->
             changeCreateFormDescription description model
-                |> Out.withNoCmd
-                |> Out.addCmd saveCreateForm
+                |> Out.withCmd saveCreateForm
+
+        PressedEnterInCreateRecord ->
+            stop
+                |> Out.withModel model
 
         PressedEscapeInCreateRecord ->
             model
                 |> setAction Idle
+                |> Out.withCmd saveCreateForm
+
+        FocusedCreateFormDescriptionInput _ ->
+            model
                 |> Out.withNoCmd
-                |> Out.addCmd saveCreateForm
 
         -- Record List
         SelectRecord id ->
@@ -436,8 +493,7 @@ update msg model =
 
         ClickedDeleteButton id ->
             { model | records = RecordList.delete id model.records }
-                |> Out.withNoCmd
-                |> Out.addCmd saveRecords
+                |> Out.withCmd saveRecords
 
         ClickedEditButton id ->
             { model
@@ -464,19 +520,9 @@ update msg model =
                 |> Out.addCmd saveCreateForm
 
 
-saveCreateForm : Model -> Cmd msg
-saveCreateForm model =
-    case model.action of
-        CreatingRecord createForm ->
-            LocalStorage.save LocalStorage.createForm createForm
-
-        _ ->
-            LocalStorage.clear LocalStorage.createForm
-
-
-saveRecords : Model -> Cmd msg
-saveRecords model =
-    LocalStorage.save LocalStorage.recordList model.records
+stop : Cmd Msg
+stop =
+    Task.perform GotStopTime Time.now
 
 
 
@@ -501,6 +547,7 @@ subscriptions model =
           else
             Sub.none
         , Browser.Events.onVisibilityChange VisibilityChanged
+        , Browser.Events.onResize (\width _ -> ViewportWidthChanged width)
         ]
 
 
@@ -600,6 +647,7 @@ viewConfig model =
                                 |> Utils.Duration.toText
                         , changedDescription = ChangedCreateFormDescription
                         , pressedStop = PressedStopButton
+                        , pressedEnter = PressedEnterInCreateRecord
                         , pressedEscape = PressedEscapeInCreateRecord
                         , language = model.language
                         }

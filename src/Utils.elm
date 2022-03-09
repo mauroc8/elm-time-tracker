@@ -40,3 +40,8 @@ nullableDecoder decoder =
         , Json.Decode.null
             Nothing
         ]
+
+
+debugLog : String -> a -> a
+debugLog str value =
+    Debug.log str value

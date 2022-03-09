@@ -33,12 +33,12 @@ withNoCmd model0 =
 {-| Start a pipeline from a model and a command.
 
     { model | user = user }
-        |> Out.withCmd (saveUser user)
+        |> Out.withCmd (\model -> saveUser model.user)
 
 -}
-withCmd : Cmd msg -> model -> ( model, Cmd msg )
+withCmd : (model -> Cmd msg) -> model -> ( model, Cmd msg )
 withCmd cmd0 model0 =
-    ( model0, cmd0 )
+    ( model0, cmd0 model0 )
 
 
 {-| Start a pipeline from a command and a model.

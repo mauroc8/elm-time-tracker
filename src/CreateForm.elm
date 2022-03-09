@@ -87,6 +87,7 @@ type alias Config msg =
     , changedDescription : String -> msg
     , elapsedTime : Text.Text
     , pressedStop : msg
+    , pressedEnter : msg
     , pressedEscape : msg
     , language : Text.Language
     }
@@ -131,8 +132,10 @@ view config =
                     Html.Attributes.id descriptionInputId
 
                  -- Key events
-                 , Utils.Events.onEnter config.pressedStop
-                 , Utils.Events.onEscape config.pressedEscape
+                 , Utils.Events.onKeyDown
+                    [ ( "Enter", config.pressedEnter )
+                    , ( "Escape", config.pressedEscape )
+                    ]
                  ]
                     ++ font Colors.blackText
                 )
@@ -173,8 +176,8 @@ subscriptions :
     -> Sub msg
 subscriptions { currentTime, gotCurrentTime } createForm =
     Time.every
-        (Utils.Duration.secondsNeededToChangeTheResultOfToString
-            (duration { currentTime = currentTime } createForm)
+        (duration { currentTime = currentTime } createForm
+            |> Utils.Duration.secondsNeededToChangeTheResultOfToString
             |> (*) 1000
             |> toFloat
         )

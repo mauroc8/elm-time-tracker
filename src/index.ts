@@ -4,7 +4,9 @@ import { Elm } from './Main.elm';
 const elm = Elm.Main.init({
     node: document.getElementById("root"),
     flags: {
-        ...storageFlags([ 'createForm', 'recordList', 'settings' ])
+        createForm: readStore('createForm'),
+        recordList: readStore('recordList'),
+        settings: readStore('settings')
     }
 })
 
@@ -20,26 +22,12 @@ function setItem(key: string, value: Json): void {
     localStorage.setItem(key, JSON.stringify(value))
 }
 
-function storageFlags<Stores extends string>(
-    stores: Stores[]
-): { [Store in Stores]: Json | undefined } {
-    return stores.reduce(
-        (stores, storeKey) =>
-            ({ ...stores, [storeKey]: getItem(storeKey) }),
-        {} as { [Store in Stores]: Json | undefined }
-    )
-}
-
-function getItem(key: string): Json | undefined {
+function readStore(key: string): Json {
     const str = localStorage.getItem(key)
 
-    if (str === null) {
-        return undefined;
-    }
-
     try {
-        return JSON.parse(str);
+        return str && JSON.parse(str);
     } catch (e) {
-        return undefined;
+        return null;
     }
 }

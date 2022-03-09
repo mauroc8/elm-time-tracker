@@ -193,7 +193,7 @@ viewExtras { language, emphasis } selectedConfig =
         ]
         [ Text.text12
             language
-            (Text.JoinWords
+            (Text.Words
                 [ selectedConfig.startTime
                 , Text.Text "•"
                 , selectedConfig.endTime

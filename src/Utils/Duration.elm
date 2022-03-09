@@ -58,72 +58,101 @@ toText (DurationInSeconds totalSeconds) =
             totalHours - days * 24
 
         minutes =
-            totalMinutes - hours * 60
+            totalMinutes - totalHours * 60
 
         seconds =
-            totalSeconds - minutes * 60
+            totalSeconds - totalMinutes * 60
     in
-    case ( hours, minutes, seconds ) of
-        ( 0, 0, 1 ) ->
-            Text.JoinWords
-                [ Text.Integer 1
-                , Text.Second
-                ]
+    case ( days, hours, minutes ) of
+        ( 0, 0, 0 ) ->
+            -- Only shows seconds if there are no minutes, hours or days
+            secondsToText seconds
 
-        ( 0, 0, s ) ->
-            Text.JoinWords
-                [ Text.Integer s
-                , Text.Seconds
-                ]
-
-        ( h, m, _ ) ->
-            [ hoursToString h
-            , minutesToString m
+        _ ->
+            [ daysToText days
+            , hoursToText hours
+            , minutesToText minutes
             ]
                 |> List.filterMap identity
-                |> Text.JoinWords
+                |> Text.Words
 
 
-hoursToString : Int -> Maybe Text.Text
-hoursToString h =
+daysToText days =
+    case days of
+        0 ->
+            Nothing
+
+        1 ->
+            Text.Words
+                [ Text.Integer 1
+                , Text.Day
+                ]
+                |> Just
+
+        _ ->
+            Text.Words
+                [ Text.Integer days
+                , Text.Days
+                ]
+                |> Just
+
+
+hoursToText : Int -> Maybe Text.Text
+hoursToText h =
     case h of
         0 ->
             Nothing
 
         1 ->
-            Text.JoinWords
+            Text.Words
                 [ Text.Integer 1
                 , Text.Hour
                 ]
                 |> Just
 
         _ ->
-            Text.JoinWords
+            Text.Words
                 [ Text.Integer h
                 , Text.Hours
                 ]
                 |> Just
 
 
-minutesToString : Int -> Maybe Text.Text
-minutesToString m =
+minutesToText : Int -> Maybe Text.Text
+minutesToText m =
     case m of
         0 ->
             Nothing
 
         1 ->
-            Text.JoinWords
+            Text.Words
                 [ Text.Integer 1
                 , Text.Minute
                 ]
                 |> Just
 
         _ ->
-            Text.JoinWords
+            Text.Words
                 [ Text.Integer m
                 , Text.Minutes
                 ]
                 |> Just
+
+
+secondsToText : Int -> Text.Text
+secondsToText s =
+    case s of
+        1 ->
+            Text.Words
+                [ Text.Integer 1
+                , Text.Second
+                ]
+
+        _ ->
+            Text.Words
+                [ Text.Integer s
+                , Text.Seconds
+                ]
 
 
 {-| Given a `duration`, this function returns the amount of seconds that need to be added

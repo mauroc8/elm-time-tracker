@@ -15,6 +15,7 @@ import RecordList exposing (RecordList)
 import Settings exposing (Settings)
 
 
+{-| -}
 type Store a
     = Store
         { key : String
@@ -54,14 +55,22 @@ settings =
 ---
 
 
-save : Store a -> a -> Cmd msg
-save (Store { key, encode }) value =
+{-| Overrides the current store value with a new value.
+-}
+save : { store : Store a, value : a } -> Cmd msg
+save { store, value } =
+    let
+        (Store { key, encode }) =
+            store
+    in
     setItem
         { key = key
         , value = encode value
         }
 
 
+{-| Deletes the store value
+-}
 clear : Store a -> Cmd msg
 clear (Store { key }) =
     setItem
@@ -77,6 +86,8 @@ port setItem : { key : String, value : Json.Decode.Value } -> Cmd msg
 ---
 
 
+{-| Loads the initial state from flags
+-}
 load : { store : Store a, flags : Json.Decode.Value } -> Result Json.Decode.Error a
 load { store, flags } =
     let

@@ -1,6 +1,5 @@
 module Utils.Events exposing
-    ( onEnter
-    , onEscape
+    ( onKeyDown
     , onPointerDown
     )
 
@@ -11,30 +10,25 @@ import Html.Events.Extra.Pointer
 import Json.Decode as Decode
 
 
-{-| -}
-onEnter : msg -> Element.Attribute msg
-onEnter msg =
-    onKeyDown "Enter" msg
+onKeyDown : List ( String, msg ) -> Element.Attribute msg
+onKeyDown msgs =
+    let
+        decodeKey msgs_ key =
+            case msgs_ of
+                ( eventKey, msg ) :: tail ->
+                    if eventKey == key then
+                        Decode.succeed msg
 
+                    else
+                        decodeKey tail key
 
-onEscape : msg -> Element.Attribute msg
-onEscape msg =
-    onKeyDown "Escape" msg
-
-
-onKeyDown : String -> a -> Element.Attribute a
-onKeyDown key msg =
+                _ ->
+                    Decode.fail "onKeyDown"
+    in
     Element.htmlAttribute
-        (Html.Events.on "keyup"
+        (Html.Events.on "keydown"
             (Decode.field "key" Decode.string
-                |> Decode.andThen
-                    (\eventKey ->
-                        if eventKey == key then
-                            Decode.succeed msg
-
-                        else
-                            Decode.fail ("Not the " ++ key ++ " key")
-                    )
+                |> Decode.andThen (decodeKey msgs)
             )
         )
 
