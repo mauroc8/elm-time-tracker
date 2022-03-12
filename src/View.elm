@@ -118,19 +118,8 @@ backgroundColor color =
 
 backgroundTransition : BackgroundColor -> Attribute msg
 backgroundTransition color =
-    let
-        easing =
-            case color of
-                Gray ->
-                    "ease-in"
-
-                White ->
-                    "ease-out"
-    in
     Element.htmlAttribute <|
-        Html.Attributes.style "transition" <|
-            "background-color 0.23s "
-                ++ easing
+        Html.Attributes.style "transition" "background-color 0.23s ease-in"
 
 
 horizontalDivider : BackgroundColor -> Element msg
@@ -270,7 +259,7 @@ recordListButton { emphasis, onClick, label } =
          , Border.width 1
          , Border.color Colors.transparent
          ]
-            ++ overflowClickableRegion 12
+            ++ overflowClickableRegion 8
         )
         { onPress =
             case emphasis of

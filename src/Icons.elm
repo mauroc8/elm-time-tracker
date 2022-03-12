@@ -310,7 +310,7 @@ trash =
             []
         , Svg.path
             [ d "M8.5 2.5V1.5C8.5 1.23478 8.39464 0.98043 8.20711 0.792893C8.01957 0.605357 7.76522 0.5 7.5 0.5H4.5C4.23478 0.5 3.98043 0.605357 3.79289 0.792893C3.60536 0.98043 3.5 1.23478 3.5 1.5V2.5"
-            , stroke (Colors.toCss Colors.accent)
+            , stroke "currentColor"
             , strokeLinecap "round"
             , strokeLinejoin "round"
             ]

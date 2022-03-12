@@ -17,6 +17,7 @@ import Icons
 import Json.Decode
 import Json.Encode
 import Text
+import Utils
 import Utils.Date
 import View
 
@@ -57,6 +58,7 @@ type alias Config msg =
     , changedLanguage : Text.Language -> msg
     , pressedSettingsCancelButton : msg
     , pressedSettingsDoneButton : msg
+    , viewport : View.Viewport
     }
 
 
@@ -64,9 +66,26 @@ view : Config msg -> Element msg
 view config =
     Element.column
         [ Element.width Element.fill
-        , Element.height Element.fill
-        , Element.padding 24
-        , Element.spacing 24
+        , case config.viewport of
+            View.Mobile ->
+                Element.height Element.fill
+
+            View.Desktop ->
+                Utils.emptyAttribute
+        , Element.padding <|
+            case config.viewport of
+                View.Mobile ->
+                    24
+
+                View.Desktop ->
+                    48
+        , Element.spacing <|
+            case config.viewport of
+                View.Mobile ->
+                    24
+
+                View.Desktop ->
+                    32
         ]
         [ settingsHeader config.language
         , settingsBody config
@@ -150,8 +169,10 @@ settingsBody config =
                             , View.horizontalDivider View.White
                             ]
                 in
-                [ Element.Input.optionWith Text.English (customRadioWithDivider Text.EnglishLanguage)
-                , Element.Input.optionWith Text.Spanish (customRadio Text.SpanishLanguage)
+                [ customRadioWithDivider Text.EnglishLanguage
+                    |> Element.Input.optionWith Text.English
+                , customRadio Text.SpanishLanguage
+                    |> Element.Input.optionWith Text.Spanish
                 ]
             }
         ]
@@ -170,10 +191,11 @@ settingsGroup children =
 
 
 settingsFooter : Config msg -> Element msg
-settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton, language } =
+settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton, language, viewport } =
     Element.row
         [ Element.alignBottom
         , Element.width Element.fill
+        , Element.spacing 32
         ]
         [ View.linkLikeButton
             { onPress = pressedSettingsCancelButton
@@ -181,12 +203,20 @@ settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton, languag
             , language = language
             , bold = False
             }
-        , Element.el [ Element.alignRight ]
-            (View.linkLikeButton
-                { onPress = pressedSettingsDoneButton
-                , label = Text.Save
-                , language = language
-                , bold = True
-                }
-            )
+            |> Element.el
+                [ case viewport of
+                    View.Mobile ->
+                        Utils.emptyAttribute
+
+                    View.Desktop ->
+                        Element.alignRight
+                ]
+        , View.linkLikeButton
+            { onPress = pressedSettingsDoneButton
+            , label = Text.Save
+            , language = language
+            , bold = True
+            }
+            |> Element.el
+                [ Element.alignRight ]
         ]

@@ -19,6 +19,7 @@ import Icons
 import Json.Decode
 import LocalStorage
 import Platform exposing (Task)
+import PreventClose
 import Record exposing (Record)
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
@@ -148,6 +149,11 @@ selectRecord id model =
     { model | selectedRecord = Just id }
 
 
+unselectRecord : Model -> Model
+unselectRecord model =
+    { model | selectedRecord = Nothing }
+
+
 editDateNotation : Utils.Date.Notation -> Model -> Model
 editDateNotation dateNotation model =
     case model.action of
@@ -182,32 +188,36 @@ editLanguage language model =
             }
 
 
-startCreatingRecord : String -> Time.Posix -> Model -> ( Model, Cmd Msg )
-startCreatingRecord description time model =
+startCreatingRecord : String -> Model -> ( Model, Cmd Msg )
+startCreatingRecord description model =
     model
-        |> setAction (CreatingRecord (CreateForm.new description time))
+        |> setAction (CreatingRecord (CreateForm.new description model.currentTime))
+        |> unselectRecord
         |> Out.withCmd
             (\_ ->
                 Browser.Dom.focus CreateForm.descriptionInputId
                     |> Task.attempt FocusedCreateFormDescriptionInput
             )
+        |> Out.addCmd (\_ -> PreventClose.on)
 
 
-stopCreatingRecord : Time.Posix -> Model -> Model
-stopCreatingRecord time model =
+stopCreatingRecord : Model -> ( Model, Cmd Msg )
+stopCreatingRecord model =
     case model.action of
         CreatingRecord createForm ->
             let
                 record =
-                    Record.fromCreateForm time createForm
+                    Record.fromCreateForm model.currentTime createForm
             in
             model
                 |> pushRecord record
                 |> setAction Idle
                 |> selectRecord record.id
+                |> Out.withCmd (\_ -> PreventClose.off)
 
         _ ->
             model
+                |> Out.withNoCmd
 
 
 pushRecord : Record -> Model -> Model
@@ -454,7 +464,7 @@ update msg model =
         GotStartButtonPressTime time ->
             model
                 |> setCurrentTime time
-                |> startCreatingRecord "" time
+                |> startCreatingRecord ""
                 |> Out.addCmd saveCreateForm
 
         PressedStopButton ->
@@ -463,9 +473,8 @@ update msg model =
 
         GotStopTime time ->
             model
-                |> stopCreatingRecord time
                 |> setCurrentTime time
-                |> Out.withNoCmd
+                |> stopCreatingRecord
                 |> Out.addCmd saveCreateForm
                 |> Out.addCmd saveRecords
 
@@ -488,8 +497,14 @@ update msg model =
 
         -- Record List
         SelectRecord id ->
-            { model | selectedRecord = Just id }
-                |> Out.withNoCmd
+            case model.action of
+                Idle ->
+                    { model | selectedRecord = Just id }
+                        |> Out.withNoCmd
+
+                _ ->
+                    model
+                        |> Out.withNoCmd
 
         ClickedDeleteButton id ->
             { model | records = RecordList.delete id model.records }
@@ -516,7 +531,7 @@ update msg model =
         GotResumeButtonTime description time ->
             model
                 |> setCurrentTime time
-                |> startCreatingRecord description time
+                |> startCreatingRecord description
                 |> Out.addCmd saveCreateForm
 
 
@@ -632,6 +647,7 @@ viewConfig model =
                 , changedLanguage = ChangedLanguage
                 , pressedSettingsCancelButton = PressedSettingsCancelButton
                 , pressedSettingsDoneButton = PressedSettingsDoneButton
+                , viewport = model.viewport
                 }
 
         CreatingRecord createForm ->
@@ -654,6 +670,7 @@ viewConfig model =
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
                 , language = model.language
+                , viewport = model.viewport
                 }
 
         EditingRecord editForm ->
@@ -665,6 +682,7 @@ viewConfig model =
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
                 , language = model.language
+                , viewport = model.viewport
                 }
 
         Idle ->
@@ -676,6 +694,7 @@ viewConfig model =
                 , clickedSettings = PressedSettingsButton
                 , changedSearchQuery = SearchQueryChanged
                 , language = model.language
+                , viewport = model.viewport
                 }
 
 

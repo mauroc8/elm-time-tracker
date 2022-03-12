@@ -1,5 +1,7 @@
 module Utils exposing (..)
 
+import Element
+import Html.Attributes
 import Json.Decode
 import Json.Encode
 
@@ -45,3 +47,8 @@ nullableDecoder decoder =
 debugLog : String -> a -> a
 debugLog str value =
     Debug.log str value
+
+
+emptyAttribute : Element.Attribute msg
+emptyAttribute =
+    Element.htmlAttribute (Html.Attributes.class "")

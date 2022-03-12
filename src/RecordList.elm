@@ -127,32 +127,30 @@ type Config msg
     | ManyRecords (List (Record.Config msg))
 
 
-view : { a | language : Text.Language, emphasis : Emphasis } -> Config msg -> Element msg
-view { emphasis, language } config =
+view : { a | viewport : View.Viewport, language : Text.Language, emphasis : Emphasis } -> Config msg -> Element msg
+view ({ emphasis } as context) config =
     case config of
         EmptyRecords ->
-            emptyState
+            emptyState context
                 { message = Text.PressTheStartButtonToCreateARecord
-                , language = language
                 }
                 |> emptyBodyLayout emphasis
 
         NoSearchResults ->
-            emptyState
+            emptyState context
                 { message = Text.NothingFound
-                , language = language
                 }
                 |> emptyBodyLayout emphasis
 
         ManyRecords records ->
             records
-                |> List.map (Record.view emphasis)
+                |> List.map (Record.view context)
                 |> List.intersperse (View.recordListHorizontalDivider emphasis)
                 |> bodyWithRecordsLayout emphasis
 
 
-emptyState : { language : Text.Language, message : Text.Text } -> Element msg
-emptyState { language, message } =
+emptyState : { a | language : Text.Language } -> { message : Text.Text } -> Element msg
+emptyState { language } { message } =
     Element.paragraph
         [ Element.centerY
         , Element.width Element.fill

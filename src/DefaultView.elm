@@ -28,27 +28,56 @@ type alias Config msg =
     , clickedSettings : msg
     , changedSearchQuery : String -> msg
     , language : Text.Language
+    , viewport : View.Viewport
     }
 
 
 view : Config msg -> Element msg
-view ({ emphasis, searchQuery, records, sidebar, clickedSettings, changedSearchQuery } as config) =
-    Element.column
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        ]
-        [ -- Search
-          searchSection config
-            |> withHeaderLayout emphasis
-            |> withHorizontalDivider emphasis
+view ({ emphasis, records, sidebar, viewport } as config) =
+    let
+        viewRecordListWithSearch =
+            [ -- Search
+              searchSection config
+                |> withHeaderLayout config
+                |> withHorizontalDivider emphasis
 
-        -- RecordList
-        , RecordList.view config records
+            -- RecordList
+            , RecordList.view config records
+            ]
 
-        -- Sidebar
-        , Sidebar.view sidebar
-            |> withFooterLayout emphasis
-        ]
+        viewSidebar =
+            [ Sidebar.view sidebar
+                |> Element.el
+                    [ Element.width (Element.fill |> Element.maximum 600)
+                    , Element.padding 24
+                    , Element.centerX
+                    ]
+                |> Element.el
+                    (Element.width Element.fill :: View.sidebarBackgroundColor emphasis)
+            ]
+    in
+    case viewport of
+        View.Mobile ->
+            Element.column
+                [ Element.width Element.fill
+                , Element.height Element.fill
+                ]
+                (viewRecordListWithSearch ++ viewSidebar)
+
+        View.Desktop ->
+            Element.column
+                [ Element.width Element.fill
+                , Element.height Element.fill
+                ]
+                (viewSidebar
+                    ++ [ Element.column
+                            [ Element.width (Element.fill |> Element.maximum 600)
+                            , Element.centerX
+                            , Element.height Element.fill
+                            ]
+                            viewRecordListWithSearch
+                       ]
+                )
 
 
 
@@ -66,10 +95,19 @@ searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings } as
         ]
 
 
-withHeaderLayout : View.Emphasis -> Element msg -> Element msg
-withHeaderLayout emphasis =
+withHeaderLayout : { config | emphasis : View.Emphasis, viewport : View.Viewport } -> Element msg -> Element msg
+withHeaderLayout { emphasis, viewport } =
+    let
+        padding =
+            case viewport of
+                View.Mobile ->
+                    Element.padding 16
+
+                View.Desktop ->
+                    Element.paddingXY 0 16
+    in
     Element.el
-        [ Element.padding 16
+        [ padding
         , Element.width Element.fill
         ]
 
@@ -82,16 +120,6 @@ withHorizontalDivider emphasis el =
         [ el
         , View.recordListHorizontalDivider emphasis
         ]
-
-
-withFooterLayout : Emphasis -> Element msg -> Element msg
-withFooterLayout emphasis =
-    Element.el
-        ([ Element.width Element.fill
-         , Element.padding 24
-         ]
-            ++ View.sidebarBackgroundColor emphasis
-        )
 
 
 settingsButton :
@@ -144,7 +172,7 @@ searchInput ({ emphasis, searchQuery, changedSearchQuery, language } as config) 
             }
         , Border.width border
         , Border.color Colors.transparent
-        , Element.inFront (clearButton (searchButtonConfig config))
+        , Element.inFront (clearButton language (searchButtonConfig config))
         , Font.size 16
         ]
         { onChange = changedSearchQuery
@@ -188,8 +216,8 @@ searchIcon =
         Icons.search
 
 
-clearButton : SearchButtonConfig msg -> Element msg
-clearButton config =
+clearButton : Text.Language -> SearchButtonConfig msg -> Element msg
+clearButton language config =
     let
         ( fontColor, onPress ) =
             case config of
@@ -207,7 +235,8 @@ clearButton config =
         { onPress = onPress
         , label =
             Element.el
-                [ Element.Region.description "Clear search"
+                [ Element.Region.description
+                    (Text.toString language Text.ClearSearch)
                 ]
                 Icons.xButton
         }

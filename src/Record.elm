@@ -125,14 +125,25 @@ encode record =
 --- VIEW
 
 
-view : View.Emphasis -> Config msg -> Element msg
-view emphasis { description, date, duration, status, language } =
+view :
+    { context | emphasis : View.Emphasis, viewport : View.Viewport }
+    -> Config msg
+    -> Element msg
+view { emphasis, viewport } { description, date, duration, status, language } =
     let
+        wrapperPadding =
+            case viewport of
+                View.Mobile ->
+                    Element.padding 16
+
+                View.Desktop ->
+                    Element.paddingXY 0 16
+
         wrapper children =
             case status of
                 NotSelected { select } ->
                     Element.column
-                        [ Element.padding 16
+                        [ wrapperPadding
                         , Element.spacing 10
                         , Element.width Element.fill
                         , Element.htmlAttribute <|
@@ -142,7 +153,7 @@ view emphasis { description, date, duration, status, language } =
 
                 Selected selectedConfig ->
                     Element.column
-                        [ Element.padding 16
+                        [ wrapperPadding
                         , Element.spacing 16
                         , Element.width Element.fill
                         ]

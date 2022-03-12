@@ -124,8 +124,11 @@ view config =
                     , right = 0
                     , top = 0
                     }
-                 , Element.Border.color Colors.accent
                  , Element.Border.rounded 0
+                 , Element.Border.color Colors.lighterGrayText
+                 , Element.focused
+                    [ Element.Border.color Colors.accent
+                    ]
 
                  -- Focus
                  , Element.htmlAttribute <|

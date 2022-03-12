@@ -81,6 +81,7 @@ type
       -- Record List
     | SearchPlaceholder
     | Search
+    | ClearSearch
     | NoDescription
       -- Operators
     | Text String
@@ -118,7 +119,7 @@ toString lang text =
             "USA date format (mm/dd/yyyy)"
 
         ( UsaDateNotation, Spanish ) ->
-            "Fechas en formato de EEUU (mm/dd/yyyy)"
+            "Fechas en formato de EEUU (mm/dd/aaaa)"
 
         ( LanguageLabel, English ) ->
             "Language"
@@ -179,6 +180,12 @@ toString lang text =
 
         ( Search, Spanish ) ->
             "Buscar"
+
+        ( ClearSearch, English ) ->
+            "Clear"
+
+        ( ClearSearch, Spanish ) ->
+            "Limpiar"
 
         ( NoDescription, English ) ->
             "no description"
