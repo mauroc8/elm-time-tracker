@@ -14,20 +14,6 @@ import View
 type Config msg
     = Idle { pressedStart : msg }
     | CreatingRecord (CreateForm.Config msg)
-    | EditingRecord
-        { description : String
-        , changedDescription : String -> msg
-        , startTime : String
-        , changedStartTime : String -> msg
-        , duration : String
-        , changedDuration : String -> msg
-        , endTime : String
-        , changedEndTime : String -> msg
-        , date : String
-        , changedDate : String -> msg
-        , pressedCancel : msg
-        , pressedSave : msg
-        }
 
 
 view : Config msg -> Element msg
@@ -43,6 +29,3 @@ view config =
 
         CreatingRecord createFormConfig ->
             CreateForm.view createFormConfig
-
-        EditingRecord {} ->
-            Element.none

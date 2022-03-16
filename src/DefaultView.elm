@@ -85,14 +85,22 @@ view ({ emphasis, records, sidebar, viewport } as config) =
 
 
 searchSection : Config msg -> Element msg
-searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings } as config) =
+searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings, viewport } as config) =
     Element.row
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-        [ settingsButton config
-        , searchInput config
-        ]
+    <|
+        case viewport of
+            View.Mobile ->
+                [ settingsButton config
+                , searchInput config
+                ]
+
+            View.Desktop ->
+                [ searchInput config
+                , settingsButton config
+                ]
 
 
 withHeaderLayout : { config | emphasis : View.Emphasis, viewport : View.Viewport } -> Element msg -> Element msg

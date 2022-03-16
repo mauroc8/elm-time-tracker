@@ -64,28 +64,26 @@ type alias Config msg =
 
 view : Config msg -> Element msg
 view config =
+    let
+        ( padding, spacing ) =
+            case config.viewport of
+                View.Mobile ->
+                    ( 24, 24 )
+
+                View.Desktop ->
+                    ( 48, 32 )
+    in
     Element.column
         [ Element.width Element.fill
+        , Element.centerX
         , case config.viewport of
             View.Mobile ->
                 Element.height Element.fill
 
             View.Desktop ->
-                Utils.emptyAttribute
-        , Element.padding <|
-            case config.viewport of
-                View.Mobile ->
-                    24
-
-                View.Desktop ->
-                    48
-        , Element.spacing <|
-            case config.viewport of
-                View.Mobile ->
-                    24
-
-                View.Desktop ->
-                    32
+                Element.width (Element.maximum 600 Element.fill)
+        , Element.padding padding
+        , Element.spacing spacing
         ]
         [ settingsHeader config.language
         , settingsBody config
@@ -131,6 +129,11 @@ settingsBody config =
         , Element.Input.radio
             [ Background.color Colors.whiteBackground
             , Element.Border.rounded 8
+            , Element.Border.width 1
+            , Element.Border.color Colors.transparent
+            , Element.focused
+                [ Element.Border.color Colors.accent
+                ]
             , Element.width Element.fill
             ]
             { onChange = config.changedLanguage
@@ -140,30 +143,47 @@ settingsBody config =
                     Text.toString config.language Text.LanguageLabel
             , options =
                 let
+                    label text =
+                        Text.text14 config.language text
+                            |> Element.el [ Element.width Element.fill ]
+
                     customRadio text optionState =
-                        Element.row
-                            [ Element.width Element.fill
-                            , Element.padding 16
-                            ]
-                            [ Text.text14 config.language text
-                                |> Element.el [ Element.width Element.fill ]
-                            , case optionState of
-                                Element.Input.Idle ->
-                                    Element.none
+                        case optionState of
+                            Element.Input.Idle ->
+                                Element.row
+                                    [ Element.width Element.fill
+                                    , Element.padding 16
+                                    ]
+                                    [ label text
+                                    , Element.none
                                         |> Element.el [ Element.height (Element.px 16) ]
+                                    ]
 
-                                Element.Input.Focused ->
-                                    Icons.check16
+                            Element.Input.Focused ->
+                                Element.row
+                                    [ Element.width Element.fill
+                                    , Element.padding 16
+                                    ]
+                                    [ label text
+                                    , Icons.check16
                                         |> Element.el [ Element.Font.color Colors.accent ]
+                                    ]
 
-                                Element.Input.Selected ->
-                                    Icons.check16
-                                        |> Element.el [ Element.Font.color Colors.blackishText ]
-                            ]
+                            Element.Input.Selected ->
+                                Element.row
+                                    [ Element.width Element.fill
+                                    , Element.padding 16
+                                    ]
+                                    [ label text
+                                    , Icons.check16
+                                        |> Element.el [ Element.Font.color Colors.accent ]
+                                    ]
 
                     customRadioWithDivider text optionState =
                         Element.column
                             [ Element.width Element.fill
+                            , Element.Border.width 1
+                            , Element.Border.color Colors.transparent
                             ]
                             [ customRadio text optionState
                             , View.horizontalDivider View.White

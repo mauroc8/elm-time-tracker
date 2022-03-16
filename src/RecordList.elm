@@ -73,8 +73,6 @@ encode : RecordList -> Json.Encode.Value
 encode recordList =
     recordList
         |> toList
-        -- No more than 100 records are allowed (for performance reasons) TODO: Check if 100 is too low
-        |> List.take 100
         |> Json.Encode.list Record.encode
 
 
@@ -101,7 +99,11 @@ toList : RecordList -> List Record
 toList (RecordList records) =
     Dict.toList records
         |> List.map Tuple.second
+        -- The dict is ordered by startDateTime. The order should be from latest to earliest startDateTime
         |> List.reverse
+        -- The super intelligent garbage collector (for performance reasons there can't be many records)
+        -- TODO: Check if 100 is too low
+        |> List.take 100
 
 
 push : Record -> RecordList -> RecordList
@@ -175,7 +177,6 @@ bodyWithRecordsLayout emphasis children =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.scrollbarY
         ]
         [ Element.column
             [ Element.width Element.fill

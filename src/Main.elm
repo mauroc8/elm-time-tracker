@@ -70,7 +70,7 @@ init flags =
 
 
 type alias Model =
-    { -- Entities
+    { -- Records
       records : RecordList
 
     -- UI
@@ -334,7 +334,6 @@ appliedSettings model =
 type Action
     = Idle
     | CreatingRecord CreateForm
-    | EditingRecord EditForm
     | ChangingSettings Settings
 
 
@@ -381,7 +380,7 @@ type Msg
     | PressedSettingsDoneButton
     | ChangedDateNotation Utils.Date.Notation
     | ChangedLanguage Language
-      -- Create record
+      -- Create Record
     | PressedStartButton
     | GotStartButtonPressTime Time.Posix
     | PressedStopButton
@@ -393,13 +392,17 @@ type Msg
       -- Record List
     | SelectRecord Record.Id
     | ClickedDeleteButton Record.Id
-    | ClickedEditButton Record.Id
     | ClickedResumeButton String
     | GotResumeButtonTime String Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        stop : Cmd Msg
+        stop =
+            Task.perform GotStopTime Time.now
+    in
     case msg of
         -- Context
         GotTimeZone zone ->
@@ -471,6 +474,10 @@ update msg model =
             stop
                 |> Out.withModel model
 
+        PressedEnterInCreateRecord ->
+            stop
+                |> Out.withModel model
+
         GotStopTime time ->
             model
                 |> setCurrentTime time
@@ -481,10 +488,6 @@ update msg model =
         ChangedCreateFormDescription description ->
             changeCreateFormDescription description model
                 |> Out.withCmd saveCreateForm
-
-        PressedEnterInCreateRecord ->
-            stop
-                |> Out.withModel model
 
         PressedEscapeInCreateRecord ->
             model
@@ -510,20 +513,6 @@ update msg model =
             { model | records = RecordList.delete id model.records }
                 |> Out.withCmd saveRecords
 
-        ClickedEditButton id ->
-            { model
-                | action =
-                    EditingRecord
-                        { id = id
-                        , description = ""
-                        , start = ""
-                        , end = ""
-                        , duration = ""
-                        , date = ""
-                        }
-            }
-                |> Out.withNoCmd
-
         ClickedResumeButton description ->
             Task.perform (GotResumeButtonTime description) Time.now
                 |> Out.withModel model
@@ -533,11 +522,6 @@ update msg model =
                 |> setCurrentTime time
                 |> startCreatingRecord description
                 |> Out.addCmd saveCreateForm
-
-
-stop : Cmd Msg
-stop =
-    Task.perform GotStopTime Time.now
 
 
 
@@ -610,6 +594,7 @@ rootAttributes config =
             [ Element.width Element.fill
             , Element.height Element.fill
             , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
+            , Element.scrollbarX
             ]
     in
     case config of
@@ -673,18 +658,6 @@ viewConfig model =
                 , viewport = model.viewport
                 }
 
-        EditingRecord editForm ->
-            Default
-                { emphasis = View.Sidebar
-                , searchQuery = model.searchQuery
-                , records = recordsConfig model
-                , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
-                , clickedSettings = PressedSettingsButton
-                , changedSearchQuery = SearchQueryChanged
-                , language = model.language
-                , viewport = model.viewport
-                }
-
         Idle ->
             Default
                 { emphasis = View.RecordList
@@ -699,7 +672,7 @@ viewConfig model =
 
 
 recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery, selectedRecord, currentTime, dateNotation, timeZone, language } =
+recordsConfig { records, searchQuery, selectedRecord, currentTime, dateNotation, timeZone, language, viewport } =
     let
         searchResults =
             RecordList.search searchQuery records
@@ -718,12 +691,12 @@ recordsConfig { records, searchQuery, selectedRecord, currentTime, dateNotation,
                     { selectedRecordId = selectedRecord
                     , selectRecord = SelectRecord
                     , clickedDeleteButton = ClickedDeleteButton
-                    , clickedEditButton = ClickedEditButton
                     , clickedResumeButton = ClickedResumeButton
                     , currentTime = currentTime
                     , dateNotation = dateNotation
                     , timeZone = timeZone
                     , language = language
+                    , viewport = viewport
                     }
                 )
             |> RecordList.ManyRecords

@@ -259,7 +259,7 @@ recordListButton { emphasis, onClick, label } =
          , Border.width 1
          , Border.color Colors.transparent
          ]
-            ++ overflowClickableRegion 8
+         -- ++ overflowClickableRegion 8
         )
         { onPress =
             case emphasis of
@@ -279,7 +279,7 @@ recordListButtonColor emphasis =
             Colors.accent
 
         Sidebar ->
-            Colors.grayText
+            Colors.lighterGrayText
 
 
 settingsBackgroundColor : List (Element.Attribute msg)
@@ -328,6 +328,8 @@ linkLikeButton { onPress, label, language, bold } =
 
            else
             Font.regular
+         , Border.color Colors.transparent
+         , Border.width 1
          ]
             ++ overflowClickableRegion 16
         )
@@ -379,7 +381,7 @@ type Viewport
 
 fromScreenWidth : Int -> Viewport
 fromScreenWidth screenWidth =
-    if screenWidth < 600 then
+    if screenWidth < 650 then
         Mobile
 
     else
