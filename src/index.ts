@@ -42,5 +42,7 @@ elm.ports.setPreventClose.subscribe((preventClose: boolean) => {
 });
 
 function askForCloseConfirmation(event: any) {
-    return (event || window.event).returnValue = "Are you sure?";
+    return (event || window.event).returnValue =
+        // Modern browsers ignore this message
+        "Are you sure?";
 }

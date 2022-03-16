@@ -2,8 +2,8 @@ module Utils.Out exposing
     ( addCmd
     , andThen
     , map2
+    , mapCmd
     , mapModel
-    , mapMsg
     , withCmd
     , withModel
     , withNoCmd
@@ -86,8 +86,8 @@ andThen f ( model0, cmd0 ) =
 
 {-| Letting go.
 -}
-mapMsg : (msg0 -> msg1) -> ( model, Cmd msg0 ) -> ( model, Cmd msg1 )
-mapMsg f ( model0, cmd0 ) =
+mapCmd : (msg0 -> msg1) -> ( model, Cmd msg0 ) -> ( model, Cmd msg1 )
+mapCmd f ( model0, cmd0 ) =
     ( model0, Cmd.map f cmd0 )
 
 
