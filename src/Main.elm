@@ -419,7 +419,7 @@ update msg model =
 
         VisibilityChanged visibility ->
             { model | visibility = visibility }
-                |> Out.withNoCmd
+                |> Out.withCmd (\_ -> Time.now |> Task.perform GotCurrentTime)
 
         ViewportWidthChanged width ->
             setViewport { screenWidth = width } model
@@ -594,7 +594,6 @@ rootAttributes config =
             [ Element.width Element.fill
             , Element.height Element.fill
             , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
-            , Element.scrollbarX
             ]
     in
     case config of

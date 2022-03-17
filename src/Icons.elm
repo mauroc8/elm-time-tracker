@@ -127,7 +127,7 @@ playButton =
             , cy "26"
             , r "25"
             , fill "white"
-            , stroke (Colors.toCss Colors.lightGrayText)
+            , stroke "currentColor"
             , strokeWidth "2"
             ]
             []

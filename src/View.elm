@@ -10,7 +10,6 @@ module View exposing
     , fromScreenWidth
     , horizontalDivider
     , linkLikeButton
-    , overflowClickableRegion
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListButton
@@ -254,13 +253,12 @@ recordListButton :
     }
     -> Element msg
 recordListButton { emphasis, onClick, label } =
-    button
-        ([ Font.color (recordListButtonColor emphasis)
-         , Border.width 1
-         , Border.color Colors.transparent
-         ]
-         -- ++ overflowClickableRegion 8
-        )
+    overflowClickableRegion 6
+        button
+        [ Font.color (recordListButtonColor emphasis)
+        , Border.width 1
+        , Border.color Colors.transparent
+        ]
         { onPress =
             case emphasis of
                 RecordList ->
@@ -300,11 +298,18 @@ This makes buttons easier to click on mobile devices.
 Shouldn't use this on elements with padding or "width fill".
 
 -}
-overflowClickableRegion : Int -> List (Attribute msg)
-overflowClickableRegion value =
-    [ Element.htmlAttribute (Html.Attributes.style "padding" <| String.fromInt value ++ "px")
-    , Element.htmlAttribute (Html.Attributes.style "margin" <| "-" ++ String.fromInt value ++ "px")
-    ]
+overflowClickableRegion : Int -> (List (Attribute msg) -> prop -> Element a) -> List (Attribute msg) -> prop -> Element a
+overflowClickableRegion value constructor attrs prop =
+    Element.el
+        []
+    <|
+        constructor
+            ([ Element.htmlAttribute (Html.Attributes.style "padding" <| String.fromInt value ++ "px")
+             , Element.htmlAttribute (Html.Attributes.style "margin" <| "-" ++ String.fromInt value ++ "px")
+             ]
+                ++ attrs
+            )
+            prop
 
 
 
@@ -321,18 +326,17 @@ linkLikeButton :
     }
     -> Element msg
 linkLikeButton { onPress, label, language, bold } =
-    Input.button
-        ([ Font.color Colors.accent
-         , if bold then
+    overflowClickableRegion 12
+        Input.button
+        [ Font.color Colors.accent
+        , if bold then
             Font.semiBold
 
-           else
+          else
             Font.regular
-         , Border.color Colors.transparent
-         , Border.width 1
-         ]
-            ++ overflowClickableRegion 16
-        )
+        , Border.color Colors.transparent
+        , Border.width 1
+        ]
         { onPress = Just onPress
         , label = Text.text16 language label
         }

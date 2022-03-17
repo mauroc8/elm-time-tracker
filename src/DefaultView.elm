@@ -62,12 +62,20 @@ view ({ emphasis, records, sidebar, viewport } as config) =
                 [ Element.width Element.fill
                 , Element.height Element.fill
                 ]
-                (viewRecordListWithSearch ++ viewSidebar)
+                (Element.column
+                    [ Element.width Element.fill
+                    , Element.height Element.fill
+                    , Element.scrollbarX
+                    ]
+                    viewRecordListWithSearch
+                    :: viewSidebar
+                )
 
         View.Desktop ->
             Element.column
                 [ Element.width Element.fill
                 , Element.height Element.fill
+                , Element.scrollbarX
                 ]
                 (viewSidebar
                     ++ [ Element.column
@@ -233,12 +241,15 @@ clearButton language config =
                     ( Colors.lighterGrayText, View.disabled )
 
                 Searching msg ->
-                    ( Colors.accent, View.enabled msg )
+                    ( Colors.grayText, View.enabled msg )
     in
     View.button
         [ Element.padding 10
         , Element.alignRight
         , Font.color fontColor
+        , Element.focused
+            [ Font.color Colors.accent
+            ]
         ]
         { onPress = onPress
         , label =

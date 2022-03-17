@@ -66,6 +66,8 @@ type
     Text
     -- Settings
     = SettingsHeading
+    | DateNotationLabel
+    | InternationalDateNotation
     | UsaDateNotation
     | LanguageLabel
     | EnglishLanguage
@@ -115,11 +117,23 @@ toString lang text =
         ( SettingsHeading, Spanish ) ->
             "Opciones"
 
+        ( DateNotationLabel, English ) ->
+            "Date notation"
+
+        ( DateNotationLabel, Spanish ) ->
+            "Formato de fechas"
+
+        ( InternationalDateNotation, English ) ->
+            "International date notation (dd/mm/yyyy)"
+
+        ( InternationalDateNotation, Spanish ) ->
+            "Formato de fecha internacional (dd/mm/yyyy)"
+
         ( UsaDateNotation, English ) ->
-            "USA date format (mm/dd/yyyy)"
+            "USA date notation (mm/dd/yyyy)"
 
         ( UsaDateNotation, Spanish ) ->
-            "Fechas en formato de EEUU (mm/dd/aaaa)"
+            "Formato de fecha de EE.UU. (mm/dd/yyyy)"
 
         ( LanguageLabel, English ) ->
             "Language"

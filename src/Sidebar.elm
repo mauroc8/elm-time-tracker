@@ -1,7 +1,9 @@
 module Sidebar exposing (Config(..), view)
 
+import Colors
 import CreateForm
 import Element exposing (Element)
+import Element.Font
 import Element.Input
 import Icons
 import View
@@ -22,6 +24,10 @@ view config =
         Idle { pressedStart } ->
             View.button
                 [ Element.centerX
+                , Element.Font.color Colors.lightGrayText
+                , Element.focused
+                    [ Element.Font.color Colors.accent
+                    ]
                 ]
                 { onPress = View.enabled pressedStart
                 , label = Icons.playButton

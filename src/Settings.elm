@@ -16,7 +16,7 @@ import Element.Region
 import Icons
 import Json.Decode
 import Json.Encode
-import Text
+import Text exposing (Text(..))
 import Utils
 import Utils.Date
 import View
@@ -106,96 +106,115 @@ settingsBody config =
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-        [ Element.el
-            [ Element.Border.rounded 8
-            , Background.color Colors.whiteBackground
-            , Element.width Element.fill
-            ]
-            (View.settingsToggle
-                { label = Text.UsaDateNotation
-                , language = config.language
-                , checked = config.dateNotation == Utils.Date.unitedStatesNotation
-                , onChange =
-                    \val ->
-                        config.changedDateNotation <|
-                            if val then
-                                Utils.Date.unitedStatesNotation
-
-                            else
-                                Utils.Date.westernNotation
-                , padding = 16
-                }
-            )
-        , Element.Input.radio
-            [ Background.color Colors.whiteBackground
-            , Element.Border.rounded 8
-            , Element.Border.width 1
-            , Element.Border.color Colors.transparent
-            , Element.focused
-                [ Element.Border.color Colors.accent
-                ]
-            , Element.width Element.fill
-            ]
-            { onChange = config.changedLanguage
-            , selected = Just config.language
-            , label =
-                Element.Input.labelHidden <|
-                    Text.toString config.language Text.LanguageLabel
+        [ radioInputGroup
+            { onChange = config.changedDateNotation
+            , selected = config.dateNotation
+            , label = Text.DateNotationLabel
+            , language = config.language
             , options =
-                let
-                    label text =
-                        Text.text14 config.language text
-                            |> Element.el [ Element.width Element.fill ]
-
-                    customRadio text optionState =
-                        case optionState of
-                            Element.Input.Idle ->
-                                Element.row
-                                    [ Element.width Element.fill
-                                    , Element.padding 16
-                                    ]
-                                    [ label text
-                                    , Element.none
-                                        |> Element.el [ Element.height (Element.px 16) ]
-                                    ]
-
-                            Element.Input.Focused ->
-                                Element.row
-                                    [ Element.width Element.fill
-                                    , Element.padding 16
-                                    ]
-                                    [ label text
-                                    , Icons.check16
-                                        |> Element.el [ Element.Font.color Colors.accent ]
-                                    ]
-
-                            Element.Input.Selected ->
-                                Element.row
-                                    [ Element.width Element.fill
-                                    , Element.padding 16
-                                    ]
-                                    [ label text
-                                    , Icons.check16
-                                        |> Element.el [ Element.Font.color Colors.accent ]
-                                    ]
-
-                    customRadioWithDivider text optionState =
-                        Element.column
-                            [ Element.width Element.fill
-                            , Element.Border.width 1
-                            , Element.Border.color Colors.transparent
-                            ]
-                            [ customRadio text optionState
-                            , View.horizontalDivider View.White
-                            ]
-                in
-                [ customRadioWithDivider Text.EnglishLanguage
-                    |> Element.Input.optionWith Text.English
-                , customRadio Text.SpanishLanguage
-                    |> Element.Input.optionWith Text.Spanish
+                [ { text = Text.InternationalDateNotation, value = Utils.Date.westernNotation }
+                , { text = Text.UsaDateNotation, value = Utils.Date.unitedStatesNotation }
+                ]
+            }
+        , radioInputGroup
+            { onChange = config.changedLanguage
+            , selected = config.language
+            , label = Text.LanguageLabel
+            , language = config.language
+            , options =
+                [ { text = Text.EnglishLanguage, value = Text.English }
+                , { text = Text.SpanishLanguage, value = Text.Spanish }
                 ]
             }
         ]
+
+
+radioInputGroup :
+    { onChange : a -> msg
+    , selected : a
+    , label : Text.Text
+    , language : Text.Language
+    , options : List { text : Text.Text, value : a }
+    }
+    -> Element msg
+radioInputGroup config =
+    Element.Input.radio
+        [ Background.color Colors.whiteBackground
+        , Element.Border.rounded 8
+        , Element.Border.width 1
+        , Element.Border.color Colors.transparent
+        , Element.focused
+            [ Element.Border.color Colors.accent
+            ]
+        , Element.width Element.fill
+        ]
+        { onChange = config.onChange
+        , selected = Just config.selected
+        , label =
+            Element.Input.labelHidden <|
+                Text.toString config.language Text.LanguageLabel
+        , options =
+            let
+                label text =
+                    Text.text14 config.language text
+                        |> Element.el [ Element.width Element.fill ]
+
+                customRadio text optionState =
+                    case optionState of
+                        Element.Input.Idle ->
+                            Element.row
+                                [ Element.width Element.fill
+                                , Element.padding 16
+                                ]
+                                [ label text
+                                , Element.none
+                                    |> Element.el [ Element.height (Element.px 16) ]
+                                ]
+
+                        Element.Input.Focused ->
+                            Element.row
+                                [ Element.width Element.fill
+                                , Element.padding 16
+                                ]
+                                [ label text
+                                , Icons.check16
+                                    |> Element.el [ Element.Font.color Colors.accent ]
+                                ]
+
+                        Element.Input.Selected ->
+                            Element.row
+                                [ Element.width Element.fill
+                                , Element.padding 16
+                                ]
+                                [ label text
+                                , Icons.check16
+                                    |> Element.el [ Element.Font.color Colors.accent ]
+                                ]
+
+                customRadioWithDivider text optionState =
+                    Element.column
+                        [ Element.width Element.fill
+                        , Element.Border.width 1
+                        , Element.Border.color Colors.transparent
+                        ]
+                        [ View.horizontalDivider View.White
+                        , customRadio text optionState
+                        ]
+
+                radioWithDividerFromOption option =
+                    customRadioWithDivider option.text
+                        |> Element.Input.optionWith option.value
+            in
+            case config.options of
+                option :: otherOptions ->
+                    (customRadio option.text
+                        |> Element.Input.optionWith option.value
+                    )
+                        :: List.map radioWithDividerFromOption otherOptions
+
+                [] ->
+                    []
+        }
 
 
 settingsGroup : List (Element msg) -> Element msg
