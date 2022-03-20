@@ -6,6 +6,7 @@ module Settings exposing
     , view
     )
 
+import Calendar
 import Colors
 import Element exposing (Element)
 import Element.Background as Background
@@ -17,6 +18,7 @@ import Icons
 import Json.Decode
 import Json.Encode
 import Text exposing (Text(..))
+import Time
 import Utils
 import Utils.Date
 import View
@@ -59,6 +61,7 @@ type alias Config msg =
     , pressedSettingsCancelButton : msg
     , pressedSettingsDoneButton : msg
     , viewport : View.Viewport
+    , today : Calendar.Date
     }
 
 
@@ -106,14 +109,40 @@ settingsBody config =
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-        [ radioInputGroup
+        [ let
+            label blackText grayText =
+                (case config.viewport of
+                    View.Mobile ->
+                        Element.column
+
+                    View.Desktop ->
+                        Element.row
+                )
+                    [ Element.spacing 8 ]
+                    [ Text.text14 config.language blackText
+                    , Text.text12 config.language grayText
+                        |> Element.el
+                            [ Element.Font.color Colors.grayText
+                            , Element.alignBottom
+                            ]
+                    ]
+          in
+          radioInputGroup
             { onChange = config.changedDateNotation
             , selected = config.dateNotation
             , label = Text.DateNotationLabel
             , language = config.language
             , options =
-                [ { text = Text.InternationalDateNotation, value = Utils.Date.westernNotation }
-                , { text = Text.UsaDateNotation, value = Utils.Date.unitedStatesNotation }
+                [ { label =
+                        label Text.InternationalDateNotation
+                            (Utils.Date.toText Utils.Date.westernNotation config.today)
+                  , value = Utils.Date.westernNotation
+                  }
+                , { label =
+                        label Text.UsaDateNotation
+                            (Utils.Date.toText Utils.Date.unitedStatesNotation config.today)
+                  , value = Utils.Date.unitedStatesNotation
+                  }
                 ]
             }
         , radioInputGroup
@@ -122,8 +151,12 @@ settingsBody config =
             , label = Text.LanguageLabel
             , language = config.language
             , options =
-                [ { text = Text.EnglishLanguage, value = Text.English }
-                , { text = Text.SpanishLanguage, value = Text.Spanish }
+                [ { label = Text.text14 config.language Text.EnglishLanguage
+                  , value = Text.English
+                  }
+                , { label = Text.text14 config.language Text.SpanishLanguage
+                  , value = Text.Spanish
+                  }
                 ]
             }
         ]
@@ -134,7 +167,7 @@ radioInputGroup :
     , selected : a
     , label : Text.Text
     , language : Text.Language
-    , options : List { text : Text.Text, value : a }
+    , options : List { label : Element msg, value : a }
     }
     -> Element msg
 radioInputGroup config =
@@ -152,23 +185,23 @@ radioInputGroup config =
         , selected = Just config.selected
         , label =
             Element.Input.labelHidden <|
-                Text.toString config.language Text.LanguageLabel
+                Text.toString config.language config.label
         , options =
             let
-                label text =
-                    Text.text14 config.language text
-                        |> Element.el [ Element.width Element.fill ]
-
-                customRadio text optionState =
+                customRadio label optionState =
                     case optionState of
                         Element.Input.Idle ->
                             Element.row
                                 [ Element.width Element.fill
                                 , Element.padding 16
                                 ]
-                                [ label text
+                                [ label
+                                    |> Element.el [ Element.width Element.fill ]
                                 , Element.none
-                                    |> Element.el [ Element.height (Element.px 16) ]
+                                    |> Element.el
+                                        [ Element.width (Element.px 16)
+                                        , Element.height (Element.px 16)
+                                        ]
                                 ]
 
                         Element.Input.Focused ->
@@ -176,7 +209,8 @@ radioInputGroup config =
                                 [ Element.width Element.fill
                                 , Element.padding 16
                                 ]
-                                [ label text
+                                [ label
+                                    |> Element.el [ Element.width Element.fill ]
                                 , Icons.check16
                                     |> Element.el [ Element.Font.color Colors.accent ]
                                 ]
@@ -186,7 +220,8 @@ radioInputGroup config =
                                 [ Element.width Element.fill
                                 , Element.padding 16
                                 ]
-                                [ label text
+                                [ label
+                                    |> Element.el [ Element.width Element.fill ]
                                 , Icons.check16
                                     |> Element.el [ Element.Font.color Colors.accent ]
                                 ]
@@ -202,12 +237,12 @@ radioInputGroup config =
                         ]
 
                 radioWithDividerFromOption option =
-                    customRadioWithDivider option.text
+                    customRadioWithDivider option.label
                         |> Element.Input.optionWith option.value
             in
             case config.options of
                 option :: otherOptions ->
-                    (customRadio option.text
+                    (customRadio option.label
                         |> Element.Input.optionWith option.value
                     )
                         :: List.map radioWithDividerFromOption otherOptions

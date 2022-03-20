@@ -1,11 +1,21 @@
-module Utils.Date exposing (Notation, encodeNotation, notationDecoder, relativeDateLabel, toZonedPosix, unitedStatesNotation, westernNotation)
+module Utils.Date exposing
+    ( Notation
+    , encodeNotation
+    , fromZoneAndPosix
+    , notationDecoder
+    , relativeDateLabel
+    , toText
+    , toZonedPosix
+    , unitedStatesNotation
+    , westernNotation
+    )
 
 import Calendar
 import Clock
 import DateTime
 import Json.Decode
 import Json.Encode
-import Text
+import Text exposing (Text(..))
 import Time
 import Utils
 
@@ -54,6 +64,22 @@ unitedStatesNotation =
 
 
 ---
+
+
+toText : Notation -> Calendar.Date -> Text.Text
+toText notation date =
+    case notation of
+        UnitedStates ->
+            Text.UsaDate
+                (Calendar.getMonth date)
+                (Calendar.getDay date)
+                (Calendar.getYear date)
+
+        Western ->
+            Text.InternationalDate
+                (Calendar.getDay date)
+                (Calendar.getMonth date)
+                (Calendar.getYear date)
 
 
 relativeDateLabel :
@@ -122,3 +148,8 @@ toZonedPosix zone posix =
             Time.posixToMillis posix
     in
     Time.millisToPosix (millis + offset)
+
+
+fromZoneAndPosix : Time.Zone -> Time.Posix -> Calendar.Date
+fromZoneAndPosix timeZone time =
+    Calendar.fromPosix (toZonedPosix timeZone time)

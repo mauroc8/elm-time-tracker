@@ -260,7 +260,7 @@ loadRecordList flags model =
         , flags = flags
         }
         |> Result.map (\recordList -> { model | records = recordList })
-        |> Result.mapError (Utils.debugLog "loadRecordList")
+        |> Result.mapError (Utils.debugError "loadRecordList")
         |> Result.withDefault model
 
 
@@ -271,7 +271,7 @@ loadSettings flags model =
         , flags = flags
         }
         |> Result.map (\settings -> setSettings settings model)
-        |> Result.mapError (Utils.debugLog "loadSettings")
+        |> Result.mapError (Utils.debugError "loadSettings")
         |> Result.withDefault model
 
 
@@ -632,6 +632,7 @@ viewConfig model =
                 , pressedSettingsCancelButton = PressedSettingsCancelButton
                 , pressedSettingsDoneButton = PressedSettingsDoneButton
                 , viewport = model.viewport
+                , today = Utils.Date.fromZoneAndPosix model.timeZone model.currentTime
                 }
 
         CreatingRecord createForm ->

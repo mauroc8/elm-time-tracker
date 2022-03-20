@@ -1,4 +1,10 @@
-module Utils exposing (..)
+module Utils exposing
+    ( debugError
+    , decodeLiteral
+    , emptyAttribute
+    , encodeNullable
+    , nullableDecoder
+    )
 
 import Element
 import Html.Attributes
@@ -42,6 +48,11 @@ nullableDecoder decoder =
         , Json.Decode.null
             Nothing
         ]
+
+
+debugError : String -> a -> a
+debugError str value =
+    debugLog ("Error: " ++ str) value
 
 
 debugLog : String -> a -> a

@@ -124,16 +124,16 @@ toString lang text =
             "Formato de fechas"
 
         ( InternationalDateNotation, English ) ->
-            "International date notation (dd/mm/yyyy)"
+            "International date notation"
 
         ( InternationalDateNotation, Spanish ) ->
-            "Formato de fecha internacional (dd/mm/yyyy)"
+            "Formato de fecha internacional"
 
         ( UsaDateNotation, English ) ->
-            "USA date notation (mm/dd/yyyy)"
+            "USA date notation"
 
         ( UsaDateNotation, Spanish ) ->
-            "Formato de fecha de EE.UU. (mm/dd/yyyy)"
+            "Formato de fecha de EE.UU."
 
         ( LanguageLabel, English ) ->
             "Language"

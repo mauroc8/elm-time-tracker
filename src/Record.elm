@@ -174,8 +174,8 @@ config viewConfig record =
     { description = record.description
     , date =
         Utils.Date.relativeDateLabel
-            { today = Calendar.fromPosix (Utils.Date.toZonedPosix timeZone currentTime)
-            , date = Calendar.fromPosix (Utils.Date.toZonedPosix timeZone record.startDateTime)
+            { today = Utils.Date.fromZoneAndPosix timeZone currentTime
+            , date = Utils.Date.fromZoneAndPosix timeZone record.startDateTime
             , dateNotation = dateNotation
             }
     , duration =
