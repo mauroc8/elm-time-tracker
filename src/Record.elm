@@ -366,12 +366,10 @@ viewExtras { language, emphasis } extrasConfig =
             , onClick = extrasConfig.clickedResumeButton
             , label = Icons.play
             }
-            |> Element.el []
     , deleteButton =
         View.recordListButton
             { emphasis = emphasis
             , onClick = extrasConfig.clickedDeleteButton
             , label = Icons.trash
             }
-            |> Element.el []
     }

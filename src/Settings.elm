@@ -90,6 +90,7 @@ view config =
         ]
         [ settingsHeader config.language
         , settingsBody config
+        , aboutLink config
         , settingsFooter config
         ]
 
@@ -109,7 +110,21 @@ settingsBody config =
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-        [ let
+        [ radioInputGroup
+            { onChange = config.changedLanguage
+            , selected = config.language
+            , label = Text.LanguageLabel
+            , language = config.language
+            , options =
+                [ { label = Text.text14 config.language Text.EnglishLanguage
+                  , value = Text.English
+                  }
+                , { label = Text.text14 config.language Text.SpanishLanguage
+                  , value = Text.Spanish
+                  }
+                ]
+            }
+        , let
             label blackText grayText =
                 (case config.viewport of
                     View.Mobile ->
@@ -145,21 +160,40 @@ settingsBody config =
                   }
                 ]
             }
-        , radioInputGroup
-            { onChange = config.changedLanguage
-            , selected = config.language
-            , label = Text.LanguageLabel
-            , language = config.language
-            , options =
-                [ { label = Text.text14 config.language Text.EnglishLanguage
-                  , value = Text.English
-                  }
-                , { label = Text.text14 config.language Text.SpanishLanguage
-                  , value = Text.Spanish
-                  }
-                ]
-            }
         ]
+
+
+aboutLink config =
+    let
+        color =
+            Colors.blackishText
+
+        focusColor =
+            Colors.accent
+
+        zero =
+            { top = 0, left = 0, right = 0, bottom = 0 }
+    in
+    Element.newTabLink
+        [ Element.Font.color color
+
+        --
+        , Element.paddingEach { zero | bottom = 4 }
+        , Element.Border.widthEach { zero | bottom = 1 }
+        , Element.Border.color color
+        , Element.focused
+            [ Element.Font.color focusColor
+            , Element.Border.color focusColor
+            ]
+        ]
+        { url = "https://github.com/mauroc8/simple-time-tracker#readme"
+        , label =
+            Element.row
+                [ Element.spacing 6 ]
+                [ Text.text14 config.language Text.AboutThisWebsite
+                , Icons.externalLink
+                ]
+        }
 
 
 radioInputGroup :

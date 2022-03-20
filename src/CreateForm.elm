@@ -159,7 +159,11 @@ view config =
                 (Text.text12 config.language config.elapsedTime)
             ]
         , View.button
-            []
+            [ Element.Font.color Colors.lightGrayText
+            , Element.focused
+                [ Element.Font.color Colors.accent
+                ]
+            ]
             { onPress = View.enabled config.pressedStop
             , label = Icons.stopButton
             }

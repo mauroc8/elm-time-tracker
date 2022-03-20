@@ -74,6 +74,7 @@ type
     | SpanishLanguage
     | Cancel
     | Save
+    | AboutThisWebsite
       -- Create Form
     | WhatAreYouWorkingOn
     | DescriptionLabel
@@ -158,6 +159,12 @@ toString lang text =
 
         ( Save, Spanish ) ->
             "Guardar"
+
+        ( AboutThisWebsite, English ) ->
+            "About this website"
+
+        ( AboutThisWebsite, Spanish ) ->
+            "Acerca de este sitio"
 
         -- Create Form
         ( WhatAreYouWorkingOn, English ) ->
@@ -399,67 +406,52 @@ monthToString month =
 
 
 --- FONT SIZE
+-- Note: this is overengineered because I tried some experiments with it.
 
 
 text12 : Language -> Text -> Element msg
 text12 =
     textWith
-        { lineHeight = 9
-        , fontSize = 12
+        { fontSize = 12
         }
 
 
 text13 : Language -> Text -> Element msg
 text13 =
     textWith
-        { lineHeight = 11
-        , fontSize = 13
+        { fontSize = 13
         }
 
 
 text14 : Language -> Text -> Element msg
 text14 =
     textWith
-        { lineHeight = 10
-        , fontSize = 14
+        { fontSize = 14
         }
 
 
 text16 : Language -> Text -> Element msg
 text16 =
     textWith
-        { lineHeight = 12
-        , fontSize = 16
+        { fontSize = 16
         }
 
 
 text24 : Language -> Text -> Element msg
 text24 =
     textWith
-        { lineHeight = 19
-        , fontSize = 24
+        { fontSize = 24
         }
 
 
 textWith :
-    { lineHeight : Int
-    , fontSize : Int
+    { fontSize : Int
     }
     -> Language
     -> Text
     -> Element msg
-textWith { lineHeight, fontSize } language text =
+textWith { fontSize } language text =
     Element.el
         [ Font.size fontSize
-        , lineHeightAttr lineHeight
         ]
         (Element.text (toString language text))
-
-
-lineHeightAttr : Int -> Attribute msg
-lineHeightAttr value =
-    Element.htmlAttribute
-        (Html.Attributes.style
-            "line-height"
-            (String.fromInt value ++ "px")
-        )

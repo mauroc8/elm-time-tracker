@@ -153,7 +153,7 @@ stopButton =
             , cy "26"
             , r "25"
             , fill "white"
-            , stroke (Colors.toCss Colors.lightGrayText)
+            , stroke "currentColor"
             , strokeWidth "2"
             ]
             []
@@ -336,3 +336,36 @@ check16 =
             []
         ]
         |> Element.html
+
+
+externalLink =
+    svg
+        [ width "14"
+        , height "14"
+        , viewBox "0 0 14 14"
+        , fill "none"
+        ]
+        [ Svg.path
+            [ d "M13.375 5.21875V1H9.15625"
+            , stroke "currentColor"
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M8.3125 6.0625L13.375 1"
+            , stroke "currentColor"
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        , Svg.path
+            [ d "M11.125 8.3125V12.8125C11.125 12.9617 11.0657 13.1048 10.9602 13.2102C10.8548 13.3157 10.7117 13.375 10.5625 13.375H1.5625C1.41332 13.375 1.27024 13.3157 1.16475 13.2102C1.05926 13.1048 1 12.9617 1 12.8125V3.8125C1 3.66332 1.05926 3.52024 1.16475 3.41475C1.27024 3.30926 1.41332 3.25 1.5625 3.25H6.0625"
+            , stroke "currentColor"
+            , strokeLinecap "round"
+            , strokeLinejoin "round"
+            ]
+            []
+        ]
+        |> Element.html
+        |> Element.el []
