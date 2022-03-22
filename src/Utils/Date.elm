@@ -11,11 +11,10 @@ module Utils.Date exposing
     )
 
 import Calendar
-import Clock
 import DateTime
 import Json.Decode
 import Json.Encode
-import Text exposing (Text(..))
+import Text
 import Time
 import Utils
 

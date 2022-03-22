@@ -1,6 +1,6 @@
 
 # Time tracker
 
-This is a demo time tracker web application.
+A simple time tracker application.
 
 Your data is saved in your local device only.

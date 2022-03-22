@@ -17,8 +17,7 @@ import Element.Region
 import Icons
 import Json.Decode
 import Json.Encode
-import Text exposing (Text(..))
-import Time
+import Text
 import Utils
 import Utils.Date
 import View
@@ -163,6 +162,7 @@ settingsBody config =
         ]
 
 
+aboutLink : { a | language : Text.Language } -> Element msg
 aboutLink config =
     let
         color =
@@ -284,18 +284,6 @@ radioInputGroup config =
                 [] ->
                     []
         }
-
-
-settingsGroup : List (Element msg) -> Element msg
-settingsGroup children =
-    Element.column
-        [ Element.Border.rounded 8
-        , Background.color Colors.whiteBackground
-        , Element.width Element.fill
-        ]
-        (children
-            |> List.intersperse (View.horizontalDivider View.White)
-        )
 
 
 settingsFooter : Config msg -> Element msg

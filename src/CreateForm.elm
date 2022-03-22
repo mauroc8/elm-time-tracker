@@ -3,7 +3,6 @@ module CreateForm exposing
     , CreateForm
     , decoder
     , descriptionInputId
-    , duration
     , encode
     , new
     , subscriptions
@@ -14,10 +13,9 @@ import Colors
 import Element exposing (Element)
 import Element.Background
 import Element.Border
-import Element.Font exposing (Font)
+import Element.Font
 import Element.Input
 import Html.Attributes
-import Html.Events
 import Icons
 import Json.Decode
 import Json.Encode
@@ -67,6 +65,7 @@ decodePosix =
 ---
 
 
+encode : CreateForm -> Json.Encode.Value
 encode createForm =
     Json.Encode.object
         [ ( "start", encodePosix createForm.start )
@@ -74,6 +73,7 @@ encode createForm =
         ]
 
 
+encodePosix : Time.Posix -> Json.Encode.Value
 encodePosix posix =
     Json.Encode.int (Time.posixToMillis posix)
 

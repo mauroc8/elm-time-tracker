@@ -1,4 +1,17 @@
-module Colors exposing (..)
+module Colors exposing
+    ( accent
+    , blackText
+    , blackishText
+    , darkGrayBackground
+    , grayBackground
+    , grayText
+    , lightGrayText
+    , lighterGrayText
+    , red
+    , toCss
+    , transparent
+    , whiteBackground
+    )
 
 import Element exposing (Color)
 
@@ -26,11 +39,6 @@ blackText =
 blackishText : Color
 blackishText =
     Element.rgb255 46 46 46
-
-
-darkGrayText : Color
-darkGrayText =
-    Element.rgb255 73 73 73
 
 
 grayText : Color

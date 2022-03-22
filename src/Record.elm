@@ -1,6 +1,7 @@
 module Record exposing
     ( Config
     , ConfigStatus(..)
+    , ExtrasConfig
     , Id
     , Record
     , config
@@ -10,16 +11,11 @@ module Record exposing
     , view
     )
 
-import Calendar
 import Clock
 import Colors
 import CreateForm
-import DateTime exposing (DateTime)
 import Element exposing (Element)
 import Element.Font
-import Html.Attributes exposing (start)
-import Html.Events
-import Html.Events.Extra.Pointer
 import Icons exposing (playButton)
 import Json.Decode
 import Json.Encode

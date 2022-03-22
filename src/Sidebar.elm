@@ -4,7 +4,6 @@ import Colors
 import CreateForm
 import Element exposing (Element)
 import Element.Font
-import Element.Input
 import Icons
 import View
 

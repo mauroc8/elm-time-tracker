@@ -6,7 +6,6 @@ module Utils.Duration exposing
     , toText
     )
 
-import DateTime exposing (DateTime)
 import Text
 import Time
 
@@ -59,12 +58,13 @@ toText (DurationInSeconds totalSeconds) =
 
         minutes =
             totalMinutes - totalHours * 60
-
-        seconds =
-            totalSeconds - totalMinutes * 60
     in
     case ( days, hours, minutes ) of
         ( 0, 0, 0 ) ->
+            let
+                seconds =
+                    totalSeconds - totalMinutes * 60
+            in
             -- Only shows seconds if there are no minutes, hours or days
             secondsToText seconds
 
@@ -77,6 +77,7 @@ toText (DurationInSeconds totalSeconds) =
                 |> Text.Words
 
 
+daysToText : Int -> Maybe Text.Text
 daysToText days =
     case days of
         0 ->

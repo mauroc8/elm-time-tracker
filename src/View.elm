@@ -4,7 +4,6 @@ module View exposing
     , Emphasis(..)
     , Viewport(..)
     , button
-    , columnWithHorizontalDivider
     , disabled
     , enabled
     , fromScreenWidth
@@ -15,25 +14,17 @@ module View exposing
     , recordListButton
     , recordListHorizontalDivider
     , settingsBackgroundColor
-    , settingsToggle
     , sidebarBackgroundColor
     )
 
-import Browser
-import Browser.Dom
 import Colors
-import DateTime
-import Dict exposing (Dict)
 import Element exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Font as Font exposing (Font)
+import Element.Font as Font
 import Element.Input as Input
-import Element.Region
-import Html exposing (Html)
 import Html.Attributes
-import Icons
-import Text exposing (Language)
+import Text
 
 
 
@@ -55,16 +46,6 @@ enabled msg =
 disabled : ButtonHandler msg
 disabled =
     Disabled
-
-
-toMaybe : ButtonHandler msg -> Maybe msg
-toMaybe pressHandler =
-    case pressHandler of
-        Enabled msg ->
-            Just msg
-
-        Disabled ->
-            Nothing
 
 
 button :
@@ -115,8 +96,8 @@ backgroundColor color =
                 Colors.grayBackground
 
 
-backgroundTransition : BackgroundColor -> Attribute msg
-backgroundTransition color =
+backgroundTransition : Attribute msg
+backgroundTransition =
     Element.htmlAttribute <|
         Html.Attributes.style "transition" "background-color 0.23s ease-in"
 
@@ -133,42 +114,9 @@ horizontalDivider bgColor =
 
                 Gray ->
                     Colors.darkGrayBackground
-        , backgroundTransition bgColor
+        , backgroundTransition
         ]
         Element.none
-
-
-columnWithHorizontalDivider : BackgroundColor -> List (Element.Attribute msg) -> List (Element msg) -> Element msg
-columnWithHorizontalDivider bgColor attrs children =
-    Element.column
-        ([ Element.width Element.fill
-         , Element.spacing 1
-         , Background.color <|
-            -- Divider color
-            case bgColor of
-                White ->
-                    Colors.grayBackground
-
-                Gray ->
-                    Colors.darkGrayBackground
-         ]
-            ++ attrs
-        )
-        (children
-            |> List.map
-                (Element.el
-                    [ Element.width Element.fill
-                    , Background.color <|
-                        -- Background color
-                        case bgColor of
-                            White ->
-                                Colors.whiteBackground
-
-                            Gray ->
-                                Colors.grayBackground
-                    ]
-                )
-        )
 
 
 
@@ -224,7 +172,7 @@ recordListBackgroundColor emphasis =
                     Gray
     in
     [ backgroundColor color
-    , backgroundTransition color
+    , backgroundTransition
     ]
 
 
@@ -240,7 +188,7 @@ sidebarBackgroundColor emphasis =
                     White
     in
     [ backgroundColor color
-    , backgroundTransition color
+    , backgroundTransition
     ]
 
 
@@ -285,7 +233,7 @@ recordListButtonColor emphasis =
 settingsBackgroundColor : List (Element.Attribute msg)
 settingsBackgroundColor =
     [ backgroundColor Gray
-    , backgroundTransition Gray
+    , backgroundTransition
     ]
 
 
@@ -335,38 +283,6 @@ linkLikeButton { onPress, label, language, bold } =
         )
         { onPress = Just onPress
         , label = Text.text16 language label
-        }
-
-
-
---- Toggle (checkbox)
-
-
-settingsToggle :
-    { checked : Bool
-    , onChange : Bool -> msg
-    , label : Text.Text
-    , language : Text.Language
-    , padding : Int
-    }
-    -> Element msg
-settingsToggle { checked, onChange, label, language, padding } =
-    Input.checkbox
-        [ Element.width Element.fill, Element.padding padding ]
-        { onChange = onChange
-        , checked = checked
-        , label =
-            Input.labelLeft [ Element.width Element.fill ]
-                (Text.text14 language label
-                    |> Element.el [ Element.centerY ]
-                )
-        , icon =
-            \value ->
-                if value then
-                    Icons.toggleOn
-
-                else
-                    Icons.toggleOff
         }
 
 

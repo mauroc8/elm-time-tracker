@@ -1,29 +1,21 @@
-module Main exposing (main)
+module Main exposing (Action, Model, Msg, main)
 
 import Browser
 import Browser.Dom
 import Browser.Events
 import Colors
 import CreateForm exposing (CreateForm)
-import DateTime
 import DefaultView
-import Dict exposing (Dict)
 import Element exposing (Attribute, Element)
-import Element.Background as Background
-import Element.Border as Border
-import Element.Font as Font exposing (Font)
-import Element.Input as Input
+import Element.Font as Font
 import Html exposing (Html)
-import Html.Attributes
-import Icons
 import Json.Decode
 import LocalStorage
-import Platform exposing (Task)
 import PreventClose
 import Record exposing (Record)
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
-import Sidebar exposing (Config(..))
+import Sidebar
 import Task
 import Text exposing (Language)
 import Time
@@ -196,7 +188,7 @@ startCreatingRecord description model =
         |> Out.withCmd
             (\_ ->
                 Browser.Dom.focus CreateForm.descriptionInputId
-                    |> Task.attempt FocusedCreateFormDescriptionInput
+                    |> Task.attempt (\_ -> FocusedCreateFormDescriptionInput)
             )
         |> Out.addCmd (\_ -> PreventClose.on)
 
@@ -348,20 +340,6 @@ getActionSettings action =
 
 
 
---- Edit Form
-
-
-type alias EditForm =
-    { id : Record.Id
-    , description : String
-    , start : String
-    , end : String
-    , duration : String
-    , date : String
-    }
-
-
-
 --- UPDATE
 
 
@@ -388,7 +366,7 @@ type Msg
     | ChangedCreateFormDescription String
     | PressedEnterInCreateRecord
     | PressedEscapeInCreateRecord
-    | FocusedCreateFormDescriptionInput (Result Browser.Dom.Error ())
+    | FocusedCreateFormDescriptionInput
       -- Record List
     | SelectRecord Record.Id
     | ClickedDeleteButton Record.Id
@@ -494,7 +472,7 @@ update msg model =
                 |> setAction Idle
                 |> Out.withCmd saveCreateForm
 
-        FocusedCreateFormDescriptionInput _ ->
+        FocusedCreateFormDescriptionInput ->
             model
                 |> Out.withNoCmd
 

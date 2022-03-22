@@ -12,9 +12,8 @@ module Text exposing
     , toString
     )
 
-import Element exposing (Attribute, Element)
+import Element exposing (Element)
 import Element.Font as Font
-import Html.Attributes
 import Json.Decode
 import Json.Encode
 import Time
@@ -181,10 +180,10 @@ toString lang text =
 
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->
-            "Press the Start button to create a record"
+            "Press start to create a record"
 
         ( PressTheStartButtonToCreateARecord, Spanish ) ->
-            "Presiona Play para crear un registro"
+            "Presiona play para crear una entrada"
 
         ( NothingFound, English ) ->
             "Nothing found"

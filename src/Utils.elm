@@ -2,14 +2,11 @@ module Utils exposing
     ( debugError
     , decodeLiteral
     , emptyAttribute
-    , encodeNullable
-    , nullableDecoder
     )
 
 import Element
 import Html.Attributes
 import Json.Decode
-import Json.Encode
 
 
 decodeLiteral : a -> String -> Json.Decode.Decoder a
@@ -28,26 +25,6 @@ decodeLiteral constructor stringLiteral =
                             ++ decodedString
                             ++ "\""
             )
-
-
-encodeNullable : (a -> Json.Encode.Value) -> Maybe a -> Json.Encode.Value
-encodeNullable encoder value =
-    case value of
-        Just x ->
-            encoder x
-
-        Nothing ->
-            Json.Encode.null
-
-
-nullableDecoder : Json.Decode.Decoder a -> Json.Decode.Decoder (Maybe a)
-nullableDecoder decoder =
-    Json.Decode.oneOf
-        [ decoder
-            |> Json.Decode.map Just
-        , Json.Decode.null
-            Nothing
-        ]
 
 
 debugError : String -> a -> a

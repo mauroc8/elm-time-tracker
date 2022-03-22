@@ -1,22 +1,16 @@
 module DefaultView exposing (Config, view)
 
-import Browser
 import Colors
-import DateTime
-import Dict exposing (Dict)
-import Element exposing (Attribute, Element)
+import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Font as Font exposing (Font)
+import Element.Font as Font
 import Element.Input as Input
 import Element.Region
-import Html exposing (Html)
-import Html.Attributes
 import Icons
 import RecordList
-import Settings
 import Sidebar
-import Text exposing (Language)
+import Text
 import View exposing (Emphasis)
 
 
@@ -93,13 +87,13 @@ view ({ emphasis, records, sidebar, viewport } as config) =
 
 
 searchSection : Config msg -> Element msg
-searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings, viewport } as config) =
+searchSection config =
     Element.row
         [ Element.spacing 16
         , Element.width Element.fill
         ]
     <|
-        case viewport of
+        case config.viewport of
             View.Mobile ->
                 [ settingsButton config
                 , searchInput config
@@ -111,8 +105,8 @@ searchSection ({ emphasis, searchQuery, changedSearchQuery, clickedSettings, vie
                 ]
 
 
-withHeaderLayout : { config | emphasis : View.Emphasis, viewport : View.Viewport } -> Element msg -> Element msg
-withHeaderLayout { emphasis, viewport } =
+withHeaderLayout : { config | viewport : View.Viewport } -> Element msg -> Element msg
+withHeaderLayout { viewport } =
     let
         padding =
             case viewport of

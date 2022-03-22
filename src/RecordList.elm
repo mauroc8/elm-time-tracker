@@ -5,7 +5,6 @@ module RecordList exposing
     , delete
     , empty
     , encode
-    , fromList
     , push
     , search
     , toList
@@ -14,7 +13,6 @@ module RecordList exposing
 
 import Colors
 import Dict exposing (Dict)
-import Dict.Extra
 import Element exposing (Element)
 import Element.Font
 import Json.Decode
@@ -136,13 +134,13 @@ view ({ emphasis } as context) config =
             emptyState context
                 { message = Text.PressTheStartButtonToCreateARecord
                 }
-                |> emptyBodyLayout emphasis
+                |> emptyBodyLayout
 
         NoSearchResults ->
             emptyState context
                 { message = Text.NothingFound
                 }
-                |> emptyBodyLayout emphasis
+                |> emptyBodyLayout
 
         ManyRecords records ->
             records
@@ -163,8 +161,8 @@ emptyState { language } { message } =
         [ Text.text16 language message ]
 
 
-emptyBodyLayout : Emphasis -> Element msg -> Element msg
-emptyBodyLayout emphasis =
+emptyBodyLayout : Element msg -> Element msg
+emptyBodyLayout =
     Element.el
         [ Element.width Element.fill
         , Element.height Element.fill
