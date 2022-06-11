@@ -100,8 +100,8 @@ toList (RecordList records) =
         -- The dict is ordered by startDateTime. The order should be from latest to earliest startDateTime
         |> List.reverse
         -- The super intelligent garbage collector (for performance reasons there can't be many records)
-        -- TODO: Check if 100 is too low
-        |> List.take 100
+        -- TODO: why 500?
+        |> List.take 500
 
 
 push : Record -> RecordList -> RecordList
@@ -132,7 +132,13 @@ view ({ emphasis } as context) config =
     case config of
         EmptyRecords ->
             emptyState context
-                { message = Text.PressTheStartButtonToCreateARecord
+                { message =
+                    case emphasis of
+                        View.RecordList ->
+                            Text.PressTheStartButtonToCreateARecord
+
+                        View.Sidebar ->
+                            Text.String ""
                 }
                 |> emptyBodyLayout
 

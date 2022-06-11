@@ -1,7 +1,5 @@
 module Record exposing
     ( Config
-    , ConfigStatus(..)
-    , ExtrasConfig
     , Id
     , Record
     , config
@@ -13,7 +11,7 @@ module Record exposing
 
 import Clock
 import Colors
-import CreateForm
+import CreateRecord
 import Element exposing (Element)
 import Element.Font
 import Icons exposing (playButton)
@@ -23,7 +21,6 @@ import Text
 import Time
 import Utils.Date
 import Utils.Duration
-import Utils.Events
 import Utils.Time
 import View
 
@@ -77,7 +74,7 @@ decoder =
         (Json.Decode.field "durationInSecods" Json.Decode.int)
 
 
-fromCreateForm : Time.Posix -> CreateForm.CreateForm -> Record
+fromCreateForm : Time.Posix -> CreateRecord.CreateRecord -> Record
 fromCreateForm now { description, start } =
     { id = Id (Time.posixToMillis now)
     , description = description
@@ -125,21 +122,9 @@ type alias Config msg =
     { description : String
     , date : Text.Text
     , duration : Text.Text
-    , status : ConfigStatus msg
+    , viewport : View.Viewport
     , language : Text.Language
-    }
-
-
-type ConfigStatus msg
-    = Selected (ExtrasConfig msg)
-    | NotSelected
-        { select : msg
-        }
-    | Desktop (ExtrasConfig msg)
-
-
-type alias ExtrasConfig msg =
-    { startTime : Text.Text
+    , startTime : Text.Text
     , endTime : Text.Text
     , clickedDeleteButton : msg
     , clickedResumeButton : msg
@@ -147,9 +132,7 @@ type alias ExtrasConfig msg =
 
 
 config :
-    { selectedRecordId : Maybe Id
-    , selectRecord : Id -> msg
-    , clickedDeleteButton : Id -> msg
+    { clickedDeleteButton : Id -> msg
     , clickedResumeButton : String -> msg
     , currentTime : Time.Posix
     , dateNotation : Utils.Date.Notation
@@ -161,7 +144,7 @@ config :
     -> Config msg
 config viewConfig record =
     let
-        { selectedRecordId, selectRecord, clickedDeleteButton, language, viewport } =
+        { clickedDeleteButton, language, viewport } =
             viewConfig
 
         { timeZone, clickedResumeButton, currentTime, dateNotation } =
@@ -177,30 +160,16 @@ config viewConfig record =
     , duration =
         Utils.Duration.fromSeconds record.durationInSeconds
             |> Utils.Duration.toText
-    , status =
-        let
-            extrasConfig =
-                { startTime =
-                    Utils.Time.toStringWithAmPm (startTime timeZone record)
-                        |> Text.Text
-                , endTime =
-                    Utils.Time.toStringWithAmPm (endTime timeZone record)
-                        |> Text.Text
-                , clickedDeleteButton = clickedDeleteButton record.id
-                , clickedResumeButton = clickedResumeButton record.description
-                }
-        in
-        if viewport == View.Desktop then
-            Desktop extrasConfig
-
-        else if selectedRecordId == Just record.id then
-            Selected extrasConfig
-
-        else
-            NotSelected
-                { select = selectRecord record.id
-                }
+    , viewport = viewport
     , language = language
+    , startTime =
+        Utils.Time.toStringWithAmPm (startTime timeZone record)
+            |> Text.String
+    , endTime =
+        Utils.Time.toStringWithAmPm (endTime timeZone record)
+            |> Text.String
+    , clickedDeleteButton = clickedDeleteButton record.id
+    , clickedResumeButton = clickedResumeButton record.description
     }
 
 
@@ -208,7 +177,7 @@ view :
     { context | emphasis : View.Emphasis }
     -> Config msg
     -> Element msg
-view { emphasis } { description, date, duration, status, language } =
+view { emphasis } ({ description, date, duration, language } as conf) =
     let
         descriptionHtml =
             let
@@ -217,7 +186,7 @@ view { emphasis } { description, date, duration, status, language } =
                         ( Text.NoDescription, Colors.lighterGrayText )
 
                     else
-                        ( Text.Text description, Colors.blackText )
+                        ( Text.String description, Colors.blackText )
             in
             Text.text16 language nonemptyDescription
                 |> Element.el
@@ -228,15 +197,37 @@ view { emphasis } { description, date, duration, status, language } =
 
         dateHtml =
             Text.text13 language date
-                |> Element.el
-                    [ Element.Font.color Colors.grayText
-                    ]
+                |> Element.el [ Element.Font.color Colors.grayText ]
 
         durationHtml =
             Text.text12 language duration
-                |> Element.el
-                    [ Element.Font.color Colors.grayText
+                |> Element.el [ Element.Font.color Colors.grayText ]
+
+        startEndTime =
+            Text.text12
+                language
+                (Text.Words
+                    [ conf.startTime
+                    , Text.String "•"
+                    , conf.endTime
                     ]
+                )
+                |> Element.el
+                    [ Element.Font.color Colors.grayText ]
+
+        playButton =
+            View.recordListButton
+                { emphasis = emphasis
+                , onClick = conf.clickedResumeButton
+                , label = Icons.play
+                }
+
+        deleteButton =
+            View.recordListButton
+                { emphasis = emphasis
+                , onClick = conf.clickedDeleteButton
+                , label = Icons.trash
+                }
     in
     let
         mobileLayout attrs extras =
@@ -259,23 +250,8 @@ view { emphasis } { description, date, duration, status, language } =
                     ++ extras
                 )
     in
-    case status of
-        NotSelected { select } ->
-            mobileLayout
-                [ Element.htmlAttribute <|
-                    Utils.Events.onPointerDown select
-                ]
-                []
-
-        Selected extrasConfig ->
-            let
-                { startEndTime, playButton, deleteButton } =
-                    viewExtras
-                        { language = language
-                        , emphasis = emphasis
-                        }
-                        extrasConfig
-            in
+    case conf.viewport of
+        View.Mobile ->
             mobileLayout
                 []
                 [ Element.row
@@ -283,28 +259,15 @@ view { emphasis } { description, date, duration, status, language } =
                     , Element.width Element.fill
                     ]
                     [ startEndTime
-                        |> Element.el
-                            [ Element.alignBottom ]
-                    , Element.row
-                        [ Element.alignRight
-                        , Element.spacing 16
-                        , Element.alignBottom
-                        ]
-                        [ deleteButton
-                        , playButton
-                        ]
+                        |> Element.el [ Element.alignBottom ]
+                    , deleteButton
+                        |> Element.el [ Element.alignBottom, Element.alignRight ]
+                    , playButton
+                        |> Element.el [ Element.alignBottom, Element.alignRight ]
                     ]
                 ]
 
-        Desktop extrasConfig ->
-            let
-                { startEndTime, playButton, deleteButton } =
-                    viewExtras
-                        { language = language
-                        , emphasis = emphasis
-                        }
-                        extrasConfig
-            in
+        View.Desktop ->
             Element.column
                 [ Element.paddingXY 0 16
                 , Element.spacing 12
@@ -331,41 +294,3 @@ view { emphasis } { description, date, duration, status, language } =
                         |> Element.el [ Element.alignRight ]
                     ]
                 ]
-
-
-viewExtras :
-    { a
-        | language : Text.Language
-        , emphasis : View.Emphasis
-    }
-    -> ExtrasConfig msg
-    ->
-        { startEndTime : Element msg
-        , playButton : Element msg
-        , deleteButton : Element msg
-        }
-viewExtras { language, emphasis } extrasConfig =
-    { startEndTime =
-        Text.text12
-            language
-            (Text.Words
-                [ extrasConfig.startTime
-                , Text.Text "•"
-                , extrasConfig.endTime
-                ]
-            )
-            |> Element.el
-                [ Element.Font.color Colors.grayText ]
-    , playButton =
-        View.recordListButton
-            { emphasis = emphasis
-            , onClick = extrasConfig.clickedResumeButton
-            , label = Icons.play
-            }
-    , deleteButton =
-        View.recordListButton
-            { emphasis = emphasis
-            , onClick = extrasConfig.clickedDeleteButton
-            , label = Icons.trash
-            }
-    }

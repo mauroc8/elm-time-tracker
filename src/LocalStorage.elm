@@ -8,14 +8,15 @@ port module LocalStorage exposing
     , settings
     )
 
-import CreateForm exposing (CreateForm)
+import CreateRecord exposing (CreateRecord)
 import Json.Decode
 import Json.Encode
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
 
 
-{-| -}
+{-| Available stores.
+-}
 type Store a
     = Store
         { key : String
@@ -24,12 +25,12 @@ type Store a
         }
 
 
-createForm : Store CreateForm
+createForm : Store CreateRecord
 createForm =
     Store
         { key = "createForm"
-        , encode = CreateForm.encode
-        , decoder = CreateForm.decoder
+        , encode = CreateRecord.encode
+        , decoder = CreateRecord.decoder
         }
 
 

@@ -3,8 +3,9 @@ module Main exposing (Action, Model, Msg, main)
 import Browser
 import Browser.Dom
 import Browser.Events
+import Calendar
 import Colors
-import CreateForm exposing (CreateForm)
+import CreateRecord exposing (CreateRecord)
 import DefaultView
 import Element exposing (Attribute, Element)
 import Element.Font as Font
@@ -67,7 +68,6 @@ type alias Model =
 
     -- UI
     , action : Action
-    , selectedRecord : Maybe Record.Id
     , searchQuery : String
 
     -- Settings
@@ -91,7 +91,6 @@ initialModel : Model
 initialModel =
     { action = Idle
     , records = RecordList.empty
-    , selectedRecord = Nothing
     , searchQuery = ""
     , dateNotation = Utils.Date.westernNotation
     , language = Text.defaultLanguage
@@ -136,16 +135,6 @@ setSettings settings model =
     }
 
 
-selectRecord : Record.Id -> Model -> Model
-selectRecord id model =
-    { model | selectedRecord = Just id }
-
-
-unselectRecord : Model -> Model
-unselectRecord model =
-    { model | selectedRecord = Nothing }
-
-
 editDateNotation : Utils.Date.Notation -> Model -> Model
 editDateNotation dateNotation model =
     case model.action of
@@ -183,11 +172,10 @@ editLanguage language model =
 startCreatingRecord : String -> Model -> ( Model, Cmd Msg )
 startCreatingRecord description model =
     model
-        |> setAction (CreatingRecord (CreateForm.new description model.currentTime))
-        |> unselectRecord
+        |> setAction (CreateRecord (CreateRecord.new description model.currentTime))
         |> Out.withCmd
             (\_ ->
-                Browser.Dom.focus CreateForm.descriptionInputId
+                Browser.Dom.focus CreateRecord.descriptionInputId
                     |> Task.attempt (\_ -> FocusedCreateFormDescriptionInput)
             )
         |> Out.addCmd (\_ -> PreventClose.on)
@@ -196,7 +184,7 @@ startCreatingRecord description model =
 stopCreatingRecord : Model -> ( Model, Cmd Msg )
 stopCreatingRecord model =
     case model.action of
-        CreatingRecord createForm ->
+        CreateRecord createForm ->
             let
                 record =
                     Record.fromCreateForm model.currentTime createForm
@@ -204,7 +192,6 @@ stopCreatingRecord model =
             model
                 |> pushRecord record
                 |> setAction Idle
-                |> selectRecord record.id
                 |> Out.withCmd (\_ -> PreventClose.off)
 
         _ ->
@@ -222,9 +209,9 @@ pushRecord record model =
 changeCreateFormDescription : String -> Model -> Model
 changeCreateFormDescription description model =
     case model.action of
-        CreatingRecord createForm ->
+        CreateRecord createForm ->
             setAction
-                (CreatingRecord
+                (CreateRecord
                     { createForm
                         | description = description
                     }
@@ -241,7 +228,7 @@ loadCreateForm flags model =
         { store = LocalStorage.createForm
         , flags = flags
         }
-        |> Result.map (\createForm -> { model | action = CreatingRecord createForm })
+        |> Result.map (\createForm -> { model | action = CreateRecord createForm })
         |> Result.withDefault model
 
 
@@ -274,7 +261,7 @@ loadSettings flags model =
 saveCreateForm : Model -> Cmd Msg
 saveCreateForm model =
     case model.action of
-        CreatingRecord createForm ->
+        CreateRecord createForm ->
             LocalStorage.save
                 { store = LocalStorage.createForm
                 , value = createForm
@@ -325,8 +312,10 @@ appliedSettings model =
 
 type Action
     = Idle
-    | CreatingRecord CreateForm
+    | CreateRecord CreateRecord
     | ChangingSettings Settings
+    | EditingRecord
+    | ViewingDateSummary Calendar.Date
 
 
 getActionSettings : Action -> Maybe Settings
@@ -368,7 +357,6 @@ type Msg
     | PressedEscapeInCreateRecord
     | FocusedCreateFormDescriptionInput
       -- Record List
-    | SelectRecord Record.Id
     | ClickedDeleteButton Record.Id
     | ClickedResumeButton String
     | GotResumeButtonTime String Time.Posix
@@ -476,17 +464,6 @@ update msg model =
             model
                 |> Out.withNoCmd
 
-        -- Record List
-        SelectRecord id ->
-            case model.action of
-                Idle ->
-                    { model | selectedRecord = Just id }
-                        |> Out.withNoCmd
-
-                _ ->
-                    model
-                        |> Out.withNoCmd
-
         ClickedDeleteButton id ->
             { model | records = RecordList.delete id model.records }
                 |> Out.withCmd saveRecords
@@ -511,8 +488,8 @@ subscriptions model =
     Sub.batch
         [ if model.visibility == Browser.Events.Visible then
             case model.action of
-                CreatingRecord createForm ->
-                    CreateForm.subscriptions
+                CreateRecord createForm ->
+                    CreateRecord.subscriptions
                         { currentTime = model.currentTime
                         , gotCurrentTime = GotCurrentTime
                         }
@@ -613,13 +590,13 @@ viewConfig model =
                 , today = Utils.Date.fromZoneAndPosix model.timeZone model.currentTime
                 }
 
-        CreatingRecord createForm ->
+        CreateRecord createForm ->
             Default
                 { emphasis = View.Sidebar
                 , searchQuery = model.searchQuery
                 , records = recordsConfig model
                 , sidebar =
-                    Sidebar.CreatingRecord
+                    Sidebar.CreateRecord
                         { description = createForm.description
                         , elapsedTime =
                             Utils.Duration.fromTimeDifference model.currentTime createForm.start
@@ -648,9 +625,15 @@ viewConfig model =
                 , viewport = model.viewport
                 }
 
+        EditingRecord ->
+            Debug.todo ""
+
+        ViewingDateSummary date ->
+            Debug.todo ""
+
 
 recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery, selectedRecord, currentTime, dateNotation, timeZone, language, viewport } =
+recordsConfig { records, searchQuery, currentTime, dateNotation, timeZone, language, viewport } =
     let
         searchResults =
             RecordList.search searchQuery records
@@ -666,9 +649,7 @@ recordsConfig { records, searchQuery, selectedRecord, currentTime, dateNotation,
             |> RecordList.toList
             |> List.map
                 (Record.config
-                    { selectedRecordId = selectedRecord
-                    , selectRecord = SelectRecord
-                    , clickedDeleteButton = ClickedDeleteButton
+                    { clickedDeleteButton = ClickedDeleteButton
                     , clickedResumeButton = ClickedResumeButton
                     , currentTime = currentTime
                     , dateNotation = dateNotation

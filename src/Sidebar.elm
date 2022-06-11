@@ -1,7 +1,7 @@
 module Sidebar exposing (Config(..), view)
 
 import Colors
-import CreateForm
+import CreateRecord
 import Element exposing (Element)
 import Element.Font
 import Icons
@@ -14,7 +14,7 @@ import View
 
 type Config msg
     = Idle { pressedStart : msg }
-    | CreatingRecord (CreateForm.Config msg)
+    | CreateRecord (CreateRecord.Config msg)
 
 
 view : Config msg -> Element msg
@@ -32,5 +32,5 @@ view config =
                 , label = Icons.playButton
                 }
 
-        CreatingRecord createFormConfig ->
-            CreateForm.view createFormConfig
+        CreateRecord createFormConfig ->
+            CreateRecord.view createFormConfig

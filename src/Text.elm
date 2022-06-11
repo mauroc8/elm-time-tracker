@@ -86,7 +86,7 @@ type
     | ClearSearch
     | NoDescription
       -- Operators
-    | Text String
+    | String String
     | Integer Int
     | Words (List Text)
       -- Duration
@@ -214,7 +214,7 @@ toString lang text =
             "descripción vacía"
 
         -- Operators
-        ( Text str, _ ) ->
+        ( String str, _ ) ->
             str
 
         ( Integer int, _ ) ->

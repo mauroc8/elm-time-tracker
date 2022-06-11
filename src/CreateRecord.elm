@@ -1,6 +1,6 @@
-module CreateForm exposing
+module CreateRecord exposing
     ( Config
-    , CreateForm
+    , CreateRecord
     , decoder
     , descriptionInputId
     , encode
@@ -30,27 +30,27 @@ import View
 --- Create Form
 
 
-type alias CreateForm =
+type alias CreateRecord =
     { start : Time.Posix
     , description : String
     }
 
 
-new : String -> Time.Posix -> CreateForm
+new : String -> Time.Posix -> CreateRecord
 new description time =
     { start = time
     , description = description
     }
 
 
-duration : { currentTime : Time.Posix } -> CreateForm -> Utils.Duration.Duration
+duration : { currentTime : Time.Posix } -> CreateRecord -> Utils.Duration.Duration
 duration { currentTime } { start } =
     Utils.Duration.fromTimeDifference start currentTime
 
 
-decoder : Json.Decode.Decoder CreateForm
+decoder : Json.Decode.Decoder CreateRecord
 decoder =
-    Json.Decode.map2 CreateForm
+    Json.Decode.map2 CreateRecord
         (Json.Decode.field "start" decodePosix)
         (Json.Decode.field "description" Json.Decode.string)
 
@@ -65,7 +65,7 @@ decodePosix =
 ---
 
 
-encode : CreateForm -> Json.Encode.Value
+encode : CreateRecord -> Json.Encode.Value
 encode createForm =
     Json.Encode.object
         [ ( "start", encodePosix createForm.start )
@@ -179,7 +179,7 @@ subscriptions :
     { currentTime : Time.Posix
     , gotCurrentTime : Time.Posix -> msg
     }
-    -> CreateForm
+    -> CreateRecord
     -> Sub msg
 subscriptions { currentTime, gotCurrentTime } createForm =
     Time.every
