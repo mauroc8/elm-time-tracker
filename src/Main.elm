@@ -314,7 +314,6 @@ type Action
     = Idle
     | CreateRecord CreateRecord
     | ChangingSettings Settings
-    | ViewingDateSummary Calendar.Date
 
 
 getActionSettings : Action -> Maybe Settings
@@ -623,9 +622,6 @@ viewConfig model =
                 , language = model.language
                 , viewport = model.viewport
                 }
-
-        ViewingDateSummary date ->
-            Debug.todo ""
 
 
 recordsConfig : Model -> RecordList.Config Msg
