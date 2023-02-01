@@ -228,57 +228,16 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                 , onClick = conf.clickedDeleteButton
                 , label = Icons.trash
                 }
-    in
-    let
-        mobileLayout attrs extras =
-            Element.column
-                ([ Element.padding 16
-                 , Element.spacing 10
-                 , Element.width Element.fill
-                 ]
-                    ++ attrs
-                )
-                ([ Element.row
-                    [ Element.spacing 10
-                    , Element.width Element.fill
-                    ]
-                    [ descriptionHtml
-                    , dateHtml
-                    ]
-                 , durationHtml
-                 ]
-                    ++ extras
-                )
-    in
-    case conf.viewport of
-        View.Mobile ->
-            mobileLayout
-                []
-                [ Element.row
-                    [ Element.spacing 16
-                    , Element.width Element.fill
-                    ]
-                    [ startEndTime
-                        |> Element.el [ Element.alignBottom ]
-                    , deleteButton
-                        |> Element.el [ Element.alignBottom, Element.alignRight ]
-                    , playButton
-                        |> Element.el [ Element.alignBottom, Element.alignRight ]
-                    ]
-                ]
 
-        View.Desktop ->
-            Element.column
-                [ Element.paddingXY 0 16
-                , Element.spacing 12
-                , Element.width Element.fill
-                ]
-                [ Element.row
+        children =
+            [ Element.row
                     [ Element.spacing 10
                     , Element.width Element.fill
                     ]
                     [ descriptionHtml
-                    , startEndTime
+                    , deleteButton
+                        |> Element.el [ Element.alignRight ]
+                    , playButton
                         |> Element.el [ Element.alignRight ]
                     , dateHtml
                         |> Element.el [ Element.alignRight ]
@@ -288,9 +247,27 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                     , Element.width Element.fill
                     ]
                     [ durationHtml
-                    , deleteButton
-                        |> Element.el [ Element.alignRight ]
-                    , playButton
+                    
+                    , startEndTime
                         |> Element.el [ Element.alignRight ]
                     ]
                 ]
+
+    in
+    case conf.viewport of
+        View.Mobile ->
+            Element.column
+                [ Element.padding 16
+                , Element.spacing 13
+                , Element.width Element.fill
+                ]
+                children
+
+
+        View.Desktop ->
+            Element.column
+                [ Element.paddingXY 0 16
+                , Element.spacing 13
+                , Element.width Element.fill
+                ]
+                children

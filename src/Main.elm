@@ -314,7 +314,6 @@ type Action
     = Idle
     | CreateRecord CreateRecord
     | ChangingSettings Settings
-    | EditingRecord
     | ViewingDateSummary Calendar.Date
 
 
@@ -624,9 +623,6 @@ viewConfig model =
                 , language = model.language
                 , viewport = model.viewport
                 }
-
-        EditingRecord ->
-            Debug.todo ""
 
         ViewingDateSummary date ->
             Debug.todo ""
