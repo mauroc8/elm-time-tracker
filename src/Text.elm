@@ -211,7 +211,7 @@ toString lang text =
             "no description"
 
         ( NoDescription, Spanish ) ->
-            "descripción vacía"
+            "sin descripción"
 
         -- Operators
         ( String str, _ ) ->

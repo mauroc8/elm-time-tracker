@@ -15,6 +15,7 @@ module View exposing
     , recordListHorizontalDivider
     , settingsBackgroundColor
     , sidebarBackgroundColor
+    , underlinedButton
     )
 
 import Colors
@@ -285,7 +286,20 @@ linkLikeButton { onPress, label, language, bold } =
         , label = Text.text16 language label
         }
 
-
+underlinedButton :
+    { onPress : msg
+    , label : Text.Text
+    , language : Text.Language
+    }
+    -> Element msg
+underlinedButton { onPress, label, language } =
+    Input.button
+        [ Font.underline
+        , Font.color Colors.grayText
+        ]
+        { onPress = Just onPress
+        , label = Text.text13 language label
+        }
 
 --- Viewport
 

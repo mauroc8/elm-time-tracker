@@ -195,7 +195,7 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                     , Element.width Element.fill
                     ]
 
-        dateHtml =
+        dateElement =
             Text.text13 language date
                 |> Element.el [ Element.Font.color Colors.grayText ]
 
@@ -239,9 +239,9 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                         |> Element.el [ Element.alignRight ]
                     , playButton
                         |> Element.el [ Element.alignRight ]
-                    , dateHtml
+                    , dateElement
                         |> Element.el [ Element.alignRight ]
-                    ]
+                     ]
                 , Element.row
                     [ Element.spacing 10
                     , Element.width Element.fill
