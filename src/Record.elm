@@ -14,6 +14,7 @@ import Colors
 import CreateRecord
 import Element exposing (Element)
 import Element.Font
+import Element.Keyed
 import Icons exposing (playButton)
 import Json.Decode
 import Json.Encode
@@ -127,13 +128,12 @@ type alias Config msg =
     , startTime : Text.Text
     , endTime : Text.Text
     , clickedDeleteButton : msg
-    , clickedResumeButton : msg
+    , recordKey : String
     }
 
 
 config :
     { clickedDeleteButton : Id -> msg
-    , clickedResumeButton : String -> msg
     , currentTime : Time.Posix
     , dateNotation : Utils.Date.Notation
     , timeZone : Time.Zone
@@ -147,7 +147,7 @@ config viewConfig record =
         { clickedDeleteButton, language, viewport } =
             viewConfig
 
-        { timeZone, clickedResumeButton, currentTime, dateNotation } =
+        { timeZone, currentTime, dateNotation } =
             viewConfig
     in
     { description = record.description
@@ -169,7 +169,12 @@ config viewConfig record =
         Utils.Time.toStringWithAmPm (endTime timeZone record)
             |> Text.String
     , clickedDeleteButton = clickedDeleteButton record.id
-    , clickedResumeButton = clickedResumeButton record.description
+    , recordKey =
+        let
+            (Id intId) =
+                record.id
+        in
+        String.fromInt intId
     }
 
 
@@ -177,7 +182,7 @@ view :
     { context | emphasis : View.Emphasis }
     -> Config msg
     -> Element msg
-view { emphasis } ({ description, date, duration, language } as conf) =
+view { emphasis } ({ description, date, duration, language, recordKey } as conf) =
     let
         descriptionHtml =
             let
@@ -215,13 +220,6 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                 |> Element.el
                     [ Element.Font.color Colors.grayText ]
 
-        playButton =
-            View.recordListButton
-                { emphasis = emphasis
-                , onClick = conf.clickedResumeButton
-                , label = Icons.play
-                }
-
         deleteButton =
             View.recordListButton
                 { emphasis = emphasis
@@ -237,8 +235,6 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                 [ descriptionHtml
                 , deleteButton
                     |> Element.el [ Element.alignRight ]
-                , playButton
-                    |> Element.el [ Element.alignRight ]
                 , dateElement
                     |> Element.el [ Element.alignRight ]
                 ]
@@ -251,20 +247,28 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                     |> Element.el [ Element.alignRight ]
                 ]
             ]
-    in
-    case conf.viewport of
-        View.Mobile ->
-            Element.column
-                [ Element.padding 16
-                , Element.spacing 13
-                , Element.width Element.fill
-                ]
-                children
 
-        View.Desktop ->
-            Element.column
-                [ Element.paddingXY 0 16
-                , Element.spacing 13
-                , Element.width Element.fill
-                ]
-                children
+        recordElement =
+            case conf.viewport of
+                View.Mobile ->
+                    Element.column
+                        [ Element.padding 16
+                        , Element.spacing 13
+                        , Element.width Element.fill
+                        ]
+                        children
+
+                View.Desktop ->
+                    Element.column
+                        [ Element.paddingXY 0 16
+                        , Element.spacing 13
+                        , Element.width Element.fill
+                        ]
+                        children
+    in
+    -- Wrapping the record in a keyed element to lose focus when we delete a record
+    Element.Keyed.column
+        [ Element.width Element.fill
+        ]
+        [ ( recordKey, recordElement )
+        ]

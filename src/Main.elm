@@ -337,8 +337,7 @@ type Msg
     | GotViewport Browser.Dom.Viewport
     | VisibilityChanged Browser.Events.Visibility
     | ViewportWidthChanged Int
-      -- Search bar
-    | SearchQueryChanged String
+      -- Heading
     | PressedSettingsButton
       -- Settings
     | PressedSettingsCancelButton
@@ -356,8 +355,6 @@ type Msg
     | FocusedCreateFormDescriptionInput
       -- Record List
     | ClickedDeleteButton Record.Id
-    | ClickedResumeButton String
-    | GotResumeButtonTime String Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -389,11 +386,7 @@ update msg model =
             setViewport { screenWidth = width } model
                 |> Out.withNoCmd
 
-        -- Search bar
-        SearchQueryChanged searchQuery ->
-            setSearchQuery searchQuery model
-                |> Out.withNoCmd
-
+        -- Heading
         PressedSettingsButton ->
             setAction
                 (ChangingSettings
@@ -465,16 +458,6 @@ update msg model =
         ClickedDeleteButton id ->
             { model | records = RecordList.delete id model.records }
                 |> Out.withCmd saveRecords
-
-        ClickedResumeButton description ->
-            Task.perform (GotResumeButtonTime description) Time.now
-                |> Out.withModel model
-
-        GotResumeButtonTime description time ->
-            model
-                |> setCurrentTime time
-                |> startCreatingRecord description
-                |> Out.addCmd saveCreateForm
 
 
 
@@ -606,7 +589,6 @@ viewConfig model =
                         , language = model.language
                         }
                 , clickedSettings = PressedSettingsButton
-                , changedSearchQuery = SearchQueryChanged
                 , language = model.language
                 , viewport = model.viewport
                 }
@@ -618,7 +600,6 @@ viewConfig model =
                 , records = recordsConfig model
                 , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
-                , changedSearchQuery = SearchQueryChanged
                 , language = model.language
                 , viewport = model.viewport
                 }
@@ -642,7 +623,6 @@ recordsConfig { records, searchQuery, currentTime, dateNotation, timeZone, langu
             |> List.map
                 (Record.config
                     { clickedDeleteButton = ClickedDeleteButton
-                    , clickedResumeButton = ClickedResumeButton
                     , currentTime = currentTime
                     , dateNotation = dateNotation
                     , timeZone = timeZone

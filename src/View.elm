@@ -24,8 +24,10 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Element.Region
 import Html.Attributes
 import Text
+import Icons
 
 
 
@@ -100,7 +102,7 @@ backgroundColor color =
 backgroundTransition : Attribute msg
 backgroundTransition =
     Element.htmlAttribute <|
-        Html.Attributes.style "transition" "background-color 0.23s ease-in"
+        Html.Attributes.style "transition" "background-color 0.19s linear"
 
 
 horizontalDivider : BackgroundColor -> Element msg
@@ -158,7 +160,7 @@ recordListAlternativeBackgroundColor emphasis =
             Colors.grayBackground
 
         Sidebar ->
-            Colors.whiteBackground
+            Colors.darkGrayBackground
 
 
 recordListBackgroundColor : Emphasis -> List (Element.Attribute msg)
@@ -303,6 +305,113 @@ underlinedButton { onPress, label, language } =
         }
 
 
+searchInput :
+    { a
+        | emphasis : Emphasis
+        , searchQuery : String
+        , changedSearchQuery : String -> msg
+        , language : Text.Language
+    }
+    -> Element msg
+searchInput ({ emphasis, searchQuery, changedSearchQuery, language } as config) =
+    let
+        padding =
+            10
+
+        border =
+            1
+
+        actualPadding =
+            padding - border
+
+        paddedSearchIconWidth =
+            34
+    in
+    Input.search
+        [ Background.color (recordListAlternativeBackgroundColor emphasis)
+        , Border.rounded 8
+        , Font.color Colors.blackText
+        , Border.width 0
+        , Element.inFront searchIcon
+        , Element.paddingEach
+            { top = actualPadding
+            , left = paddedSearchIconWidth
+            , right = actualPadding
+            , bottom = actualPadding
+            }
+        , Border.width border
+        , Border.color Colors.transparent
+        , Element.inFront (clearButton language (searchButtonConfig config))
+        , Font.size 16
+        ]
+        { onChange = changedSearchQuery
+        , text = searchQuery
+        , placeholder =
+            Just <|
+                Input.placeholder
+                    [ Font.color Colors.lightGrayText ]
+                    (Text.text16 language Text.SearchPlaceholder)
+        , label =
+            Input.labelHidden (Text.toString language Text.Search)
+        }
+
+
+
+type SearchButtonConfig clearSearchMsg
+    = NotSearching
+    | Searching clearSearchMsg
+
+searchButtonConfig :
+    { a
+        | searchQuery : String
+        , changedSearchQuery : String -> b
+    }
+    -> SearchButtonConfig b
+searchButtonConfig { searchQuery, changedSearchQuery } =
+    if String.isEmpty searchQuery then
+        NotSearching
+
+    else
+        Searching (changedSearchQuery "")
+
+
+searchIcon : Element msg
+searchIcon =
+    Element.el
+        [ Font.color Colors.blackText
+        , Element.padding 10
+        , Element.alignLeft
+        ]
+        Icons.search
+
+
+clearButton : Text.Language -> SearchButtonConfig msg -> Element msg
+clearButton language config =
+    let
+        ( fontColor, onPress ) =
+            case config of
+                NotSearching ->
+                    ( Colors.lighterGrayText, disabled )
+
+                Searching msg ->
+                    ( Colors.grayText, enabled msg )
+    in
+    button
+        [ Element.padding 10
+        , Element.alignRight
+        , Font.color fontColor
+        , Element.focused
+            [ Font.color Colors.accent
+            ]
+        ]
+        { onPress = onPress
+        , label =
+            Element.el
+                [ Element.Region.description
+                    (Text.toString language Text.ClearSearch)
+                ]
+                Icons.xButton
+        }
 
 --- Viewport
 

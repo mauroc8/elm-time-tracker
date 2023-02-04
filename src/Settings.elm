@@ -186,7 +186,7 @@ aboutLink config =
             , Element.Border.color focusColor
             ]
         ]
-        { url = "https://github.com/mauroc8/simple-time-tracker#readme"
+        { url = "https://github.com/mauroc8/elm-time-tracker#readme"
         , label =
             Element.row
                 [ Element.spacing 6 ]

@@ -20,7 +20,6 @@ type alias Config msg =
     , records : RecordList.Config msg
     , sidebar : Sidebar.Config msg
     , clickedSettings : msg
-    , changedSearchQuery : String -> msg
     , language : Text.Language
     , viewport : View.Viewport
     }
@@ -29,9 +28,9 @@ type alias Config msg =
 view : Config msg -> Element msg
 view ({ emphasis, records, sidebar, viewport } as config) =
     let
-        viewRecordListWithSearch =
-            [ -- Search
-              searchSection config
+        viewRecordListWithHeading =
+            [ -- Heading
+              headingSection config
                 |> withHeaderLayout config
                 |> withHorizontalDivider emphasis
 
@@ -58,7 +57,7 @@ view ({ emphasis, records, sidebar, viewport } as config) =
         (viewSidebar
             ++ (case viewport of
                     View.Mobile ->
-                        viewRecordListWithSearch
+                        viewRecordListWithHeading
 
                     View.Desktop ->
                         [ Element.column
@@ -66,33 +65,24 @@ view ({ emphasis, records, sidebar, viewport } as config) =
                             , Element.centerX
                             , Element.height Element.fill
                             ]
-                            viewRecordListWithSearch
+                            viewRecordListWithHeading
                         ]
                )
         )
 
 
 
---- SEARCH
+--- Heading
 
 
-searchSection : Config msg -> Element msg
-searchSection config =
+headingSection : Config msg -> Element msg
+headingSection config =
     Element.row
         [ Element.spacing 16
         , Element.width Element.fill
         ]
-    <|
-        case config.viewport of
-            View.Mobile ->
-                [ settingsButton config
-                , searchInput config
-                ]
-
-            View.Desktop ->
-                [ searchInput config
-                , settingsButton config
-                ]
+        [ settingsButton config
+        ]
 
 
 withHeaderLayout : { config | viewport : View.Viewport } -> Element msg -> Element msg
@@ -133,113 +123,4 @@ settingsButton { emphasis, clickedSettings } =
         { emphasis = emphasis
         , onClick = clickedSettings
         , label = Icons.options
-        }
-
-
-searchInput :
-    { a
-        | emphasis : Emphasis
-        , searchQuery : String
-        , changedSearchQuery : String -> msg
-        , language : Text.Language
-    }
-    -> Element msg
-searchInput ({ emphasis, searchQuery, changedSearchQuery, language } as config) =
-    let
-        padding =
-            10
-
-        border =
-            1
-
-        actualPadding =
-            padding - border
-
-        paddedSearchIconWidth =
-            34
-    in
-    Input.search
-        [ Background.color (View.recordListAlternativeBackgroundColor emphasis)
-        , Border.rounded 8
-        , Font.color Colors.blackText
-        , Border.width 0
-        , Element.inFront searchIcon
-        , Element.paddingEach
-            { top = actualPadding
-            , left = paddedSearchIconWidth
-            , right = actualPadding
-            , bottom = actualPadding
-            }
-        , Border.width border
-        , Border.color Colors.transparent
-        , Element.inFront (clearButton language (searchButtonConfig config))
-        , Font.size 16
-        ]
-        { onChange = changedSearchQuery
-        , text = searchQuery
-        , placeholder =
-            Just <|
-                Input.placeholder
-                    [ Font.color Colors.lightGrayText ]
-                    (Text.text16 language Text.SearchPlaceholder)
-        , label =
-            Input.labelHidden (Text.toString language Text.Search)
-        }
-
-
-type SearchButtonConfig clearSearchMsg
-    = NotSearching
-    | Searching clearSearchMsg
-
-
-searchButtonConfig :
-    { a
-        | searchQuery : String
-        , changedSearchQuery : String -> b
-    }
-    -> SearchButtonConfig b
-searchButtonConfig { searchQuery, changedSearchQuery } =
-    if String.isEmpty searchQuery then
-        NotSearching
-
-    else
-        Searching (changedSearchQuery "")
-
-
-searchIcon : Element msg
-searchIcon =
-    Element.el
-        [ Font.color Colors.blackText
-        , Element.padding 10
-        , Element.alignLeft
-        ]
-        Icons.search
-
-
-clearButton : Text.Language -> SearchButtonConfig msg -> Element msg
-clearButton language config =
-    let
-        ( fontColor, onPress ) =
-            case config of
-                NotSearching ->
-                    ( Colors.lighterGrayText, View.disabled )
-
-                Searching msg ->
-                    ( Colors.grayText, View.enabled msg )
-    in
-    View.button
-        [ Element.padding 10
-        , Element.alignRight
-        , Font.color fontColor
-        , Element.focused
-            [ Font.color Colors.accent
-            ]
-        ]
-        { onPress = onPress
-        , label =
-            Element.el
-                [ Element.Region.description
-                    (Text.toString language Text.ClearSearch)
-                ]
-                Icons.xButton
         }
