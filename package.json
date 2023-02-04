@@ -12,5 +12,8 @@
     "start": "parcel src/index.html",
     "build": "rm -rf docs && parcel build src/index.html --dist-dir docs --public-url=./ --detailed-report",
     "review": "elm-review"
+  },
+  "dependencies": {
+    "elm-format": "^0.8.5"
   }
 }

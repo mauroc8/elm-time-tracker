@@ -50,36 +50,26 @@ view ({ emphasis, records, sidebar, viewport } as config) =
                     (Element.width Element.fill :: View.sidebarBackgroundColor emphasis)
             ]
     in
-    case viewport of
-        View.Mobile ->
-            Element.column
-                [ Element.width Element.fill
-                , Element.height Element.fill
-                ]
-                (Element.column
-                    [ Element.width Element.fill
-                    , Element.height Element.fill
-                    , Element.scrollbarX
-                    ]
-                    viewRecordListWithSearch
-                    :: viewSidebar
-                )
+    Element.column
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        , Element.scrollbarX
+        ]
+        (viewSidebar
+            ++ (case viewport of
+                    View.Mobile ->
+                        viewRecordListWithSearch
 
-        View.Desktop ->
-            Element.column
-                [ Element.width Element.fill
-                , Element.height Element.fill
-                , Element.scrollbarX
-                ]
-                (viewSidebar
-                    ++ [ Element.column
+                    View.Desktop ->
+                        [ Element.column
                             [ Element.width (Element.fill |> Element.maximum 600)
                             , Element.centerX
                             , Element.height Element.fill
                             ]
                             viewRecordListWithSearch
-                       ]
-                )
+                        ]
+               )
+        )
 
 
 

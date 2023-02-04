@@ -27,6 +27,7 @@ import Utils.Out as Out
 import View
 
 
+
 --- MAIN
 
 
@@ -314,6 +315,7 @@ type Action
     | CreateRecord CreateRecord
     | ChangingSettings Settings
 
+
 getActionSettings : Action -> Maybe Settings
 getActionSettings action =
     case action of
@@ -473,7 +475,6 @@ update msg model =
                 |> setCurrentTime time
                 |> startCreatingRecord description
                 |> Out.addCmd saveCreateForm
-
 
 
 

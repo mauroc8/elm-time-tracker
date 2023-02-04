@@ -231,28 +231,26 @@ view { emphasis } ({ description, date, duration, language } as conf) =
 
         children =
             [ Element.row
-                    [ Element.spacing 10
-                    , Element.width Element.fill
-                    ]
-                    [ descriptionHtml
-                    , deleteButton
-                        |> Element.el [ Element.alignRight ]
-                    , playButton
-                        |> Element.el [ Element.alignRight ]
-                    , dateElement
-                        |> Element.el [ Element.alignRight ]
-                     ]
-                , Element.row
-                    [ Element.spacing 10
-                    , Element.width Element.fill
-                    ]
-                    [ durationHtml
-                    
-                    , startEndTime
-                        |> Element.el [ Element.alignRight ]
-                    ]
+                [ Element.spacing 10
+                , Element.width Element.fill
                 ]
-
+                [ descriptionHtml
+                , deleteButton
+                    |> Element.el [ Element.alignRight ]
+                , playButton
+                    |> Element.el [ Element.alignRight ]
+                , dateElement
+                    |> Element.el [ Element.alignRight ]
+                ]
+            , Element.row
+                [ Element.spacing 10
+                , Element.width Element.fill
+                ]
+                [ durationHtml
+                , startEndTime
+                    |> Element.el [ Element.alignRight ]
+                ]
+            ]
     in
     case conf.viewport of
         View.Mobile ->
@@ -262,7 +260,6 @@ view { emphasis } ({ description, date, duration, language } as conf) =
                 , Element.width Element.fill
                 ]
                 children
-
 
         View.Desktop ->
             Element.column
