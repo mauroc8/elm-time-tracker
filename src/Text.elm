@@ -77,6 +77,7 @@ type
       -- Create Form
     | WhatAreYouWorkingOn
     | DescriptionLabel
+    | ChangeStartTimeLabel
       -- Empty states
     | PressTheStartButtonToCreateARecord
     | NothingFound
@@ -177,6 +178,12 @@ toString lang text =
 
         ( DescriptionLabel, Spanish ) ->
             "Descripción"
+
+        ( ChangeStartTimeLabel, English ) ->
+            "change start time"
+
+        ( ChangeStartTimeLabel, Spanish ) ->
+            "cambiar tiempo de inicio"
 
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->

@@ -9,13 +9,13 @@ module View exposing
     , fromScreenWidth
     , horizontalDivider
     , linkLikeButton
+    , linkLikeButtonSmall
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListButton
     , recordListHorizontalDivider
     , settingsBackgroundColor
     , sidebarBackgroundColor
-    , underlinedButton
     )
 
 import Colors
@@ -26,8 +26,8 @@ import Element.Font as Font
 import Element.Input as Input
 import Element.Region
 import Html.Attributes
-import Text
 import Icons
+import Text
 
 
 
@@ -289,17 +289,17 @@ linkLikeButton { onPress, label, language, bold } =
         }
 
 
-underlinedButton :
+linkLikeButtonSmall :
     { onPress : msg
     , label : Text.Text
     , language : Text.Language
     }
     -> Element msg
-underlinedButton { onPress, label, language } =
+linkLikeButtonSmall { onPress, label, language } =
     Input.button
-        [ Font.underline
-        , Font.color Colors.grayText
-        ]
+        ([ Font.color Colors.accent ]
+            ++ overflowClickableRegion 12
+        )
         { onPress = Just onPress
         , label = Text.text13 language label
         }
@@ -356,10 +356,10 @@ searchInput ({ emphasis, searchQuery, changedSearchQuery, language } as config) 
         }
 
 
-
 type SearchButtonConfig clearSearchMsg
     = NotSearching
     | Searching clearSearchMsg
+
 
 searchButtonConfig :
     { a
@@ -412,6 +412,8 @@ clearButton language config =
                 ]
                 Icons.xButton
         }
+
+
 
 --- Viewport
 

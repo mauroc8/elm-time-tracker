@@ -89,6 +89,7 @@ type alias Config msg =
     , pressedStop : msg
     , pressedEnter : msg
     , pressedEscape : msg
+    , pressedChangeStartTime : msg
     , language : Text.Language
     }
 
@@ -100,18 +101,12 @@ view config =
             [ Element.Font.semiBold
             , Element.Font.color color
             ]
-    in
-    Element.row
-        [ Element.spacing 24
-        , Element.width Element.fill
-        ]
-        [ Element.column
-            [ Element.spacing 10
-            , Element.width Element.fill
-            ]
-            [ Element.Input.text
+
+        descriptionInput =
+            Element.Input.text
                 ([ -- Layout
                    Element.width Element.fill
+                 , Element.height (Element.px 32)
                  , Element.paddingXY 0 6
 
                  -- Background
@@ -153,20 +148,51 @@ view config =
                 , label =
                     Element.Input.labelHidden (Text.toString config.language Text.DescriptionLabel)
                 }
-            , Element.el
-                [ Element.Font.color Colors.blackishText
+                |> Element.el
+                    [ Element.width Element.fill
+
+                    -- A bit of custom CSS adds a progress/running animation on the input's border.
+                    , Element.htmlAttribute (Html.Attributes.class "input-progress-animation")
+                    ]
+
+        stopButton =
+            View.button
+                [ Element.Font.color Colors.lightGrayText
+                , Element.focused
+                    [ Element.Font.color Colors.accent
+                    ]
                 ]
-                (Text.text12 config.language config.elapsedTime)
+                { onPress = View.enabled config.pressedStop
+                , label = Icons.stopButton
+                }
+    in
+    Element.row
+        [ Element.spacing 24
+        , Element.width Element.fill
+        ]
+        [ Element.column
+            [ Element.spacing 9
+            , Element.width Element.fill
             ]
-        , View.button
-            [ Element.Font.color Colors.lightGrayText
-            , Element.focused
-                [ Element.Font.color Colors.accent
+            [ descriptionInput
+            , Element.row
+                [ Element.spacing 10
+                , Element.width Element.fill
+                ]
+                [ Element.el
+                    [ Element.Font.color Colors.blackishText
+                    , Element.alignBottom
+                    ]
+                    (Text.text12 config.language config.elapsedTime)
+                , View.linkLikeButtonSmall
+                    { onPress = config.pressedChangeStartTime
+                    , label = Text.ChangeStartTimeLabel
+                    , language = config.language
+                    }
+                    |> Element.el [ Element.alignRight ]
                 ]
             ]
-            { onPress = View.enabled config.pressedStop
-            , label = Icons.stopButton
-            }
+        , stopButton
         ]
 
 

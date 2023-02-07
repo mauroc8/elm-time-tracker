@@ -352,6 +352,7 @@ type Msg
     | ChangedCreateFormDescription String
     | PressedEnterInCreateRecord
     | PressedEscapeInCreateRecord
+    | PressedChangeStartTimeInCreateRecord
     | FocusedCreateFormDescriptionInput
       -- Record List
     | ClickedDeleteButton Record.Id
@@ -450,6 +451,10 @@ update msg model =
             model
                 |> setAction Idle
                 |> Out.withCmd saveCreateForm
+
+        PressedChangeStartTimeInCreateRecord ->
+            model
+                |> Out.withNoCmd
 
         FocusedCreateFormDescriptionInput ->
             model
@@ -586,6 +591,7 @@ viewConfig model =
                         , pressedStop = PressedStopButton
                         , pressedEnter = PressedEnterInCreateRecord
                         , pressedEscape = PressedEscapeInCreateRecord
+                        , pressedChangeStartTime = PressedChangeStartTimeInCreateRecord
                         , language = model.language
                         }
                 , clickedSettings = PressedSettingsButton
