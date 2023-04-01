@@ -22,7 +22,12 @@ import Utils
 
 ---
 
+{-| The UnitedStates date notation is MM/DD/YYYY, while the "western" date notation
+is DD/MM/YYYY.
 
+Note: I'm sorry for not supporting other date notations
+(I don't even know what other date notations there are) :(
+-}
 type Notation
     = UnitedStates
     | Western
@@ -40,15 +45,14 @@ notationToString notation =
             "UnitedStates"
 
         Western ->
-            "RestOfOccident"
+            "Western"
 
 
 notationDecoder : Json.Decode.Decoder Notation
 notationDecoder =
-    Json.Decode.oneOf
-        [ Utils.decodeLiteral UnitedStates (notationToString UnitedStates)
-        , Utils.decodeLiteral Western (notationToString Western)
-        ]
+    [ UnitedStates, Western ]
+        |> List.map (\lang -> Utils.decodeLiteral lang (notationToString lang))
+        |> Json.Decode.oneOf
 
 
 encodeNotation : Notation -> Json.Encode.Value
@@ -81,6 +85,9 @@ toText notation date =
                 (Calendar.getYear date)
 
 
+{-| Returns a description of a date relative to the current date.
+For example: "yesterday", "a week ago", etc.
+-}
 relativeDateLabel :
     { today : Calendar.Date
     , date : Calendar.Date
@@ -148,7 +155,7 @@ toZonedPosix zone posix =
     in
     Time.millisToPosix (millis + offset)
 
-
+{-| I wish this function was part of the Calendar package ._. -}
 fromZoneAndPosix : Time.Zone -> Time.Posix -> Calendar.Date
 fromZoneAndPosix timeZone time =
     Calendar.fromPosix (toZonedPosix timeZone time)

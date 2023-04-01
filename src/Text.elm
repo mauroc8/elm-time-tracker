@@ -51,10 +51,12 @@ encodeLanguage lang =
 
 languageDecoder : Json.Decode.Decoder Language
 languageDecoder =
-    Json.Decode.oneOf
-        [ Utils.decodeLiteral English (languageToString English)
-        , Utils.decodeLiteral Spanish (languageToString Spanish)
-        ]
+    [ English
+    , Spanish
+    ]
+        |> List.map
+            (\language -> Utils.decodeLiteral language (languageToString language))
+        |> Json.Decode.oneOf
 
 
 

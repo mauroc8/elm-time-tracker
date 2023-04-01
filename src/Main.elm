@@ -507,17 +507,13 @@ type Config msg
 
 view : Model -> Html Msg
 view model =
-    let
-        config =
-            viewConfig model
-    in
     Element.layoutWith
         { options =
             [ Element.focusStyle focusStyle
             ]
         }
-        (rootAttributes config)
-        (rootElement config)
+        (rootAttributes model)
+        (rootElement model)
 
 
 focusStyle : Element.FocusStyle
@@ -528,8 +524,8 @@ focusStyle =
     }
 
 
-rootAttributes : Config msg -> List (Attribute msg)
-rootAttributes config =
+rootAttributes : Model -> List (Attribute msg)
+rootAttributes model =
     let
         shared =
             [ Element.width Element.fill
@@ -537,35 +533,52 @@ rootAttributes config =
             , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
             ]
     in
-    case config of
-        ChangeSettings _ ->
+    case model.action of
+        ChangingSettings _ ->
             shared
                 ++ View.settingsBackgroundColor
-
-        Default { emphasis } ->
+        
+        CreateRecord _ ->
             shared
-                ++ View.recordListBackgroundColor emphasis
+                ++ View.recordListBackgroundColor View.Sidebar
+
+        Idle ->
+            shared
+                ++ View.recordListBackgroundColor View.RecordList
 
 
-rootElement : Config Msg -> Element Msg
-rootElement config =
-    case config of
-        ChangeSettings settings ->
-            Settings.view settings
+rootElement : Model -> Element Msg
+rootElement model =
+    let
+        recordsConfig =
+            let
+                searchResults =
+                    RecordList.search model.searchQuery model.records
+            in
+            if model.records == RecordList.empty then
+                RecordList.EmptyRecords
 
-        Default defaultViewConfig ->
-            DefaultView.view defaultViewConfig
+            else if searchResults == RecordList.empty then
+                RecordList.NoSearchResults
 
-
-
--- Config
-
-
-viewConfig : Model -> Config Msg
-viewConfig model =
+            else
+                searchResults
+                    |> RecordList.toList
+                    |> List.map
+                        (Record.config
+                            { clickedDeleteButton = ClickedDeleteButton
+                            , currentTime = model.currentTime
+                            , dateNotation = model.dateNotation
+                            , timeZone = model.timeZone
+                            , language = model.language
+                            , viewport = model.viewport
+                            }
+                        )
+                    |> RecordList.ManyRecords
+    in
     case model.action of
         ChangingSettings settings ->
-            ChangeSettings
+            Settings.view
                 { dateNotation = settings.dateNotation
                 , language = settings.language
                 , changedDateNotation = ChangedDateNotation
@@ -577,10 +590,10 @@ viewConfig model =
                 }
 
         CreateRecord createForm ->
-            Default
+            DefaultView.view
                 { emphasis = View.Sidebar
                 , searchQuery = model.searchQuery
-                , records = recordsConfig model
+                , records = recordsConfig
                 , sidebar =
                     Sidebar.CreateRecord
                         { description = createForm.description
@@ -600,40 +613,12 @@ viewConfig model =
                 }
 
         Idle ->
-            Default
+            DefaultView.view
                 { emphasis = View.RecordList
                 , searchQuery = model.searchQuery
-                , records = recordsConfig model
+                , records = recordsConfig
                 , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
                 , language = model.language
                 , viewport = model.viewport
                 }
-
-
-recordsConfig : Model -> RecordList.Config Msg
-recordsConfig { records, searchQuery, currentTime, dateNotation, timeZone, language, viewport } =
-    let
-        searchResults =
-            RecordList.search searchQuery records
-    in
-    if records == RecordList.empty then
-        RecordList.EmptyRecords
-
-    else if searchResults == RecordList.empty then
-        RecordList.NoSearchResults
-
-    else
-        searchResults
-            |> RecordList.toList
-            |> List.map
-                (Record.config
-                    { clickedDeleteButton = ClickedDeleteButton
-                    , currentTime = currentTime
-                    , dateNotation = dateNotation
-                    , timeZone = timeZone
-                    , language = language
-                    , viewport = viewport
-                    }
-                )
-            |> RecordList.ManyRecords

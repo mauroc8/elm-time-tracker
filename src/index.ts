@@ -38,13 +38,14 @@ function getItem(key: string): Json {
 // --- PreventClose
 
 elm.ports.setPreventClose.subscribe((preventClose: boolean) => {
+    function askForCloseConfirmation(event: any) {
+        return (event || window.event).returnValue =
+            // Modern browsers ignore this message
+            "Are you sure?";
+    }
+
     window.onbeforeunload = preventClose
         ? askForCloseConfirmation
         : null;
 });
 
-function askForCloseConfirmation(event: any) {
-    return (event || window.event).returnValue =
-        // Modern browsers ignore this message
-        "Are you sure?";
-}

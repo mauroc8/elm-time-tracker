@@ -34,7 +34,8 @@ debugError str value =
 
 debugLog : String -> a -> a
 debugLog str value =
-    -- I manually change this line to `value` each time I make a build
+    -- I manually toggle these lines to make a build:
+    -- value
     Debug.log str value
 
 
