@@ -68,7 +68,6 @@ type alias Model =
 
     -- UI
     , action : Action
-    , searchQuery : String
 
     -- Settings
     , dateNotation : Utils.Date.Notation
@@ -91,7 +90,6 @@ initialModel : Model
 initialModel =
     { action = Idle
     , records = RecordList.empty
-    , searchQuery = ""
     , dateNotation = Utils.Date.westernNotation
     , language = Text.defaultLanguage
     , currentTime = Time.millisToPosix 0
@@ -115,11 +113,6 @@ setCurrentTime posixTime model =
 setViewport : { screenWidth : Int } -> Model -> Model
 setViewport { screenWidth } model =
     { model | viewport = View.fromScreenWidth screenWidth }
-
-
-setSearchQuery : String -> Model -> Model
-setSearchQuery searchQuery model =
-    { model | searchQuery = searchQuery }
 
 
 setAction : Action -> Model -> Model
@@ -537,7 +530,7 @@ rootAttributes model =
         ChangingSettings _ ->
             shared
                 ++ View.settingsBackgroundColor
-        
+
         CreateRecord _ ->
             shared
                 ++ View.recordListBackgroundColor View.Sidebar
@@ -549,33 +542,6 @@ rootAttributes model =
 
 rootElement : Model -> Element Msg
 rootElement model =
-    let
-        recordsConfig =
-            let
-                searchResults =
-                    RecordList.search model.searchQuery model.records
-            in
-            if model.records == RecordList.empty then
-                RecordList.EmptyRecords
-
-            else if searchResults == RecordList.empty then
-                RecordList.NoSearchResults
-
-            else
-                searchResults
-                    |> RecordList.toList
-                    |> List.map
-                        (Record.config
-                            { clickedDeleteButton = ClickedDeleteButton
-                            , currentTime = model.currentTime
-                            , dateNotation = model.dateNotation
-                            , timeZone = model.timeZone
-                            , language = model.language
-                            , viewport = model.viewport
-                            }
-                        )
-                    |> RecordList.ManyRecords
-    in
     case model.action of
         ChangingSettings settings ->
             Settings.view
@@ -592,8 +558,7 @@ rootElement model =
         CreateRecord createForm ->
             DefaultView.view
                 { emphasis = View.Sidebar
-                , searchQuery = model.searchQuery
-                , records = recordsConfig
+                , records = model.records
                 , sidebar =
                     Sidebar.CreateRecord
                         { description = createForm.description
@@ -610,15 +575,22 @@ rootElement model =
                 , clickedSettings = PressedSettingsButton
                 , language = model.language
                 , viewport = model.viewport
+                , clickedDeleteButton = ClickedDeleteButton
+                , currentTime = model.currentTime
+                , dateNotation = model.dateNotation
+                , timeZone = model.timeZone
                 }
 
         Idle ->
             DefaultView.view
                 { emphasis = View.RecordList
-                , searchQuery = model.searchQuery
-                , records = recordsConfig
+                , records = model.records
                 , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
                 , language = model.language
                 , viewport = model.viewport
+                , clickedDeleteButton = ClickedDeleteButton
+                , currentTime = model.currentTime
+                , dateNotation = model.dateNotation
+                , timeZone = model.timeZone
                 }

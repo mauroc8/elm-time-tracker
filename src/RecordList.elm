@@ -1,6 +1,5 @@
 module RecordList exposing
-    ( Config(..)
-    , RecordList
+    ( RecordList
     , decoder
     , delete
     , empty
@@ -21,6 +20,7 @@ import Levenshtein
 import Record exposing (Record)
 import Text
 import Time
+import Utils.Date
 import View exposing (Emphasis)
 
 
@@ -121,17 +121,22 @@ delete id (RecordList records) =
 --- VIEW
 
 
-type Config msg
-    = NoSearchResults
-    | EmptyRecords
-    | ManyRecords (List (Record.Config msg))
-
-
-view : { a | viewport : View.Viewport, language : Text.Language, emphasis : Emphasis } -> Config msg -> Element msg
-view ({ emphasis } as context) config =
-    case config of
-        EmptyRecords ->
-            emptyState context
+view :
+    { a
+        | viewport : View.Viewport
+        , language : Text.Language
+        , emphasis : Emphasis
+        , records : RecordList
+        , clickedDeleteButton : Record.Id -> msg
+        , currentTime : Time.Posix
+        , dateNotation : Utils.Date.Notation
+        , timeZone : Time.Zone
+    }
+    -> Element msg
+view ({ emphasis, records } as config) =
+    case toList records of
+        [] ->
+            emptyState config
                 { message =
                     case emphasis of
                         View.RecordList ->
@@ -142,15 +147,9 @@ view ({ emphasis } as context) config =
                 }
                 |> emptyBodyLayout
 
-        NoSearchResults ->
-            emptyState context
-                { message = Text.NothingFound
-                }
-                |> emptyBodyLayout
-
-        ManyRecords records ->
-            records
-                |> List.map (Record.view context)
+        recordsList ->
+            recordsList
+                |> List.map (Record.view config)
                 |> List.intersperse (View.recordListHorizontalDivider emphasis)
                 |> bodyWithRecordsLayout emphasis
 

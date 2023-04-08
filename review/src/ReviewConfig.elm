@@ -11,8 +11,6 @@ when inside the directory containing this file.
 
 -}
 
-import Review.Rule exposing (Rule)
-
 import NoDeprecated
 import NoExposingEverything
 import NoImportingEverything
@@ -20,9 +18,7 @@ import NoMissingTypeAnnotation
 import NoMissingTypeAnnotationInLetIn
 import NoMissingTypeExpose
 import NoPrematureLetComputation
-
 import NoSimpleLetBody
-
 import NoUnused.CustomTypeConstructorArgs
 import NoUnused.CustomTypeConstructors
 import NoUnused.Dependencies
@@ -31,6 +27,8 @@ import NoUnused.Modules
 import NoUnused.Parameters
 import NoUnused.Patterns
 import NoUnused.Variables
+import Review.Rule exposing (Rule)
+
 
 config : List Rule
 config =
@@ -39,9 +37,7 @@ config =
     , NoImportingEverything.rule [ "Svg", "Svg.Attributes" ]
     , NoMissingTypeAnnotation.rule
     , NoMissingTypeExpose.rule
-
     , NoSimpleLetBody.rule
-
     , NoUnused.CustomTypeConstructors.rule []
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.Dependencies.rule

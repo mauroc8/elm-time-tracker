@@ -22,11 +22,13 @@ import Utils
 
 ---
 
+
 {-| The UnitedStates date notation is MM/DD/YYYY, while the "western" date notation
 is DD/MM/YYYY.
 
 Note: I'm sorry for not supporting other date notations
 (I don't even know what other date notations there are) :(
+
 -}
 type Notation
     = UnitedStates
@@ -155,7 +157,9 @@ toZonedPosix zone posix =
     in
     Time.millisToPosix (millis + offset)
 
-{-| I wish this function was part of the Calendar package ._. -}
+
+{-| I wish this function was part of the Calendar package .\_.
+-}
 fromZoneAndPosix : Time.Zone -> Time.Posix -> Calendar.Date
 fromZoneAndPosix timeZone time =
     Calendar.fromPosix (toZonedPosix timeZone time)

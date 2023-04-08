@@ -1,32 +1,32 @@
 module DefaultView exposing (Config, view)
 
-import Colors
 import Element exposing (Element)
-import Element.Background as Background
-import Element.Border as Border
-import Element.Font as Font
-import Element.Input as Input
-import Element.Region
 import Icons
+import Record
 import RecordList
 import Sidebar
 import Text
+import Time
+import Utils.Date
 import View exposing (Emphasis)
 
 
 type alias Config msg =
     { emphasis : Emphasis
-    , searchQuery : String
-    , records : RecordList.Config msg
-    , sidebar : Sidebar.Config msg
-    , clickedSettings : msg
     , language : Text.Language
     , viewport : View.Viewport
+    , currentTime : Time.Posix
+    , dateNotation : Utils.Date.Notation
+    , timeZone : Time.Zone
+    , records : RecordList.RecordList
+    , sidebar : Sidebar.Config msg
+    , clickedSettings : msg
+    , clickedDeleteButton : Record.Id -> msg
     }
 
 
 view : Config msg -> Element msg
-view ({ emphasis, records, sidebar, viewport } as config) =
+view ({ emphasis, sidebar, viewport } as config) =
     let
         viewRecordListWithHeading =
             [ -- Heading
@@ -35,7 +35,7 @@ view ({ emphasis, records, sidebar, viewport } as config) =
                 |> withHorizontalDivider emphasis
 
             -- RecordList
-            , RecordList.view config records
+            , RecordList.view config
             ]
 
         viewSidebar =

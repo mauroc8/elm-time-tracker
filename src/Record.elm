@@ -2,7 +2,6 @@ module Record exposing
     ( Config
     , Id
     , Record
-    , config
     , decoder
     , encode
     , fromCreateForm
@@ -120,70 +119,65 @@ encode record =
 
 
 type alias Config msg =
-    { description : String
-    , date : Text.Text
-    , duration : Text.Text
-    , viewport : View.Viewport
-    , language : Text.Language
-    , startTime : Text.Text
-    , endTime : Text.Text
-    , clickedDeleteButton : msg
-    , recordKey : String
-    }
-
-
-config :
     { clickedDeleteButton : Id -> msg
     , currentTime : Time.Posix
     , dateNotation : Utils.Date.Notation
     , timeZone : Time.Zone
     , language : Text.Language
     , viewport : View.Viewport
-    }
-    -> Record
-    -> Config msg
-config viewConfig record =
-    let
-        { clickedDeleteButton, language, viewport } =
-            viewConfig
-
-        { timeZone, currentTime, dateNotation } =
-            viewConfig
-    in
-    { description = record.description
-    , date =
-        Utils.Date.relativeDateLabel
-            { today = Utils.Date.fromZoneAndPosix timeZone currentTime
-            , date = Utils.Date.fromZoneAndPosix timeZone record.startDateTime
-            , dateNotation = dateNotation
-            }
-    , duration =
-        Utils.Duration.fromSeconds record.durationInSeconds
-            |> Utils.Duration.toText
-    , viewport = viewport
-    , language = language
-    , startTime =
-        Utils.Time.toStringWithAmPm (startTime timeZone record)
-            |> Text.String
-    , endTime =
-        Utils.Time.toStringWithAmPm (endTime timeZone record)
-            |> Text.String
-    , clickedDeleteButton = clickedDeleteButton record.id
-    , recordKey =
-        let
-            (Id intId) =
-                record.id
-        in
-        String.fromInt intId
+    , emphasis : View.Emphasis
     }
 
 
 view :
-    { context | emphasis : View.Emphasis }
-    -> Config msg
+    { a
+        | clickedDeleteButton : Id -> msg
+        , currentTime : Time.Posix
+        , dateNotation : Utils.Date.Notation
+        , timeZone : Time.Zone
+        , language : Text.Language
+        , viewport : View.Viewport
+        , emphasis : View.Emphasis
+    }
+    -> Record
     -> Element msg
-view { emphasis } ({ description, date, duration, language, recordKey } as conf) =
+view config record =
     let
+        { clickedDeleteButton, language, viewport } =
+            config
+
+        { timeZone, currentTime, dateNotation, emphasis } =
+            config
+
+        description =
+            record.description
+
+        date =
+            Utils.Date.relativeDateLabel
+                { today = Utils.Date.fromZoneAndPosix timeZone currentTime
+                , date = Utils.Date.fromZoneAndPosix timeZone record.startDateTime
+                , dateNotation = dateNotation
+                }
+
+        duration =
+            Utils.Duration.fromSeconds record.durationInSeconds
+                |> Utils.Duration.toText
+
+        startTimeText =
+            Utils.Time.toStringWithAmPm (startTime timeZone record)
+                |> Text.String
+
+        endTimeText =
+            Utils.Time.toStringWithAmPm (endTime timeZone record)
+                |> Text.String
+
+        recordKey =
+            let
+                (Id intId) =
+                    record.id
+            in
+            String.fromInt intId
+
         descriptionHtml =
             let
                 ( nonemptyDescription, descriptionColor ) =
@@ -212,9 +206,9 @@ view { emphasis } ({ description, date, duration, language, recordKey } as conf)
             Text.text12
                 language
                 (Text.Words
-                    [ conf.startTime
+                    [ startTimeText
                     , Text.String "•"
-                    , conf.endTime
+                    , endTimeText
                     ]
                 )
                 |> Element.el
@@ -223,7 +217,7 @@ view { emphasis } ({ description, date, duration, language, recordKey } as conf)
         deleteButton =
             View.recordListButton
                 { emphasis = emphasis
-                , onClick = conf.clickedDeleteButton
+                , onClick = clickedDeleteButton record.id
                 , label = Icons.trash
                 }
 
@@ -249,7 +243,7 @@ view { emphasis } ({ description, date, duration, language, recordKey } as conf)
             ]
 
         recordElement =
-            case conf.viewport of
+            case viewport of
                 View.Mobile ->
                     Element.column
                         [ Element.padding 16
