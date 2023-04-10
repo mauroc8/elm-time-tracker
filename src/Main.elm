@@ -3,7 +3,6 @@ module Main exposing (Action, Model, Msg, main)
 import Browser
 import Browser.Dom
 import Browser.Events
-import Calendar
 import Colors
 import CreateRecord exposing (CreateRecord)
 import DefaultView
@@ -16,7 +15,7 @@ import PreventClose
 import Record exposing (Record)
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
-import Sidebar
+import StartButton
 import Task
 import Text exposing (Language)
 import Time
@@ -488,16 +487,6 @@ subscriptions model =
 --- VIEW
 
 
-{-| There are two main views.
-
-This type describes them.
-
--}
-type Config msg
-    = ChangeSettings (Settings.Config msg)
-    | Default (DefaultView.Config msg)
-
-
 view : Model -> Html Msg
 view model =
     Element.layoutWith
@@ -533,7 +522,7 @@ rootAttributes model =
 
         CreateRecord _ ->
             shared
-                ++ View.recordListBackgroundColor View.Sidebar
+                ++ View.recordListBackgroundColor View.TopBar
 
         Idle ->
             shared
@@ -555,15 +544,15 @@ rootElement model =
                 , today = Utils.Date.fromZoneAndPosix model.timeZone model.currentTime
                 }
 
-        CreateRecord createForm ->
+        CreateRecord createRecord ->
             DefaultView.view
-                { emphasis = View.Sidebar
+                { emphasis = View.TopBar
                 , records = model.records
-                , sidebar =
-                    Sidebar.CreateRecord
-                        { description = createForm.description
+                , topBar =
+                    CreateRecord.view
+                        { description = createRecord.description
                         , elapsedTime =
-                            Utils.Duration.fromTimeDifference model.currentTime createForm.start
+                            Utils.Duration.fromTimeDifference model.currentTime createRecord.start
                                 |> Utils.Duration.toText
                         , changedDescription = ChangedCreateFormDescription
                         , pressedStop = PressedStopButton
@@ -585,7 +574,6 @@ rootElement model =
             DefaultView.view
                 { emphasis = View.RecordList
                 , records = model.records
-                , sidebar = Sidebar.Idle { pressedStart = PressedStartButton }
                 , clickedSettings = PressedSettingsButton
                 , language = model.language
                 , viewport = model.viewport
@@ -593,4 +581,5 @@ rootElement model =
                 , currentTime = model.currentTime
                 , dateNotation = model.dateNotation
                 , timeZone = model.timeZone
+                , topBar = StartButton.view { pressedStart = PressedStartButton }
                 }

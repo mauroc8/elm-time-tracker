@@ -3,6 +3,7 @@ module View exposing
     , ButtonHandler
     , Emphasis(..)
     , Viewport(..)
+    , accentButton
     , button
     , disabled
     , enabled
@@ -12,7 +13,6 @@ module View exposing
     , linkLikeButtonSmall
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
-    , recordListButton
     , recordListHorizontalDivider
     , settingsBackgroundColor
     , sidebarBackgroundColor
@@ -24,9 +24,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Element.Region
 import Html.Attributes
-import Icons
 import Text
 
 
@@ -34,7 +32,8 @@ import Text
 --- Button
 
 
-{-| Not sure if necessary but I'm adding `aria-disabled` to buttons when `onPress = Nothing`
+{-| Not sure if necessary but I'm using `aria-disabled` (instead of `disabed`) in buttons
+when `onPress = Nothing`
 -}
 type ButtonHandler msg
     = Enabled msg
@@ -136,7 +135,7 @@ NOTE: Move to DefaultView.elm?
 -}
 type Emphasis
     = RecordList
-    | Sidebar
+    | TopBar
 
 
 recordListHorizontalDivider : Emphasis -> Element msg
@@ -147,7 +146,7 @@ recordListHorizontalDivider emphasis =
                 RecordList ->
                     White
 
-                Sidebar ->
+                TopBar ->
                     Gray
     in
     horizontalDivider bgColor
@@ -159,7 +158,7 @@ recordListAlternativeBackgroundColor emphasis =
         RecordList ->
             Colors.grayBackground
 
-        Sidebar ->
+        TopBar ->
             Colors.darkGrayBackground
 
 
@@ -171,7 +170,7 @@ recordListBackgroundColor emphasis =
                 RecordList ->
                     White
 
-                Sidebar ->
+                TopBar ->
                     Gray
     in
     [ backgroundColor color
@@ -187,7 +186,7 @@ sidebarBackgroundColor emphasis =
                 RecordList ->
                     Gray
 
-                Sidebar ->
+                TopBar ->
                     White
     in
     [ backgroundColor color
@@ -195,42 +194,35 @@ sidebarBackgroundColor emphasis =
     ]
 
 
-{-| A button in the "RecordList" area of the UI (the search bar + the list of records)
+{-| A button with focus styles and accent color
 -}
-recordListButton :
-    { emphasis : Emphasis
-    , onClick : msg
+accentButton :
+    { onPress : ButtonHandler msg
     , label : Element msg
     }
     -> Element msg
-recordListButton { emphasis, onClick, label } =
+accentButton { onPress, label } =
     button
-        ([ Font.color (recordListButtonColor emphasis)
+        ([ Font.color (accentButtonColor onPress)
          , Border.width 1
          , Border.color Colors.transparent
          ]
             ++ overflowClickableRegion 6
         )
-        { onPress =
-            case emphasis of
-                RecordList ->
-                    enabled onClick
-
-                Sidebar ->
-                    disabled
+        { onPress = onPress
         , label = label
         }
         |> Element.el []
 
 
-recordListButtonColor : Emphasis -> Element.Color
-recordListButtonColor emphasis =
-    case emphasis of
-        RecordList ->
-            Colors.accent
-
-        Sidebar ->
+accentButtonColor : ButtonHandler msg -> Element.Color
+accentButtonColor onPress =
+    case onPress of
+        Disabled ->
             Colors.lighterGrayText
+
+        Enabled _ ->
+            Colors.accent
 
 
 settingsBackgroundColor : List (Element.Attribute msg)
@@ -302,115 +294,6 @@ linkLikeButtonSmall { onPress, label, language } =
         )
         { onPress = Just onPress
         , label = Text.text13 language label
-        }
-
-
-searchInput :
-    { a
-        | emphasis : Emphasis
-        , searchQuery : String
-        , changedSearchQuery : String -> msg
-        , language : Text.Language
-    }
-    -> Element msg
-searchInput ({ emphasis, searchQuery, changedSearchQuery, language } as config) =
-    let
-        padding =
-            10
-
-        border =
-            1
-
-        actualPadding =
-            padding - border
-
-        paddedSearchIconWidth =
-            34
-    in
-    Input.search
-        [ Background.color (recordListAlternativeBackgroundColor emphasis)
-        , Border.rounded 8
-        , Font.color Colors.blackText
-        , Border.width 0
-        , Element.inFront searchIcon
-        , Element.paddingEach
-            { top = actualPadding
-            , left = paddedSearchIconWidth
-            , right = actualPadding
-            , bottom = actualPadding
-            }
-        , Border.width border
-        , Border.color Colors.transparent
-        , Element.inFront (clearButton language (searchButtonConfig config))
-        , Font.size 16
-        ]
-        { onChange = changedSearchQuery
-        , text = searchQuery
-        , placeholder =
-            Just <|
-                Input.placeholder
-                    [ Font.color Colors.lightGrayText ]
-                    (Text.text16 language Text.SearchPlaceholder)
-        , label =
-            Input.labelHidden (Text.toString language Text.Search)
-        }
-
-
-type SearchButtonConfig clearSearchMsg
-    = NotSearching
-    | Searching clearSearchMsg
-
-
-searchButtonConfig :
-    { a
-        | searchQuery : String
-        , changedSearchQuery : String -> b
-    }
-    -> SearchButtonConfig b
-searchButtonConfig { searchQuery, changedSearchQuery } =
-    if String.isEmpty searchQuery then
-        NotSearching
-
-    else
-        Searching (changedSearchQuery "")
-
-
-searchIcon : Element msg
-searchIcon =
-    Element.el
-        [ Font.color Colors.blackText
-        , Element.padding 10
-        , Element.alignLeft
-        ]
-        Icons.search
-
-
-clearButton : Text.Language -> SearchButtonConfig msg -> Element msg
-clearButton language config =
-    let
-        ( fontColor, onPress ) =
-            case config of
-                NotSearching ->
-                    ( Colors.lighterGrayText, disabled )
-
-                Searching msg ->
-                    ( Colors.grayText, enabled msg )
-    in
-    button
-        [ Element.padding 10
-        , Element.alignRight
-        , Font.color fontColor
-        , Element.focused
-            [ Font.color Colors.accent
-            ]
-        ]
-        { onPress = onPress
-        , label =
-            Element.el
-                [ Element.Region.description
-                    (Text.toString language Text.ClearSearch)
-                ]
-                Icons.xButton
         }
 
 

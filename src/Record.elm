@@ -215,9 +215,14 @@ view config record =
                     [ Element.Font.color Colors.grayText ]
 
         deleteButton =
-            View.recordListButton
-                { emphasis = emphasis
-                , onClick = clickedDeleteButton record.id
+            View.accentButton
+                { onPress =
+                    case emphasis of
+                        View.RecordList ->
+                            View.enabled (clickedDeleteButton record.id)
+
+                        View.TopBar ->
+                            View.disabled
                 , label = Icons.trash
                 }
 

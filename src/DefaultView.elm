@@ -4,7 +4,6 @@ import Element exposing (Element)
 import Icons
 import Record
 import RecordList
-import Sidebar
 import Text
 import Time
 import Utils.Date
@@ -19,14 +18,14 @@ type alias Config msg =
     , dateNotation : Utils.Date.Notation
     , timeZone : Time.Zone
     , records : RecordList.RecordList
-    , sidebar : Sidebar.Config msg
+    , topBar : Element.Element msg
     , clickedSettings : msg
     , clickedDeleteButton : Record.Id -> msg
     }
 
 
 view : Config msg -> Element msg
-view ({ emphasis, sidebar, viewport } as config) =
+view ({ emphasis, topBar, viewport } as config) =
     let
         viewRecordListWithHeading =
             [ -- Heading
@@ -38,8 +37,8 @@ view ({ emphasis, sidebar, viewport } as config) =
             , RecordList.view config
             ]
 
-        viewSidebar =
-            [ Sidebar.view sidebar
+        topBarWrapped =
+            [ topBar
                 |> Element.el
                     [ Element.width (Element.fill |> Element.maximum 600)
                     , Element.padding 24
@@ -54,7 +53,7 @@ view ({ emphasis, sidebar, viewport } as config) =
         , Element.height Element.fill
         , Element.scrollbarX
         ]
-        (viewSidebar
+        (topBarWrapped
             ++ (case viewport of
                     View.Mobile ->
                         viewRecordListWithHeading
@@ -119,8 +118,13 @@ settingsButton :
     }
     -> Element msg
 settingsButton { emphasis, clickedSettings } =
-    View.recordListButton
-        { emphasis = emphasis
-        , onClick = clickedSettings
+    View.accentButton
+        { onPress =
+            case emphasis of
+                View.TopBar ->
+                    View.disabled
+
+                View.RecordList ->
+                    View.enabled clickedSettings
         , label = Icons.options
         }

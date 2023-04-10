@@ -142,7 +142,7 @@ view ({ emphasis, records } as config) =
                         View.RecordList ->
                             Text.PressTheStartButtonToCreateARecord
 
-                        View.Sidebar ->
+                        View.TopBar ->
                             Text.String ""
                 }
                 |> emptyBodyLayout
