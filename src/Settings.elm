@@ -66,41 +66,17 @@ type alias Config msg =
 
 view : Config msg -> Element msg
 view config =
-    let
-        ( padding, spacing ) =
-            case config.viewport of
-                View.Mobile ->
-                    ( 24, 24 )
-
-                View.Desktop ->
-                    ( 48, 32 )
-    in
-    Element.column
-        [ Element.width Element.fill
-        , Element.centerX
-        , case config.viewport of
-            View.Mobile ->
-                Element.height Element.fill
-
-            View.Desktop ->
-                Element.width (Element.maximum 600 Element.fill)
-        , Element.padding padding
-        , Element.spacing spacing
-        ]
-        [ settingsHeader config.language
-        , settingsBody config
-        , aboutLink config
-        , settingsFooter config
-        ]
+    View.modalContent
+        { header = settingsHeader config.language
+        , body = [ settingsBody config, aboutLink config ]
+        , footer = settingsFooter config
+        , viewport = config.viewport
+        }
 
 
 settingsHeader : Text.Language -> Element msg
 settingsHeader language =
-    Element.el
-        [ Element.Region.heading 1
-        , Element.Font.semiBold
-        ]
-        (Text.text24 language Text.SettingsHeading)
+    Text.text24 language Text.SettingsHeading
 
 
 settingsBody : Config msg -> Element msg
@@ -206,7 +182,7 @@ radioInputGroup :
     -> Element msg
 radioInputGroup config =
     Element.Input.radio
-        [ Background.color Colors.whiteBackground
+        [ Background.color Colors.grayBackground
         , Element.Border.rounded 8
         , Element.Border.width 1
         , Element.Border.color Colors.transparent
@@ -266,7 +242,7 @@ radioInputGroup config =
                         , Element.Border.width 1
                         , Element.Border.color Colors.transparent
                         ]
-                        [ View.horizontalDivider View.White
+                        [ View.horizontalDivider View.Gray
                         , customRadio text optionState
                         ]
 
@@ -288,31 +264,10 @@ radioInputGroup config =
 
 settingsFooter : Config msg -> Element msg
 settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton, language, viewport } =
-    Element.row
-        [ Element.alignBottom
-        , Element.width Element.fill
-        , Element.spacing 32
-        ]
-        [ View.linkLikeButton
-            { onPress = pressedSettingsCancelButton
-            , label = Text.Cancel
-            , language = language
-            , bold = False
-            }
-            |> Element.el
-                [ case viewport of
-                    View.Mobile ->
-                        Utils.emptyAttribute
-
-                    View.Desktop ->
-                        Element.alignRight
-                ]
-        , View.linkLikeButton
-            { onPress = pressedSettingsDoneButton
-            , label = Text.Save
-            , language = language
-            , bold = True
-            }
-            |> Element.el
-                [ Element.alignRight ]
-        ]
+    View.cancelConfirmButtons
+        { onCancel = pressedSettingsCancelButton
+        , onConfirm = pressedSettingsDoneButton
+        , confirmText = Text.Save
+        , language = language
+        , viewport = viewport
+        }

@@ -244,6 +244,7 @@ check16 =
             , stroke "currentColor"
             , strokeLinecap "round"
             , strokeLinejoin "round"
+            , strokeWidth "1.1"
             ]
             []
         ]

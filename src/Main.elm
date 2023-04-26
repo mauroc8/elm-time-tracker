@@ -1,4 +1,4 @@
-module Main exposing (Action, Model, Msg, main)
+module Main exposing (Model, Msg, main)
 
 import Browser
 import Browser.Dom
@@ -8,6 +8,7 @@ import CreateRecord exposing (CreateRecord)
 import DefaultView
 import Element exposing (Attribute, Element)
 import Element.Font as Font
+import Element.Background
 import Html exposing (Html)
 import Json.Decode
 import LocalStorage
@@ -24,6 +25,7 @@ import Utils.Date
 import Utils.Duration
 import Utils.Out as Out
 import View
+import ConfirmDeletion
 
 
 
@@ -66,7 +68,8 @@ type alias Model =
       records : RecordList
 
     -- UI
-    , action : Action
+    , createRecordForm : Maybe CreateRecord
+    , modal : Modal
 
     -- Settings
     , dateNotation : Utils.Date.Notation
@@ -87,7 +90,8 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { action = Idle
+    { createRecordForm = Nothing
+    , modal = ClosedModal
     , records = RecordList.empty
     , dateNotation = Utils.Date.westernNotation
     , language = Text.defaultLanguage
@@ -114,9 +118,9 @@ setViewport { screenWidth } model =
     { model | viewport = View.fromScreenWidth screenWidth }
 
 
-setAction : Action -> Model -> Model
-setAction action model =
-    { model | action = action }
+setModal : Modal -> Model -> Model
+setModal modal model =
+    { model | modal = modal }
 
 
 setSettings : Settings -> Model -> Model
@@ -129,10 +133,10 @@ setSettings settings model =
 
 editDateNotation : Utils.Date.Notation -> Model -> Model
 editDateNotation dateNotation model =
-    case model.action of
-        ChangingSettings settings ->
-            setAction
-                (ChangingSettings
+    case model.modal of
+        ChangeSettingsModal settings ->
+            setModal
+                (ChangeSettingsModal
                     { settings
                         | dateNotation = dateNotation
                     }
@@ -145,10 +149,10 @@ editDateNotation dateNotation model =
 
 editLanguage : Language -> Model -> Model
 editLanguage language model =
-    case model.action of
-        ChangingSettings settings ->
-            setAction
-                (ChangingSettings
+    case model.modal of
+        ChangeSettingsModal settings ->
+            setModal
+                (ChangeSettingsModal
                     { settings
                         | language = language
                     }
@@ -164,7 +168,7 @@ editLanguage language model =
 startCreatingRecord : String -> Model -> ( Model, Cmd Msg )
 startCreatingRecord description model =
     model
-        |> setAction (CreateRecord (CreateRecord.new description model.currentTime))
+        |> setCreateRecord (Just <| CreateRecord.new description model.currentTime)
         |> Out.withCmd
             (\_ ->
                 Browser.Dom.focus CreateRecord.descriptionInputId
@@ -172,18 +176,22 @@ startCreatingRecord description model =
             )
         |> Out.addCmd (\_ -> PreventClose.on)
 
+setCreateRecord : Maybe CreateRecord -> Model -> Model
+setCreateRecord createRecord model =
+    { model | createRecordForm = createRecord }
+
 
 stopCreatingRecord : Model -> ( Model, Cmd Msg )
 stopCreatingRecord model =
-    case model.action of
-        CreateRecord createForm ->
+    case model.createRecordForm of
+        Just createForm ->
             let
                 record =
                     Record.fromCreateForm model.currentTime createForm
             in
             model
                 |> pushRecord record
-                |> setAction Idle
+                |> setCreateRecord Nothing
                 |> Out.withCmd (\_ -> PreventClose.off)
 
         _ ->
@@ -200,10 +208,10 @@ pushRecord record model =
 
 changeCreateFormDescription : String -> Model -> Model
 changeCreateFormDescription description model =
-    case model.action of
-        CreateRecord createForm ->
-            setAction
-                (CreateRecord
+    case model.createRecordForm of
+        Just createForm ->
+            setCreateRecord
+                (Just
                     { createForm
                         | description = description
                     }
@@ -220,7 +228,7 @@ loadCreateForm flags model =
         { store = LocalStorage.createForm
         , flags = flags
         }
-        |> Result.map (\createForm -> { model | action = CreateRecord createForm })
+        |> Result.map (\createForm -> { model | createRecordForm = Just createForm })
         |> Result.withDefault model
 
 
@@ -252,8 +260,8 @@ loadSettings flags model =
 
 saveCreateForm : Model -> Cmd Msg
 saveCreateForm model =
-    case model.action of
-        CreateRecord createForm ->
+    case model.createRecordForm of
+        Just createForm ->
             LocalStorage.save
                 { store = LocalStorage.createForm
                 , value = createForm
@@ -294,24 +302,24 @@ the saved settings.
 -}
 appliedSettings : Model -> Settings
 appliedSettings model =
-    getActionSettings model.action
+    getModalSettings model.modal
         |> Maybe.withDefault (savedSettings model)
 
 
 
---- Action
+--- Modal
 
 
-type Action
-    = Idle
-    | CreateRecord CreateRecord
-    | ChangingSettings Settings
+type Modal
+    = ClosedModal
+    | ChangeSettingsModal Settings
+    | ConfirmDeletionModal Record.Id
 
 
-getActionSettings : Action -> Maybe Settings
-getActionSettings action =
-    case action of
-        ChangingSettings settings ->
+getModalSettings : Modal -> Maybe Settings
+getModalSettings modal =
+    case modal of
+        ChangeSettingsModal settings ->
             Just settings
 
         _ ->
@@ -348,6 +356,9 @@ type Msg
     | FocusedCreateFormDescriptionInput
       -- Record List
     | ClickedDeleteButton Record.Id
+      -- Confirm deletion modal
+    | CancelDeleteRecord
+    | ConfirmDeleteRecord Record.Id
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -381,8 +392,8 @@ update msg model =
 
         -- Heading
         PressedSettingsButton ->
-            setAction
-                (ChangingSettings
+            setModal
+                (ChangeSettingsModal
                     { dateNotation = model.dateNotation
                     , language = model.language
                     }
@@ -392,11 +403,11 @@ update msg model =
 
         -- Settings
         PressedSettingsCancelButton ->
-            setAction Idle model
+            setModal ClosedModal model
                 |> Out.withNoCmd
 
         PressedSettingsDoneButton ->
-            setAction Idle model
+            setModal ClosedModal model
                 |> setSettings (appliedSettings model)
                 |> Out.withCmd saveSettings
 
@@ -441,7 +452,7 @@ update msg model =
 
         PressedEscapeInCreateRecord ->
             model
-                |> setAction Idle
+                |> setModal ClosedModal
                 |> Out.withCmd saveCreateForm
 
         PressedChangeStartTimeInCreateRecord ->
@@ -452,8 +463,19 @@ update msg model =
             model
                 |> Out.withNoCmd
 
+        -- Record List
         ClickedDeleteButton id ->
-            { model | records = RecordList.delete id model.records }
+            { model | modal = ConfirmDeletionModal id }
+                |> Out.withNoCmd
+
+        -- Confirm deletion modal
+        CancelDeleteRecord ->
+            { model | modal = ClosedModal }
+                |> Out.withNoCmd
+
+        ConfirmDeleteRecord id ->
+            { model | records = RecordList.delete id model.records
+                , modal = ClosedModal }
                 |> Out.withCmd saveRecords
 
 
@@ -465,8 +487,8 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ if model.visibility == Browser.Events.Visible then
-            case model.action of
-                CreateRecord createForm ->
+            case model.createRecordForm of
+                Just createForm ->
                     CreateRecord.subscriptions
                         { currentTime = model.currentTime
                         , gotCurrentTime = GotCurrentTime
@@ -515,24 +537,24 @@ rootAttributes model =
             , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
             ]
     in
-    case model.action of
-        ChangingSettings _ ->
+    case ( model.modal, model.createRecordForm ) of
+        ( ClosedModal, Just _ ) ->
             shared
-                ++ View.settingsBackgroundColor
+                ++ View.grayBackgroundStyles
 
-        CreateRecord _ ->
+        ( ClosedModal, Nothing ) ->
             shared
-                ++ View.recordListBackgroundColor View.TopBar
+                ++ View.whiteBackgroundStyles
 
-        Idle ->
+        ( _, _ ) ->
             shared
-                ++ View.recordListBackgroundColor View.RecordList
+                ++ View.grayGradientBackgroundStyles
 
 
 rootElement : Model -> Element Msg
 rootElement model =
-    case model.action of
-        ChangingSettings settings ->
+    case model.modal of
+        ChangeSettingsModal settings ->
             Settings.view
                 { dateNotation = settings.dateNotation
                 , language = settings.language
@@ -544,36 +566,44 @@ rootElement model =
                 , today = Utils.Date.fromZoneAndPosix model.timeZone model.currentTime
                 }
 
-        CreateRecord createRecord ->
-            DefaultView.view
-                { emphasis = View.TopBar
-                , records = model.records
-                , topBar =
-                    CreateRecord.view
-                        { description = createRecord.description
-                        , elapsedTime =
-                            Utils.Duration.fromTimeDifference model.currentTime createRecord.start
-                                |> Utils.Duration.toText
-                        , changedDescription = ChangedCreateFormDescription
-                        , pressedStop = PressedStopButton
-                        , pressedEnter = PressedEnterInCreateRecord
-                        , pressedEscape = PressedEscapeInCreateRecord
-                        , pressedChangeStartTime = PressedChangeStartTimeInCreateRecord
-                        , language = model.language
-                        }
-                , clickedSettings = PressedSettingsButton
-                , language = model.language
+        ConfirmDeletionModal recordId ->
+            ConfirmDeletion.view
+                { onConfirm = ConfirmDeleteRecord recordId
+                , onCancel = CancelDeleteRecord
                 , viewport = model.viewport
-                , clickedDeleteButton = ClickedDeleteButton
-                , currentTime = model.currentTime
-                , dateNotation = model.dateNotation
-                , timeZone = model.timeZone
+                , language = model.language
                 }
 
-        Idle ->
+        ClosedModal ->
             DefaultView.view
-                { emphasis = View.RecordList
+                { emphasis =
+                    case model.createRecordForm of
+                        Just _ ->
+                            View.TopBar
+
+                        Nothing ->
+                            View.RecordList
+
                 , records = model.records
+                , topBar =
+                    case model.createRecordForm of
+                        Just createRecord ->
+                            CreateRecord.view
+                                { description = createRecord.description
+                                , elapsedTime =
+                                    Utils.Duration.fromTimeDifference model.currentTime createRecord.start
+                                        |> Utils.Duration.toText
+                                , changedDescription = ChangedCreateFormDescription
+                                , pressedStop = PressedStopButton
+                                , pressedEnter = PressedEnterInCreateRecord
+                                , pressedEscape = PressedEscapeInCreateRecord
+                                , pressedChangeStartTime = PressedChangeStartTimeInCreateRecord
+                                , language = model.language
+                                }
+                                
+                        Nothing ->
+                            StartButton.view { pressedStart = PressedStartButton }
+
                 , clickedSettings = PressedSettingsButton
                 , language = model.language
                 , viewport = model.viewport
@@ -581,5 +611,4 @@ rootElement model =
                 , currentTime = model.currentTime
                 , dateNotation = model.dateNotation
                 , timeZone = model.timeZone
-                , topBar = StartButton.view { pressedStart = PressedStartButton }
                 }

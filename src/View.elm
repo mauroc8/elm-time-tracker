@@ -14,8 +14,12 @@ module View exposing
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListHorizontalDivider
-    , settingsBackgroundColor
+    , grayBackgroundStyles
     , sidebarBackgroundColor
+    , grayGradientBackgroundStyles
+    , modalContent
+    , cancelConfirmButtons
+    , whiteBackgroundStyles
     )
 
 import Colors
@@ -24,8 +28,10 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Element.Region
 import Html.Attributes
 import Text
+import Utils
 
 
 
@@ -180,18 +186,12 @@ recordListBackgroundColor emphasis =
 
 sidebarBackgroundColor : Emphasis -> List (Element.Attribute msg)
 sidebarBackgroundColor emphasis =
-    let
-        color =
-            case emphasis of
-                RecordList ->
-                    Gray
+    case emphasis of
+        RecordList ->
+            grayBackgroundStyles
 
-                TopBar ->
-                    White
-    in
-    [ backgroundColor color
-    , backgroundTransition
-    ]
+        TopBar ->
+            whiteBackgroundStyles
 
 
 {-| A button with focus styles and accent color
@@ -225,13 +225,121 @@ accentButtonColor onPress =
             Colors.accent
 
 
-settingsBackgroundColor : List (Element.Attribute msg)
-settingsBackgroundColor =
+whiteBackgroundStyles : List (Element.Attribute msg)
+whiteBackgroundStyles =
+    [ backgroundColor White
+    , backgroundTransition
+    ]
+
+grayBackgroundStyles : List (Element.Attribute msg)
+grayBackgroundStyles =
     [ backgroundColor Gray
     , backgroundTransition
     ]
 
+grayGradientBackgroundStyles : List (Element.Attribute msg)
+grayGradientBackgroundStyles =
+    [ Background.color Colors.darkGrayBackground
+    , Background.gradient
+        { angle = pi
+        , steps =
+            [ Element.rgba 0 0 0 0
+            , Element.rgba 0 0 0 0
+            , Element.rgba 0 0 0 0
+            , Element.rgba 0 0 0 0.3
+            ]
+        }
+    ]
 
+modalContent { viewport, header, body, footer } =
+    let
+        ( padding, spacing ) =
+            case viewport of
+                Mobile ->
+                    ( 24, 24 )
+
+                Desktop ->
+                    ( 48, 32 )
+
+        content =
+            Element.column
+                ([ Element.width
+                    (case viewport of
+                        Mobile ->
+                            Element.fill
+
+                        Desktop ->
+                            Element.maximum 600 Element.fill
+                    )
+                , Element.centerX
+                , Element.height
+                    (case viewport of
+                        Mobile ->
+                            Element.fill
+
+                        Desktop ->
+                            Element.shrink
+                    )
+                , Element.padding padding
+                , Element.spacing (spacing * 2)
+                , Border.rounded 16
+                ]
+                    ++ whiteBackgroundStyles
+                )
+                [ Element.column
+                    [ Element.width Element.fill
+                    , Element.spacing spacing
+                    ]
+                    ([ header
+                        |> Element.el
+                            [ Element.Region.heading 1
+                            , Font.semiBold
+                            ]
+                    ]
+                        ++ body
+                    )
+                , footer
+                ]
+    in
+    Element.column
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        , Element.padding 24
+        ]
+        [ content
+        ]
+
+{-| The footer of the modal, that has two buttons. The left one is a "Cancel" button
+and the right one confirms an operation. -}
+cancelConfirmButtons { onCancel, onConfirm, confirmText, language, viewport } =
+    Element.row
+        [ Element.alignBottom
+        , Element.width Element.fill
+        , Element.spacing 32
+        ]
+        [ linkLikeButton
+            { onPress = onCancel
+            , label = Text.Cancel
+            , language = language
+            , bold = False
+            }
+            |> Element.el
+                [ case viewport of
+                    Mobile ->
+                        Utils.emptyAttribute
+
+                    Desktop ->
+                        Element.alignRight
+                ]
+        , linkLikeButton
+            { onPress = onConfirm
+            , label = confirmText
+            , language = language
+            , bold = True
+            }
+            |> Element.el
+                [ Element.alignRight ]
+        ]
 
 --- Utils
 

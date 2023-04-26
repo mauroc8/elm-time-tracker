@@ -1,6 +1,5 @@
 module Record exposing
-    ( Config
-    , Id
+    ( Id
     , Record
     , decoder
     , encode
@@ -118,17 +117,6 @@ encode record =
 --- VIEW
 
 
-type alias Config msg =
-    { clickedDeleteButton : Id -> msg
-    , currentTime : Time.Posix
-    , dateNotation : Utils.Date.Notation
-    , timeZone : Time.Zone
-    , language : Text.Language
-    , viewport : View.Viewport
-    , emphasis : View.Emphasis
-    }
-
-
 view :
     { a
         | clickedDeleteButton : Id -> msg
@@ -137,7 +125,6 @@ view :
         , timeZone : Time.Zone
         , language : Text.Language
         , viewport : View.Viewport
-        , emphasis : View.Emphasis
     }
     -> Record
     -> Element msg
@@ -146,7 +133,7 @@ view config record =
         { clickedDeleteButton, language, viewport } =
             config
 
-        { timeZone, currentTime, dateNotation, emphasis } =
+        { timeZone, currentTime, dateNotation } =
             config
 
         description =
@@ -216,13 +203,7 @@ view config record =
 
         deleteButton =
             View.accentButton
-                { onPress =
-                    case emphasis of
-                        View.RecordList ->
-                            View.enabled (clickedDeleteButton record.id)
-
-                        View.TopBar ->
-                            View.disabled
+                { onPress = View.enabled (clickedDeleteButton record.id)
                 , label = Icons.trash
                 }
 

@@ -113,18 +113,11 @@ withHorizontalDivider emphasis el =
 
 settingsButton :
     { a
-        | emphasis : Emphasis
-        , clickedSettings : msg
+        | clickedSettings : msg
     }
     -> Element msg
-settingsButton { emphasis, clickedSettings } =
+settingsButton { clickedSettings } =
     View.accentButton
-        { onPress =
-            case emphasis of
-                View.TopBar ->
-                    View.disabled
-
-                View.RecordList ->
-                    View.enabled clickedSettings
+        { onPress = View.enabled clickedSettings
         , label = Icons.options
         }

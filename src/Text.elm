@@ -88,6 +88,10 @@ type
     | Search
     | ClearSearch
     | NoDescription
+    -- Confirm deletion
+    | ConfirmDeletionHeading
+    | ConfirmDeletionBody
+    | Confirm
       -- Operators
     | String String
     | Integer Int
@@ -221,6 +225,25 @@ toString lang text =
 
         ( NoDescription, Spanish ) ->
             "sin descripción"
+
+        -- Confirm deletion
+        ( ConfirmDeletionHeading, English ) ->
+            "Delete record"
+
+        ( ConfirmDeletionHeading, Spanish ) ->
+            "Borrar registro"
+
+        ( ConfirmDeletionBody, English ) ->
+            "Are you sure you want to delete this entry? This action can't be undone."
+
+        ( ConfirmDeletionBody, Spanish ) ->
+            "Estás seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer."
+
+        ( Confirm, English ) ->
+            "Confirm"
+
+        ( Confirm, Spanish ) ->
+            "Confirmar"
 
         -- Operators
         ( String str, _ ) ->
