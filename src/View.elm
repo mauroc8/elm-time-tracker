@@ -416,7 +416,14 @@ linkLikeButton :
     -> Element msg
 linkLikeButton { onPress, label, language, bold } =
     Input.button
-        ([ Font.color Colors.accent
+        ([ Font.color
+            (case label of
+                Text.Delete ->
+                    Colors.red
+
+                _ ->
+                    Colors.accent
+            )
          , if bold then
             Font.semiBold
 

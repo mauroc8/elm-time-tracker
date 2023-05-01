@@ -20,7 +20,7 @@ view { onCancel, onConfirm, viewport, language } =
             View.cancelConfirmButtons
                 { onCancel = onCancel
                 , onConfirm = onConfirm
-                , confirmText = Text.Confirm
+                , confirmText = Text.Delete
                 , language = language
                 , viewport = viewport
                 }

@@ -3,6 +3,7 @@ module Main exposing (Modal, Model, Msg, main)
 import Browser
 import Browser.Dom
 import Browser.Events
+import ChangeStartTime
 import Colors
 import ConfirmDeletion
 import CreateRecord exposing (CreateRecord)
@@ -315,6 +316,7 @@ type Modal
     = ClosedModal
     | ChangeSettingsModal Settings
     | ConfirmDeletionModal Record.Id
+    | ChangeStartTimeModal
 
 
 getModalSettings : Modal -> Maybe Settings
@@ -458,6 +460,8 @@ update msg model =
 
         PressedChangeStartTimeInCreateRecord ->
             model
+                |> setModal
+                    ChangeStartTimeModal
                 |> Out.withNoCmd
 
         FocusedCreateFormDescriptionInput ->
@@ -621,18 +625,9 @@ rootElement model =
                         Nothing ->
                             [ Element.height Element.fill ]
                    )
-
-        rootAttributes =
-            case model.createRecordForm of
-                Just _ ->
-                    shared
-                        ++ View.grayBackgroundStyles
-
-                Nothing ->
-                    shared
-                        ++ View.whiteBackgroundStyles
     in
-    ( rootAttributes
+    ( shared
+        ++ View.recordListBackgroundColor emphasis
     , Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -681,6 +676,19 @@ viewModal config modal =
                 , onCancel = CancelDeleteRecord
                 , viewport = config.viewport
                 , language = config.language
+                }
+                |> Just
+
+        ChangeStartTimeModal ->
+            ChangeStartTime.view
+                { onConfirm = CancelDeleteRecord -- TODO:
+                , onCancel = CancelDeleteRecord
+                , onChange = \_ -> CancelDeleteRecord
+                , viewport = config.viewport
+                , language = config.language
+                }
+                { inputValue = ""
+                , showInputError = False
                 }
                 |> Just
 

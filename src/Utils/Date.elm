@@ -4,7 +4,7 @@ module Utils.Date exposing
     , fromZoneAndPosix
     , notationDecoder
     , relativeDateLabel
-    , toText
+    , toLabel
     , toZonedPosix
     , unitedStatesNotation
     , westernNotation
@@ -71,8 +71,8 @@ unitedStatesNotation =
 ---
 
 
-toText : Notation -> Calendar.Date -> Text.Text
-toText notation date =
+toLabel : Notation -> Calendar.Date -> Text.Text
+toLabel notation date =
     case notation of
         UnitedStates ->
             Text.UsaDate

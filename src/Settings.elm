@@ -123,12 +123,12 @@ settingsBody config =
             , options =
                 [ { label =
                         label Text.InternationalDateNotation
-                            (Utils.Date.toText Utils.Date.westernNotation config.today)
+                            (Utils.Date.toLabel Utils.Date.westernNotation config.today)
                   , value = Utils.Date.westernNotation
                   }
                 , { label =
                         label Text.UsaDateNotation
-                            (Utils.Date.toText Utils.Date.unitedStatesNotation config.today)
+                            (Utils.Date.toLabel Utils.Date.unitedStatesNotation config.today)
                   , value = Utils.Date.unitedStatesNotation
                   }
                 ]

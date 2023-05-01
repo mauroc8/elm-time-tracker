@@ -80,12 +80,15 @@ type
     | WhatAreYouWorkingOn
     | DescriptionLabel
     | ChangeStartTimeLabel
+      -- Change Start Time
+    | ChangeStartTimeHeading
       -- Empty states
     | PressTheStartButtonToCreateARecord
     | NoDescription
       -- Confirm deletion
     | ConfirmDeletionHeading
     | ConfirmDeletionBody
+    | Delete
     | Confirm
       -- Operators
     | String String
@@ -188,6 +191,13 @@ toString lang text =
         ( ChangeStartTimeLabel, Spanish ) ->
             "cambiar tiempo de inicio"
 
+        -- Change Start Time
+        ( ChangeStartTimeHeading, English ) ->
+            "Change start time"
+
+        ( ChangeStartTimeHeading, Spanish ) ->
+            "Cambiar tiempo de inicio"
+
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->
             "Press start to create a record"
@@ -206,13 +216,19 @@ toString lang text =
             "Delete record"
 
         ( ConfirmDeletionHeading, Spanish ) ->
-            "Borrar registro"
+            "Eliminar registro"
 
         ( ConfirmDeletionBody, English ) ->
             "Are you sure you want to delete this entry? This action can't be undone."
 
         ( ConfirmDeletionBody, Spanish ) ->
-            "Estás seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer."
+            "¿Estás seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer."
+
+        ( Delete, English ) ->
+            "Delete"
+
+        ( Delete, Spanish ) ->
+            "Eliminar"
 
         ( Confirm, English ) ->
             "Confirm"
@@ -324,7 +340,7 @@ toString lang text =
             "The data is stored on your browser's cache. You'll lose all records if you clear the cache."
 
         ( CommentAboutStorage, Spanish ) ->
-            "Los datos se guardan en la caché de tu navegador. Perderás todos los registros al limpiar la caché."
+            "Los datos se guardan en la caché del navegador. Perderás todos los registros al limpiar la caché."
 
 
 weekdayToEnglish : Time.Weekday -> String
@@ -419,7 +435,6 @@ monthToString month =
 
 
 --- FONT SIZE
--- Note: this is overengineered because I tried some experiments with it.
 
 
 text12 : Language -> Text -> Element msg
