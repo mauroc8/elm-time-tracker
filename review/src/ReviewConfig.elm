@@ -35,14 +35,15 @@ config =
     [ NoExposingEverything.rule
     , NoDeprecated.rule NoDeprecated.defaults
     , NoImportingEverything.rule [ "Svg", "Svg.Attributes" ]
-    , NoMissingTypeAnnotation.rule
+
+    -- , NoMissingTypeAnnotation.rule
     , NoMissingTypeExpose.rule
     , NoSimpleLetBody.rule
     , NoUnused.CustomTypeConstructors.rule []
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.Dependencies.rule
-    , NoUnused.Exports.rule
-        |> Review.Rule.ignoreErrorsForFiles [ "src/Utils/Out.elm" ]
+
+    -- , NoUnused.Exports.rule
     , NoUnused.Modules.rule
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule

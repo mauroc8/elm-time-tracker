@@ -1,9 +1,9 @@
-module ConfirmDeletion exposing (view)
+module ConfirmDeletion exposing (Config, view)
 
 import Element
-import View
 import Text
-import Utils
+import View
+
 
 type alias Config msg =
     { onCancel : msg
@@ -11,6 +11,7 @@ type alias Config msg =
     , viewport : View.Viewport
     , language : Text.Language
     }
+
 
 view : Config msg -> Element.Element msg
 view { onCancel, onConfirm, viewport, language } =
@@ -26,9 +27,12 @@ view { onCancel, onConfirm, viewport, language } =
     in
     View.modalContent
         { header = Text.text24 language Text.ConfirmDeletionHeading
-        , body = [
-            Text.text14 language Text.ConfirmDeletionBody
-        ]
+        , body =
+            [ Element.paragraph
+                [ Element.spacing 6 ]
+                [ Text.text14 language Text.ConfirmDeletionBody
+                ]
+            ]
         , footer = footer
         , viewport = viewport
         }

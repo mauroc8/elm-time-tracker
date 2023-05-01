@@ -1,15 +1,15 @@
-module Main exposing (Model, Msg, main)
+module Main exposing (Modal, Model, Msg, main)
 
 import Browser
 import Browser.Dom
 import Browser.Events
 import Colors
+import ConfirmDeletion
 import CreateRecord exposing (CreateRecord)
-import DefaultView
 import Element exposing (Attribute, Element)
 import Element.Font as Font
-import Element.Background
 import Html exposing (Html)
+import Icons
 import Json.Decode
 import LocalStorage
 import PreventClose
@@ -24,8 +24,7 @@ import Utils
 import Utils.Date
 import Utils.Duration
 import Utils.Out as Out
-import View
-import ConfirmDeletion
+import View exposing (Emphasis)
 
 
 
@@ -175,6 +174,7 @@ startCreatingRecord description model =
                     |> Task.attempt (\_ -> FocusedCreateFormDescriptionInput)
             )
         |> Out.addCmd (\_ -> PreventClose.on)
+
 
 setCreateRecord : Maybe CreateRecord -> Model -> Model
 setCreateRecord createRecord model =
@@ -474,8 +474,10 @@ update msg model =
                 |> Out.withNoCmd
 
         ConfirmDeleteRecord id ->
-            { model | records = RecordList.delete id model.records
-                , modal = ClosedModal }
+            { model
+                | records = RecordList.delete id model.records
+                , modal = ClosedModal
+            }
                 |> Out.withCmd saveRecords
 
 
@@ -537,23 +539,118 @@ rootAttributes model =
             , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
             ]
     in
-    case ( model.modal, model.createRecordForm ) of
-        ( ClosedModal, Just _ ) ->
+    case model.createRecordForm of
+        Just _ ->
             shared
                 ++ View.grayBackgroundStyles
 
-        ( ClosedModal, Nothing ) ->
+        Nothing ->
             shared
                 ++ View.whiteBackgroundStyles
-
-        ( _, _ ) ->
-            shared
-                ++ View.grayGradientBackgroundStyles
 
 
 rootElement : Model -> Element Msg
 rootElement model =
-    case model.modal of
+    let
+        emphasis =
+            case model.createRecordForm of
+                Just _ ->
+                    View.TopBar
+
+                Nothing ->
+                    View.RecordList
+
+        modalIsOpen =
+            model.modal /= ClosedModal
+
+        topBar =
+            case model.createRecordForm of
+                Just createRecord ->
+                    CreateRecord.view
+                        { description = createRecord.description
+                        , elapsedTime =
+                            Utils.Duration.fromTimeDifference model.currentTime createRecord.start
+                                |> Utils.Duration.label
+                        , changedDescription = ChangedCreateFormDescription
+                        , pressedStop = PressedStopButton
+                        , pressedEnter = PressedEnterInCreateRecord
+                        , pressedEscape = PressedEscapeInCreateRecord
+                        , pressedChangeStartTime = PressedChangeStartTimeInCreateRecord
+                        , language = model.language
+                        , modalIsOpen = modalIsOpen
+                        }
+
+                Nothing ->
+                    StartButton.view
+                        { pressedStart = PressedStartButton
+                        , modalIsOpen = modalIsOpen
+                        }
+
+        config =
+            { emphasis = emphasis
+            , records = model.records
+            , topBar = topBar
+            , clickedSettings = PressedSettingsButton
+            , language = model.language
+            , viewport = model.viewport
+            , clickedDeleteButton = ClickedDeleteButton
+            , currentTime = model.currentTime
+            , dateNotation = model.dateNotation
+            , timeZone = model.timeZone
+            , modalIsOpen = modalIsOpen
+            }
+
+        viewRecordListWithHeading =
+            [ -- Heading
+              headingSection config
+                |> withHeaderLayout config
+                |> withHorizontalDivider emphasis
+
+            -- RecordList
+            , RecordList.view config
+            ]
+
+        topBarWrapped =
+            [ topBar
+                |> Element.el
+                    [ Element.width (Element.fill |> Element.maximum 600)
+                    , Element.padding 24
+                    , Element.centerX
+                    ]
+                |> Element.el
+                    (Element.width Element.fill :: View.sidebarBackgroundColor emphasis)
+            ]
+    in
+    Element.column
+        [ Element.width Element.fill
+        , Element.height Element.fill
+        , Element.scrollbarX
+        , case viewModal config model.modal of
+            Just modal ->
+                Element.inFront modal
+
+            Nothing ->
+                Utils.emptyAttribute
+        ]
+        (topBarWrapped
+            ++ (case config.viewport of
+                    View.Mobile ->
+                        viewRecordListWithHeading
+
+                    View.Desktop ->
+                        [ Element.column
+                            [ Element.width (Element.fill |> Element.maximum 600)
+                            , Element.centerX
+                            , Element.height Element.fill
+                            ]
+                            viewRecordListWithHeading
+                        ]
+               )
+        )
+
+
+viewModal config modal =
+    case modal of
         ChangeSettingsModal settings ->
             Settings.view
                 { dateNotation = settings.dateNotation
@@ -562,53 +659,89 @@ rootElement model =
                 , changedLanguage = ChangedLanguage
                 , pressedSettingsCancelButton = PressedSettingsCancelButton
                 , pressedSettingsDoneButton = PressedSettingsDoneButton
-                , viewport = model.viewport
-                , today = Utils.Date.fromZoneAndPosix model.timeZone model.currentTime
+                , viewport = config.viewport
+                , today = Utils.Date.fromZoneAndPosix config.timeZone config.currentTime
                 }
+                |> Just
 
         ConfirmDeletionModal recordId ->
             ConfirmDeletion.view
                 { onConfirm = ConfirmDeleteRecord recordId
                 , onCancel = CancelDeleteRecord
-                , viewport = model.viewport
-                , language = model.language
+                , viewport = config.viewport
+                , language = config.language
                 }
+                |> Just
 
         ClosedModal ->
-            DefaultView.view
-                { emphasis =
-                    case model.createRecordForm of
-                        Just _ ->
-                            View.TopBar
+            Nothing
 
-                        Nothing ->
-                            View.RecordList
 
-                , records = model.records
-                , topBar =
-                    case model.createRecordForm of
-                        Just createRecord ->
-                            CreateRecord.view
-                                { description = createRecord.description
-                                , elapsedTime =
-                                    Utils.Duration.fromTimeDifference model.currentTime createRecord.start
-                                        |> Utils.Duration.toText
-                                , changedDescription = ChangedCreateFormDescription
-                                , pressedStop = PressedStopButton
-                                , pressedEnter = PressedEnterInCreateRecord
-                                , pressedEscape = PressedEscapeInCreateRecord
-                                , pressedChangeStartTime = PressedChangeStartTimeInCreateRecord
-                                , language = model.language
-                                }
-                                
-                        Nothing ->
-                            StartButton.view { pressedStart = PressedStartButton }
+type alias Config msg =
+    { emphasis : Emphasis
+    , language : Text.Language
+    , viewport : View.Viewport
+    , currentTime : Time.Posix
+    , dateNotation : Utils.Date.Notation
+    , timeZone : Time.Zone
+    , records : RecordList.RecordList
+    , topBar : Element.Element msg
+    , clickedSettings : msg
+    , clickedDeleteButton : Record.Id -> msg
+    , modal : Modal
+    }
 
-                , clickedSettings = PressedSettingsButton
-                , language = model.language
-                , viewport = model.viewport
-                , clickedDeleteButton = ClickedDeleteButton
-                , currentTime = model.currentTime
-                , dateNotation = model.dateNotation
-                , timeZone = model.timeZone
+
+
+--- Heading
+
+
+headingSection :
+    { a
+        | clickedSettings : msg
+        , modalIsOpen : Bool
+    }
+    -> Element msg
+headingSection { clickedSettings, modalIsOpen } =
+    let
+        settingsButton =
+            View.accentButton
+                { onPress =
+                    View.enabled clickedSettings
+                        |> View.disableIf modalIsOpen
+                , label = Icons.options
                 }
+    in
+    Element.row
+        [ Element.spacing 16
+        , Element.width Element.fill
+        ]
+        [ settingsButton
+        ]
+
+
+withHeaderLayout : { config | viewport : View.Viewport } -> Element msg -> Element msg
+withHeaderLayout { viewport } =
+    let
+        padding =
+            case viewport of
+                View.Mobile ->
+                    Element.padding 16
+
+                View.Desktop ->
+                    Element.paddingXY 0 16
+    in
+    Element.el
+        [ padding
+        , Element.width Element.fill
+        ]
+
+
+withHorizontalDivider : Emphasis -> Element msg -> Element msg
+withHorizontalDivider emphasis el =
+    Element.column
+        [ Element.width Element.fill
+        ]
+        [ el
+        , View.recordListHorizontalDivider emphasis
+        ]

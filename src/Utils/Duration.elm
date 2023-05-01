@@ -2,8 +2,8 @@ module Utils.Duration exposing
     ( Duration
     , fromSeconds
     , fromTimeDifference
-    , secondsNeededToChangeTheResultOfToString
-    , toText
+    , label
+    , secondsBeforeTheLabelChanges
     )
 
 import Text
@@ -41,8 +41,8 @@ fromSeconds s =
 ---
 
 
-toText : Duration -> Text.Text
-toText (DurationInSeconds totalSeconds) =
+label : Duration -> Text.Text
+label (DurationInSeconds totalSeconds) =
     let
         totalMinutes =
             totalSeconds // 60
@@ -159,8 +159,8 @@ secondsToText s =
 {-| Given a `duration`, this function returns the amount of seconds that need to be added
 to that duration such that `toString duration /= toString addedDuration`.
 -}
-secondsNeededToChangeTheResultOfToString : Duration -> Int
-secondsNeededToChangeTheResultOfToString (DurationInSeconds duration) =
+secondsBeforeTheLabelChanges : Duration -> Int
+secondsBeforeTheLabelChanges (DurationInSeconds duration) =
     if duration < 60 then
         -- The result of toString changes every second in the first minute
         1

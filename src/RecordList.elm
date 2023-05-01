@@ -13,6 +13,8 @@ module RecordList exposing
 import Colors
 import Dict exposing (Dict)
 import Element exposing (Element)
+import Element.Background
+import Element.Border
 import Element.Font
 import Json.Decode
 import Json.Encode
@@ -131,6 +133,7 @@ view :
         , currentTime : Time.Posix
         , dateNotation : Utils.Date.Notation
         , timeZone : Time.Zone
+        , modalIsOpen : Bool
     }
     -> Element msg
 view ({ emphasis, records } as config) =
@@ -150,8 +153,22 @@ view ({ emphasis, records } as config) =
         recordsList ->
             recordsList
                 |> List.map (Record.view config)
+                |> (\list -> list ++ [ information config ])
                 |> List.intersperse (View.recordListHorizontalDivider emphasis)
-                |> bodyWithRecordsLayout emphasis
+                |> Element.column
+                    [ Element.width Element.fill
+                    , Element.height Element.fill
+                    ]
+
+
+information { language } =
+    Element.paragraph
+        [ Element.spacing 8
+        , Element.paddingXY 0 16
+        , Element.width Element.fill
+        , Element.Font.color Colors.grayText
+        ]
+        [ Text.text13 language Text.CommentAboutStorage ]
 
 
 emptyState : { a | language : Text.Language } -> { message : Text.Text } -> Element msg
@@ -172,18 +189,4 @@ emptyBodyLayout =
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.padding 16
-        ]
-
-
-bodyWithRecordsLayout : Emphasis -> List (Element msg) -> Element msg
-bodyWithRecordsLayout emphasis children =
-    Element.column
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        ]
-        [ Element.column
-            [ Element.width Element.fill
-            ]
-            children
-        , View.recordListHorizontalDivider emphasis
         ]

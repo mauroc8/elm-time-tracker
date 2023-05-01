@@ -11,8 +11,8 @@ import View
 --- SIDE BAR
 
 
-view : { pressedStart : msg } -> Element msg
-view { pressedStart } =
+view : { pressedStart : msg, modalIsOpen : Bool } -> Element msg
+view { pressedStart, modalIsOpen } =
     View.button
         [ Element.centerX
         , Element.Font.color Colors.lightGrayText
@@ -20,6 +20,8 @@ view { pressedStart } =
             [ Element.Font.color Colors.accent
             ]
         ]
-        { onPress = View.enabled pressedStart
+        { onPress =
+            View.enabled pressedStart
+                |> View.disableIf modalIsOpen
         , label = Icons.playButton
         }

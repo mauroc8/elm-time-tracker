@@ -15,7 +15,7 @@ module Colors exposing
     )
 
 import Element exposing (Color)
-import Debug
+
 
 whiteBackground : Color
 whiteBackground =
@@ -35,6 +35,7 @@ darkGrayBackground =
 darkerGrayBackground : Color
 darkerGrayBackground =
     Element.rgb255 215 215 215
+
 
 blackText : Color
 blackText =

@@ -13,7 +13,7 @@ import CreateRecord
 import Element exposing (Element)
 import Element.Font
 import Element.Keyed
-import Icons exposing (playButton)
+import Icons
 import Json.Decode
 import Json.Encode
 import Text
@@ -125,6 +125,7 @@ view :
         , timeZone : Time.Zone
         , language : Text.Language
         , viewport : View.Viewport
+        , modalIsOpen : Bool
     }
     -> Record
     -> Element msg
@@ -148,7 +149,7 @@ view config record =
 
         duration =
             Utils.Duration.fromSeconds record.durationInSeconds
-                |> Utils.Duration.toText
+                |> Utils.Duration.label
 
         startTimeText =
             Utils.Time.toStringWithAmPm (startTime timeZone record)
@@ -203,7 +204,9 @@ view config record =
 
         deleteButton =
             View.accentButton
-                { onPress = View.enabled (clickedDeleteButton record.id)
+                { onPress =
+                    View.enabled (clickedDeleteButton record.id)
+                        |> View.disableIf config.modalIsOpen
                 , label = Icons.trash
                 }
 

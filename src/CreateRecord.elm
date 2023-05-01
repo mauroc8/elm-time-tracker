@@ -14,7 +14,6 @@ import Element exposing (Element)
 import Element.Background
 import Element.Border
 import Element.Font
-import Element.Input
 import Html.Attributes
 import Icons
 import Json.Decode
@@ -91,6 +90,7 @@ type alias Config msg =
     , pressedEscape : msg
     , pressedChangeStartTime : msg
     , language : Text.Language
+    , modalIsOpen : Bool
     }
 
 
@@ -103,7 +103,7 @@ view config =
             ]
 
         descriptionInput =
-            Element.Input.text
+            View.hiddenLabelInput
                 ([ -- Layout
                    Element.width Element.fill
                  , Element.height (Element.px 32)
@@ -137,22 +137,18 @@ view config =
                  ]
                     ++ font Colors.blackText
                 )
-                { onChange = config.changedDescription
+                { onChange =
+                    View.enabled config.changedDescription
+                        |> View.disableIf config.modalIsOpen
                 , text = config.description
-                , placeholder =
-                    Just
-                        (Element.Input.placeholder
-                            (font Colors.lightGrayText)
-                            (Text.text16 config.language Text.WhatAreYouWorkingOn)
-                        )
-                , label =
-                    Element.Input.labelHidden (Text.toString config.language Text.DescriptionLabel)
+                , placeholder = Just (Text.text16 config.language Text.WhatAreYouWorkingOn)
+                , label = Text.toString config.language Text.DescriptionLabel
                 }
                 |> Element.el
                     [ Element.width Element.fill
 
-                    -- A bit of custom CSS adds a progress/running animation on the input's border.
-                    , Element.htmlAttribute (Html.Attributes.class "input-progress-animation")
+                    -- A bit of custom CSS adds a running animation on the input's border.
+                    , Element.htmlAttribute (Html.Attributes.class "input-border-animation")
                     ]
 
         stopButton =
@@ -162,7 +158,9 @@ view config =
                     [ Element.Font.color Colors.accent
                     ]
                 ]
-                { onPress = View.enabled config.pressedStop
+                { onPress =
+                    View.enabled config.pressedStop
+                        |> View.disableIf config.modalIsOpen
                 , label = Icons.stopButton
                 }
     in
@@ -185,7 +183,9 @@ view config =
                     ]
                     (Text.text12 config.language config.elapsedTime)
                 , View.linkLikeButtonSmall
-                    { onPress = config.pressedChangeStartTime
+                    { onPress =
+                        View.enabled config.pressedChangeStartTime
+                            |> View.disableIf config.modalIsOpen
                     , label = Text.ChangeStartTimeLabel
                     , language = config.language
                     }
@@ -210,8 +210,8 @@ subscriptions :
 subscriptions { currentTime, gotCurrentTime } createForm =
     Time.every
         (duration { currentTime = currentTime } createForm
-            |> Utils.Duration.secondsNeededToChangeTheResultOfToString
-            |> (*) 1000
+            |> Utils.Duration.secondsBeforeTheLabelChanges
             |> toFloat
+            |> (*) 1000
         )
         gotCurrentTime

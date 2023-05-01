@@ -1,24 +1,26 @@
 module View exposing
     ( BackgroundColor(..)
-    , ButtonHandler
     , Emphasis(..)
+    , PressEvent
     , Viewport(..)
     , accentButton
     , button
+    , cancelConfirmButtons
+    , disableIf
     , disabled
     , enabled
     , fromScreenWidth
+    , grayBackgroundStyles
+    , grayGradientBackgroundStyles
+    , hiddenLabelInput
     , horizontalDivider
     , linkLikeButton
     , linkLikeButtonSmall
+    , modalContent
     , recordListAlternativeBackgroundColor
     , recordListBackgroundColor
     , recordListHorizontalDivider
-    , grayBackgroundStyles
     , sidebarBackgroundColor
-    , grayGradientBackgroundStyles
-    , modalContent
-    , cancelConfirmButtons
     , whiteBackgroundStyles
     )
 
@@ -41,47 +43,85 @@ import Utils
 {-| Not sure if necessary but I'm using `aria-disabled` (instead of `disabed`) in buttons
 when `onPress = Nothing`
 -}
-type ButtonHandler msg
+type PressEvent msg
     = Enabled msg
     | Disabled
 
 
-enabled : msg -> ButtonHandler msg
+enabled : msg -> PressEvent msg
 enabled msg =
     Enabled msg
 
 
-disabled : ButtonHandler msg
+disabled : PressEvent msg
 disabled =
     Disabled
+
+
+disableIf : Bool -> PressEvent msg -> PressEvent msg
+disableIf bool handler =
+    case bool of
+        True ->
+            Disabled
+
+        False ->
+            handler
 
 
 button :
     List (Attribute msg)
     ->
-        { onPress : ButtonHandler msg
+        { onPress : PressEvent msg
         , label : Element msg
         }
     -> Element msg
 button attrs config =
-    let
-        ( extraAttrs, onPress ) =
-            case config.onPress of
-                Disabled ->
-                    ( [ Element.htmlAttribute (Html.Attributes.attribute "aria-disabled" "true")
-                      , Element.htmlAttribute (Html.Attributes.style "cursor" "default")
-                      ]
-                    , Nothing
-                    )
+    case config.onPress of
+        Disabled ->
+            Element.el
+                (Element.htmlAttribute (Html.Attributes.attribute "aria-disabled" "true")
+                    :: attrs
+                )
+                config.label
 
-                Enabled msg ->
-                    ( [], Just msg )
+        Enabled msg ->
+            Input.button
+                attrs
+                { onPress = Just msg
+                , label = config.label
+                }
+
+
+hiddenLabelInput attrs config =
+    let
+        placeholderStyles =
+            [ Font.semiBold, Font.color Colors.lightGrayText ]
     in
-    Input.button
-        (attrs ++ extraAttrs)
-        { onPress = onPress
-        , label = config.label
-        }
+    case config.onChange of
+        Disabled ->
+            Element.el
+                (Element.htmlAttribute (Html.Attributes.attribute "aria-disabled" "true")
+                    :: attrs
+                )
+                (if config.text == "" then
+                    config.placeholder
+                        |> Maybe.withDefault (Element.text "")
+                        |> Element.el placeholderStyles
+
+                 else
+                    Element.text config.text
+                )
+
+        Enabled msg ->
+            Input.text
+                attrs
+                { onChange = msg
+                , text = config.text
+                , label = Input.labelHidden config.label
+                , placeholder =
+                    config.placeholder
+                        |> Maybe.map (Input.placeholder placeholderStyles)
+                }
 
 
 
@@ -131,13 +171,8 @@ horizontalDivider bgColor =
 --- EMPHASIS
 
 
-{-| This type describes which section of the default view will be _emphasized_ with a white
+{-| This type describes which section of the main view will be _emphasized_ with a white
 background. The other section will have a gray background.
-
-Some buttons in the de-emphasized section will be disabled.
-
-NOTE: Move to DefaultView.elm?
-
 -}
 type Emphasis
     = RecordList
@@ -197,7 +232,7 @@ sidebarBackgroundColor emphasis =
 {-| A button with focus styles and accent color
 -}
 accentButton :
-    { onPress : ButtonHandler msg
+    { onPress : PressEvent msg
     , label : Element msg
     }
     -> Element msg
@@ -215,7 +250,7 @@ accentButton { onPress, label } =
         |> Element.el []
 
 
-accentButtonColor : ButtonHandler msg -> Element.Color
+accentButtonColor : PressEvent msg -> Element.Color
 accentButtonColor onPress =
     case onPress of
         Disabled ->
@@ -231,11 +266,13 @@ whiteBackgroundStyles =
     , backgroundTransition
     ]
 
+
 grayBackgroundStyles : List (Element.Attribute msg)
 grayBackgroundStyles =
     [ backgroundColor Gray
     , backgroundTransition
     ]
+
 
 grayGradientBackgroundStyles : List (Element.Attribute msg)
 grayGradientBackgroundStyles =
@@ -250,6 +287,7 @@ grayGradientBackgroundStyles =
             ]
         }
     ]
+
 
 modalContent { viewport, header, body, footer } =
     let
@@ -269,10 +307,10 @@ modalContent { viewport, header, body, footer } =
                             Element.fill
 
                         Desktop ->
-                            Element.maximum 600 Element.fill
+                            Element.maximum 500 Element.fill
                     )
-                , Element.centerX
-                , Element.height
+                 , Element.centerX
+                 , Element.height
                     (case viewport of
                         Mobile ->
                             Element.fill
@@ -280,10 +318,10 @@ modalContent { viewport, header, body, footer } =
                         Desktop ->
                             Element.shrink
                     )
-                , Element.padding padding
-                , Element.spacing (spacing * 2)
-                , Border.rounded 16
-                ]
+                 , Element.padding padding
+                 , Element.spacing (spacing * 2)
+                 , Border.rounded 16
+                 ]
                     ++ whiteBackgroundStyles
                 )
                 [ Element.column
@@ -295,7 +333,7 @@ modalContent { viewport, header, body, footer } =
                             [ Element.Region.heading 1
                             , Font.semiBold
                             ]
-                    ]
+                     ]
                         ++ body
                     )
                 , footer
@@ -304,13 +342,16 @@ modalContent { viewport, header, body, footer } =
     Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.padding 24
+        , Element.padding 32
+        , Background.color (Element.rgba 0 0 0 0.23)
         ]
         [ content
         ]
 
+
 {-| The footer of the modal, that has two buttons. The left one is a "Cancel" button
-and the right one confirms an operation. -}
+and the right one confirms an operation.
+-}
 cancelConfirmButtons { onCancel, onConfirm, confirmText, language, viewport } =
     Element.row
         [ Element.alignBottom
@@ -340,6 +381,8 @@ cancelConfirmButtons { onCancel, onConfirm, confirmText, language, viewport } =
             |> Element.el
                 [ Element.alignRight ]
         ]
+
+
 
 --- Utils
 
@@ -390,17 +433,23 @@ linkLikeButton { onPress, label, language, bold } =
 
 
 linkLikeButtonSmall :
-    { onPress : msg
+    { onPress : PressEvent msg
     , label : Text.Text
     , language : Text.Language
     }
     -> Element msg
 linkLikeButtonSmall { onPress, label, language } =
-    Input.button
-        ([ Font.color Colors.accent ]
-            ++ overflowClickableRegion 12
+    button
+        ([ Font.color Colors.accent
+         , Border.width 1
+         , Border.color Colors.transparent
+         , Element.focused
+            [ Border.color Colors.accent
+            ]
+         ]
+            ++ overflowClickableRegion 8
         )
-        { onPress = Just onPress
+        { onPress = onPress
         , label = Text.text13 language label
         }
 

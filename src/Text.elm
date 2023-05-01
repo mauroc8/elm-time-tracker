@@ -82,13 +82,8 @@ type
     | ChangeStartTimeLabel
       -- Empty states
     | PressTheStartButtonToCreateARecord
-    | NothingFound
-      -- Record List
-    | SearchPlaceholder
-    | Search
-    | ClearSearch
     | NoDescription
-    -- Confirm deletion
+      -- Confirm deletion
     | ConfirmDeletionHeading
     | ConfirmDeletionBody
     | Confirm
@@ -112,6 +107,8 @@ type
     | Weekday Time.Weekday
     | InternationalDate Int Time.Month Int
     | UsaDate Time.Month Int Int
+    -- Other
+    | CommentAboutStorage
 
 
 toString : Language -> Text -> String
@@ -197,28 +194,6 @@ toString lang text =
 
         ( PressTheStartButtonToCreateARecord, Spanish ) ->
             "Presiona play para crear una entrada"
-
-        ( NothingFound, English ) ->
-            "Nothing found"
-
-        ( NothingFound, Spanish ) ->
-            "No hay resultados"
-
-        -- Record List
-        ( SearchPlaceholder, _ ) ->
-            toString lang Search ++ "…"
-
-        ( Search, English ) ->
-            "Search"
-
-        ( Search, Spanish ) ->
-            "Buscar"
-
-        ( ClearSearch, English ) ->
-            "Clear"
-
-        ( ClearSearch, Spanish ) ->
-            "Limpiar"
 
         ( NoDescription, English ) ->
             "no description"
@@ -343,6 +318,13 @@ toString lang text =
                 , String.fromInt day
                 , String.fromInt year
                 ]
+
+        -- Other
+        ( CommentAboutStorage, English ) ->
+            "The data is stored on your browser's cache. You'll lose all records if you clear the cache."
+
+        ( CommentAboutStorage, Spanish ) ->
+            "Los datos se guardan en la caché de tu navegador. Perderás todos los registros al limpiar la caché."
 
 
 weekdayToEnglish : Time.Weekday -> String
