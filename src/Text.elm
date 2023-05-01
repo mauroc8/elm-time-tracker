@@ -107,7 +107,7 @@ type
     | Weekday Time.Weekday
     | InternationalDate Int Time.Month Int
     | UsaDate Time.Month Int Int
-    -- Other
+      -- Other
     | CommentAboutStorage
 
 

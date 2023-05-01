@@ -9,6 +9,7 @@ import CreateRecord exposing (CreateRecord)
 import Element exposing (Attribute, Element)
 import Element.Font as Font
 import Html exposing (Html)
+import Html.Attributes
 import Icons
 import Json.Decode
 import LocalStorage
@@ -513,13 +514,17 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    let
+        ( attrs, el ) =
+            rootElement model
+    in
     Element.layoutWith
         { options =
             [ Element.focusStyle focusStyle
             ]
         }
-        (rootAttributes model)
-        (rootElement model)
+        attrs
+        el
 
 
 focusStyle : Element.FocusStyle
@@ -530,26 +535,7 @@ focusStyle =
     }
 
 
-rootAttributes : Model -> List (Attribute msg)
-rootAttributes model =
-    let
-        shared =
-            [ Element.width Element.fill
-            , Element.height Element.fill
-            , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
-            ]
-    in
-    case model.createRecordForm of
-        Just _ ->
-            shared
-                ++ View.grayBackgroundStyles
-
-        Nothing ->
-            shared
-                ++ View.whiteBackgroundStyles
-
-
-rootElement : Model -> Element Msg
+rootElement : Model -> ( List (Attribute Msg), Element Msg )
 rootElement model =
     let
         emphasis =
@@ -620,17 +606,41 @@ rootElement model =
                 |> Element.el
                     (Element.width Element.fill :: View.sidebarBackgroundColor emphasis)
             ]
+
+        shared =
+            [ Element.width Element.fill
+            , Element.height Element.fill
+            , Font.family [ Font.typeface "Manrope", Font.sansSerif ]
+            ]
+                ++ (case viewModal config model.modal of
+                        Just modal ->
+                            [ Element.inFront modal
+                            , Element.htmlAttribute (Html.Attributes.style "height" "100vh")
+                            ]
+
+                        Nothing ->
+                            [ Element.height Element.fill ]
+                   )
+
+        rootAttributes =
+            case model.createRecordForm of
+                Just _ ->
+                    shared
+                        ++ View.grayBackgroundStyles
+
+                Nothing ->
+                    shared
+                        ++ View.whiteBackgroundStyles
     in
-    Element.column
+    ( rootAttributes
+    , Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
-        , Element.scrollbarX
-        , case viewModal config model.modal of
-            Just modal ->
-                Element.inFront modal
+        , if modalIsOpen then
+            Element.clipX
 
-            Nothing ->
-                Utils.emptyAttribute
+          else
+            Element.scrollbarX
         ]
         (topBarWrapped
             ++ (case config.viewport of
@@ -647,6 +657,7 @@ rootElement model =
                         ]
                )
         )
+    )
 
 
 viewModal config modal =
