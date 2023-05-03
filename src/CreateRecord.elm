@@ -186,7 +186,7 @@ view config =
                     { onPress =
                         View.enabled config.pressedChangeStartTime
                             |> View.disableIf config.modalIsOpen
-                    , label = Text.ChangeStartTimeLabel
+                    , label = Text.ChangeStartTimeButton
                     , language = config.language
                     }
                     |> Element.el [ Element.alignRight ]

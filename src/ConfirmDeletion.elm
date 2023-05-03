@@ -35,4 +35,5 @@ view { onCancel, onConfirm, viewport, language } =
             ]
         , footer = footer
         , viewport = viewport
+        , onClose = onCancel
         }

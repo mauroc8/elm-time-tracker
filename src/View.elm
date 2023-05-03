@@ -31,6 +31,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region
+import Element.Events
 import Html.Attributes
 import Text
 import Utils
@@ -289,7 +290,7 @@ grayGradientBackgroundStyles =
     ]
 
 
-modalContent { viewport, header, body, footer } =
+modalContent { viewport, header, body, footer, onClose } =
     let
         ( padding, spacing ) =
             case viewport of
@@ -343,7 +344,15 @@ modalContent { viewport, header, body, footer } =
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.padding 32
-        , Background.color (Element.rgba 0 0 0 0.23)
+        , Element.behindContent
+            (Element.el
+                [ Element.width Element.fill
+                , Element.height Element.fill
+                , Background.color (Element.rgba 0 0 0 0.23)
+                , Element.Events.onClick onClose
+                ]
+                Element.none
+            )
         ]
         [ content
         ]

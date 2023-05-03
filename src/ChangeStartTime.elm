@@ -1,4 +1,4 @@
-module ChangeStartTime exposing (Config, Model, view)
+module ChangeStartTime exposing (Config, Model, initialModel, view)
 
 import Colors
 import CreateRecord
@@ -9,7 +9,9 @@ import Element.Region
 import Text
 import Time
 import Utils.Date
+import Utils.Time
 import View
+import Debug
 
 
 type alias Model =
@@ -19,25 +21,29 @@ type alias Model =
 
 
 initialModel :
-    { timezone : Time.Zone
-    , dateNotation : Utils.Date.Notation
-    , language : Text.Language
+    { a
+        | timeZone : Time.Zone
+        , language : Text.Language
     }
     -> CreateRecord.CreateRecord
     -> Model
-initialModel { timezone, dateNotation, language } { start } =
+initialModel { timeZone, language } { start } =
+    let
+        _ = Debug.log "start" start
+    in
     { inputValue =
-        Utils.Date.fromZoneAndPosix timezone start
-            |> Utils.Date.toLabel dateNotation
-            |> Text.toString language
+        Utils.Time.fromZoneAndPosix timeZone start
+            |> Utils.Time.toHhMm
     , showInputError = False
     }
 
 
 type alias Config msg =
     { onCancel : msg
-    , onConfirm : msg
-    , onChange : String -> msg
+    , onConfirm : msg -- TODO: Time.Posix -> msg
+    , onChange :
+        String
+        -> msg -- TODO: Model -> msg
     , viewport : View.Viewport
     , language : Text.Language
     }
@@ -57,7 +63,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, showInp
                     Element.Input.labelAbove
                         [ Element.Font.semiBold
                         ]
-                        (Text.text14 language <| Text.String "Hora de inicio") -- TODO:
+                        (Text.text14 language Text.ChangeStartTimeLabel)
                 , onChange = onChange
                 , placeholder =
                     Just (Element.Input.placeholder [] (Text.text16 language <| Text.String "16:45"))
@@ -68,7 +74,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, showInp
                     [ Element.Font.color Colors.red
                     , Element.Region.announce
                     ]
-                    [ Text.text14 language (Text.String "La hora ingresada no es válida") ]
+                    [ Text.text14 language Text.InvalidStartTimeMessage ]
 
               else
                 Element.none
@@ -88,4 +94,5 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, showInp
         , body = body
         , footer = footer
         , viewport = viewport
+        , onClose = onCancel
         }

@@ -316,7 +316,7 @@ type Modal
     = ClosedModal
     | ChangeSettingsModal Settings
     | ConfirmDeletionModal Record.Id
-    | ChangeStartTimeModal
+    | ChangeStartTimeModal ChangeStartTime.Model
 
 
 getModalSettings : Modal -> Maybe Settings
@@ -459,10 +459,14 @@ update msg model =
                 |> Out.withCmd saveCreateForm
 
         PressedChangeStartTimeInCreateRecord ->
-            model
-                |> setModal
-                    ChangeStartTimeModal
-                |> Out.withNoCmd
+            case model.createRecordForm of
+                Just createForm ->
+                    model
+                        |> setModal (ChangeStartTimeModal <| ChangeStartTime.initialModel model createForm)
+                        |> Out.withNoCmd
+
+                Nothing ->
+                    model |> Out.withNoCmd
 
         FocusedCreateFormDescriptionInput ->
             model
@@ -679,7 +683,7 @@ viewModal config modal =
                 }
                 |> Just
 
-        ChangeStartTimeModal ->
+        ChangeStartTimeModal changeStartTimeModel ->
             ChangeStartTime.view
                 { onConfirm = CancelDeleteRecord -- TODO:
                 , onCancel = CancelDeleteRecord
@@ -687,9 +691,7 @@ viewModal config modal =
                 , viewport = config.viewport
                 , language = config.language
                 }
-                { inputValue = ""
-                , showInputError = False
-                }
+                changeStartTimeModel
                 |> Just
 
         ClosedModal ->

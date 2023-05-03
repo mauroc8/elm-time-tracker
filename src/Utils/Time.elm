@@ -1,6 +1,25 @@
-module Utils.Time exposing (toStringWithAmPm)
+module Utils.Time exposing (fromZoneAndPosix, toHhMm, toStringWithAmPm)
 
 import Clock
+import Time
+import Utils.Date
+
+
+toHhMm : Clock.Time -> String
+toHhMm time =
+    [ Clock.getMinutes time
+    , Clock.getHours time
+    ]
+        |> List.map
+            (\n ->
+                if n < 10 then
+                    "0"
+                        ++ String.fromInt n
+
+                else
+                    String.fromInt n
+            )
+        |> String.join ":"
 
 
 toStringWithAmPm : Clock.Time -> String
@@ -47,3 +66,9 @@ meridiemToString amPm =
 
         Am ->
             "am"
+
+
+fromZoneAndPosix : Time.Zone -> Time.Posix -> Clock.Time
+fromZoneAndPosix zone posix =
+    Utils.Date.toZonedPosix zone posix
+        |> Clock.fromPosix

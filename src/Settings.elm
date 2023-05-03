@@ -69,6 +69,7 @@ view config =
         , body = [ settingsBody config, aboutLink config ]
         , footer = settingsFooter config
         , viewport = config.viewport
+        , onClose = config.pressedSettingsCancelButton
         }
 
 

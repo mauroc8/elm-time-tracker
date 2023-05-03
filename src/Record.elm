@@ -82,21 +82,20 @@ fromCreateForm now { description, start } =
     }
 
 
-zonedStartTime : Time.Zone -> Record -> Time.Posix
-zonedStartTime zone record =
-    Utils.Date.toZonedPosix zone record.startDateTime
-
-
 startTime : Time.Zone -> Record -> Clock.Time
 startTime zone record =
-    Clock.fromPosix (zonedStartTime zone record)
+    Utils.Time.fromZoneAndPosix zone record.startDateTime
 
 
 endTime : Time.Zone -> Record -> Clock.Time
 endTime zone record =
+    let
+        zonedStartTime =
+            Utils.Date.toZonedPosix zone record.startDateTime
+    in
     Clock.fromPosix
         (Time.millisToPosix
-            (Time.posixToMillis (zonedStartTime zone record)
+            (Time.posixToMillis zonedStartTime
                 + record.durationInSeconds
                 * 1000
             )

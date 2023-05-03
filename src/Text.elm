@@ -79,9 +79,11 @@ type
       -- Create Form
     | WhatAreYouWorkingOn
     | DescriptionLabel
-    | ChangeStartTimeLabel
+    | ChangeStartTimeButton
       -- Change Start Time
     | ChangeStartTimeHeading
+    | ChangeStartTimeLabel
+    | InvalidStartTimeMessage
       -- Empty states
     | PressTheStartButtonToCreateARecord
     | NoDescription
@@ -185,10 +187,10 @@ toString lang text =
         ( DescriptionLabel, Spanish ) ->
             "Descripción"
 
-        ( ChangeStartTimeLabel, English ) ->
+        ( ChangeStartTimeButton, English ) ->
             "change start time"
 
-        ( ChangeStartTimeLabel, Spanish ) ->
+        ( ChangeStartTimeButton, Spanish ) ->
             "cambiar tiempo de inicio"
 
         -- Change Start Time
@@ -197,6 +199,18 @@ toString lang text =
 
         ( ChangeStartTimeHeading, Spanish ) ->
             "Cambiar tiempo de inicio"
+
+        ( ChangeStartTimeLabel, English ) ->
+            "Start time"
+
+        ( ChangeStartTimeLabel, Spanish ) ->
+            "Tiempo de inicio"
+
+        ( InvalidStartTimeMessage, English ) ->
+            "The time is not valid"
+
+        ( InvalidStartTimeMessage, Spanish ) ->
+            "La hora ingresada no es válida"
 
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->
