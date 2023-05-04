@@ -1,8 +1,37 @@
-module Utils.Time exposing (fromZoneAndPosix, toHhMm, toStringWithAmPm)
+module Utils.Time exposing
+    ( fromHhMm
+    , fromZoneAndPosix
+    , toHhMm
+    , toPosix
+    , toStringWithAmPm
+    )
 
 import Clock
+import DateTime
+import Text
 import Time
 import Utils.Date
+
+
+fromHhMm : String -> Result Text.Text Clock.Time
+fromHhMm string =
+    let
+        listOfNumbers =
+            String.split ":" string
+                |> List.map String.toInt
+    in
+    case listOfNumbers of
+        [ Just hours, Just minutes ] ->
+            Clock.fromRawParts
+                { hours = hours
+                , minutes = minutes
+                , seconds = 0
+                , milliseconds = 0
+                }
+                |> Result.fromMaybe Text.InvalidTime
+
+        _ ->
+            Err Text.InvalidTimeFormat
 
 
 toHhMm : Clock.Time -> String
@@ -72,3 +101,15 @@ fromZoneAndPosix : Time.Zone -> Time.Posix -> Clock.Time
 fromZoneAndPosix zone posix =
     Utils.Date.toZonedPosix zone posix
         |> Clock.fromPosix
+
+
+toPosix :
+    { timeZone : Time.Zone, currentTime : Time.Posix }
+    -> Clock.Time
+    -> Time.Posix
+toPosix { timeZone, currentTime } clockTime =
+    DateTime.fromDateAndTime
+        (Utils.Date.fromZoneAndPosix timeZone currentTime)
+        clockTime
+        |> DateTime.toPosix
+        |> Utils.Date.toZonedPosix timeZone

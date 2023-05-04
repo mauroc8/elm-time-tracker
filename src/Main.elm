@@ -4,6 +4,7 @@ import Browser
 import Browser.Dom
 import Browser.Events
 import ChangeStartTime
+import Clock
 import Colors
 import ConfirmDeletion
 import CreateRecord exposing (CreateRecord)
@@ -26,6 +27,7 @@ import Utils
 import Utils.Date
 import Utils.Duration
 import Utils.Out as Out
+import Utils.Time
 import View exposing (Emphasis)
 
 
@@ -224,6 +226,27 @@ changeCreateFormDescription description model =
             model
 
 
+changeCreateFormStartTime : Clock.Time -> Model -> Model
+changeCreateFormStartTime startTime model =
+    case model.createRecordForm of
+        Just createRecord ->
+            setCreateRecord
+                (Just
+                    { createRecord
+                        | start =
+                            Utils.Time.toPosix
+                                { timeZone = model.timeZone
+                                , currentTime = model.currentTime
+                                }
+                                startTime
+                    }
+                )
+                model
+
+        _ ->
+            model
+
+
 loadCreateForm : Json.Decode.Value -> Model -> Model
 loadCreateForm flags model =
     LocalStorage.load
@@ -357,6 +380,10 @@ type Msg
     | PressedEscapeInCreateRecord
     | PressedChangeStartTimeInCreateRecord
     | FocusedCreateFormDescriptionInput
+      -- Change start time
+    | ConfirmStartTime Clock.Time
+    | CancelStartTime
+    | ChangeStartTime ChangeStartTime.Model
       -- Record List
     | ClickedDeleteButton Record.Id
       -- Confirm deletion modal
@@ -470,6 +497,23 @@ update msg model =
 
         FocusedCreateFormDescriptionInput ->
             model
+                |> Out.withNoCmd
+
+        -- Change start time
+        ConfirmStartTime newStartTime ->
+            model
+                |> changeCreateFormStartTime newStartTime
+                |> setModal ClosedModal
+                |> Out.withNoCmd
+
+        CancelStartTime ->
+            model
+                |> setModal ClosedModal
+                |> Out.withNoCmd
+
+        ChangeStartTime changeStartTimeModel ->
+            model
+                |> setModal (ChangeStartTimeModal changeStartTimeModel)
                 |> Out.withNoCmd
 
         -- Record List
@@ -685,9 +729,9 @@ viewModal config modal =
 
         ChangeStartTimeModal changeStartTimeModel ->
             ChangeStartTime.view
-                { onConfirm = CancelDeleteRecord -- TODO:
-                , onCancel = CancelDeleteRecord
-                , onChange = \_ -> CancelDeleteRecord
+                { onConfirm = ConfirmStartTime
+                , onCancel = CancelStartTime
+                , onChange = ChangeStartTime
                 , viewport = config.viewport
                 , language = config.language
                 }

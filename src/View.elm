@@ -28,10 +28,10 @@ import Colors
 import Element exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region
-import Element.Events
 import Html.Attributes
 import Text
 import Utils

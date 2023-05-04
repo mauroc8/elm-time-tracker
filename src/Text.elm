@@ -83,7 +83,8 @@ type
       -- Change Start Time
     | ChangeStartTimeHeading
     | ChangeStartTimeLabel
-    | InvalidStartTimeMessage
+    | InvalidTime
+    | InvalidTimeFormat
       -- Empty states
     | PressTheStartButtonToCreateARecord
     | NoDescription
@@ -206,11 +207,17 @@ toString lang text =
         ( ChangeStartTimeLabel, Spanish ) ->
             "Tiempo de inicio"
 
-        ( InvalidStartTimeMessage, English ) ->
+        ( InvalidTime, English ) ->
             "The time is not valid"
 
-        ( InvalidStartTimeMessage, Spanish ) ->
+        ( InvalidTime, Spanish ) ->
             "La hora ingresada no es válida"
+
+        ( InvalidTimeFormat, English ) ->
+            "The time must be formatted as hh:mm"
+
+        ( InvalidTimeFormat, Spanish ) ->
+            "La hora debe estar en el formato hh:mm"
 
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->
