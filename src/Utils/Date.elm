@@ -8,6 +8,7 @@ module Utils.Date exposing
     , toZonedPosix
     , unitedStatesNotation
     , westernNotation
+    , fromZonedPosix
     )
 
 import Calendar
@@ -149,14 +150,28 @@ than `Date#getUTCHour`.
 toZonedPosix : Time.Zone -> Time.Posix -> Time.Posix
 toZonedPosix zone posix =
     let
-        offset =
-            DateTime.getTimezoneOffset zone posix
-
-        millis =
-            Time.posixToMillis posix
+        { offset, millis } =
+            offsetAndMillis zone posix
     in
     Time.millisToPosix (millis + offset)
 
+
+fromZonedPosix : Time.Zone -> Time.Posix -> Time.Posix
+fromZonedPosix zone posix =
+    let
+        { offset, millis } =
+            offsetAndMillis zone posix
+    in
+    Time.millisToPosix (millis - offset)
+
+
+offsetAndMillis : Time.Zone -> Time.Posix -> { offset : Int, millis : Int }
+offsetAndMillis zone posix =
+    { offset =
+        DateTime.getTimezoneOffset zone posix
+    , millis =
+        Time.posixToMillis posix
+    }
 
 {-| I wish this function was part of the Calendar package .\_.
 -}

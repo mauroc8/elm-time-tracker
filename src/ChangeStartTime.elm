@@ -6,6 +6,7 @@ import CreateRecord
 import Element
 import Element.Font
 import Element.Input
+import Element.Border
 import Element.Region
 import Text
 import Time
@@ -56,17 +57,20 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
             Text.text24 language Text.ChangeStartTimeHeading
 
         input =
-            Element.Input.text
-                [ Element.width (Element.px 80)
+            View.input
+                [ Element.width (Element.px 150)
+                , Element.Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
+                , Element.Border.color Colors.darkGrayBackground
+                , Element.Border.rounded 0
+                , Element.paddingXY 0 8
                 ]
                 { label =
                     Element.Input.labelAbove
-                        [ Element.Font.semiBold
-                        ]
+                        [ Element.Font.semiBold ]
                         (Text.text14 language Text.ChangeStartTimeLabel)
-                , onChange = \value -> onChange { inputValue = value, inputError = Nothing }
+                , onChange = View.enabled <| \value -> onChange { inputValue = value, inputError = Nothing }
                 , placeholder =
-                    Just (Element.Input.placeholder [] (Text.text16 language <| Text.String "16:45"))
+                    Just (Text.text16 language <| Text.String "16:45")
                 , text = inputValue
                 }
 

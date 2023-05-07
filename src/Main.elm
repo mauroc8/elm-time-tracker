@@ -5,6 +5,7 @@ import Browser.Dom
 import Browser.Events
 import ChangeStartTime
 import Clock
+import DateTime
 import Colors
 import ConfirmDeletion
 import CreateRecord exposing (CreateRecord)
@@ -227,21 +228,23 @@ changeCreateFormDescription description model =
 
 
 changeCreateFormStartTime : Clock.Time -> Model -> Model
-changeCreateFormStartTime startTime model =
-    case model.createRecordForm of
+changeCreateFormStartTime startTime ({ createRecordForm, timeZone, currentTime } as model) =
+    case createRecordForm of
         Just createRecord ->
-            setCreateRecord
-                (Just
-                    { createRecord
-                        | start =
-                            Utils.Time.toPosix
-                                { timeZone = model.timeZone
-                                , currentTime = model.currentTime
-                                }
-                                startTime
-                    }
-                )
-                model
+            case CreateRecord.setStartTime model startTime createRecord of
+                Ok updatedCreateRecord ->
+                    model
+                        |> setCreateRecord (Just updatedCreateRecord)
+                        |> setModal ClosedModal
+
+                Err errorMessage ->
+                    case model.modal of
+                        ChangeStartTimeModal changeStartTimeModel ->
+                            model
+                                |> setModal (ChangeStartTimeModal { changeStartTimeModel | inputError = Just errorMessage })
+
+                        _ ->
+                            model
 
         _ ->
             model
@@ -503,7 +506,6 @@ update msg model =
         ConfirmStartTime newStartTime ->
             model
                 |> changeCreateFormStartTime newStartTime
-                |> setModal ClosedModal
                 |> Out.withNoCmd
 
         CancelStartTime ->

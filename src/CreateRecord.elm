@@ -7,20 +7,26 @@ module CreateRecord exposing
     , new
     , subscriptions
     , view
+    , setStartTime
     )
 
 import Colors
 import Element exposing (Element)
 import Element.Background
 import Element.Border
+import Element.Input
 import Element.Font
 import Html.Attributes
 import Icons
 import Json.Decode
 import Json.Encode
 import Text
+import DateTime
 import Time
+import Clock
 import Utils.Duration
+import Utils.Date
+import Utils.Time
 import Utils.Events
 import View
 
@@ -46,6 +52,28 @@ duration : { currentTime : Time.Posix } -> CreateRecord -> Utils.Duration.Durati
 duration { currentTime } { start } =
     Utils.Duration.fromTimeDifference start currentTime
 
+
+setStartTime : { ctx | currentTime : Time.Posix, timeZone : Time.Zone }
+    -> Clock.Time
+    -> CreateRecord
+    -> Result Text.Text CreateRecord
+setStartTime { currentTime, timeZone } startTime { start, description } =
+    let
+        newStart =
+            DateTime.fromDateAndTime
+                (Utils.Date.fromZoneAndPosix timeZone currentTime)
+                startTime
+                |> DateTime.toPosix
+                |> Utils.Date.fromZonedPosix timeZone
+    in
+    if Time.posixToMillis newStart < Time.posixToMillis currentTime then
+        { description = description
+        , start = newStart
+        }
+            |> Ok
+
+    else
+        Err Text.InvalidFutureTime
 
 decoder : Json.Decode.Decoder CreateRecord
 decoder =
@@ -103,7 +131,7 @@ view config =
             ]
 
         descriptionInput =
-            View.hiddenLabelInput
+            View.input
                 ([ -- Layout
                    Element.width Element.fill
                  , Element.height (Element.px 32)
@@ -142,7 +170,9 @@ view config =
                         |> View.disableIf config.modalIsOpen
                 , text = config.description
                 , placeholder = Just (Text.text16 config.language Text.WhatAreYouWorkingOn)
-                , label = Text.toString config.language Text.DescriptionLabel
+                , label =
+                    Text.toString config.language Text.DescriptionLabel
+                        |> Element.Input.labelHidden
                 }
                 |> Element.el
                     [ Element.width Element.fill

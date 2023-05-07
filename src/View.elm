@@ -12,7 +12,7 @@ module View exposing
     , fromScreenWidth
     , grayBackgroundStyles
     , grayGradientBackgroundStyles
-    , hiddenLabelInput
+    , input
     , horizontalDivider
     , linkLikeButton
     , linkLikeButtonSmall
@@ -93,10 +93,12 @@ button attrs config =
                 }
 
 
-hiddenLabelInput attrs config =
+input attrs config =
     let
         placeholderStyles =
-            [ Font.semiBold, Font.color Colors.lightGrayText ]
+            [ Font.semiBold
+            , Font.color Colors.lightGrayText
+            ]
     in
     case config.onChange of
         Disabled ->
@@ -118,7 +120,7 @@ hiddenLabelInput attrs config =
                 attrs
                 { onChange = msg
                 , text = config.text
-                , label = Input.labelHidden config.label
+                , label = config.label
                 , placeholder =
                     config.placeholder
                         |> Maybe.map (Input.placeholder placeholderStyles)

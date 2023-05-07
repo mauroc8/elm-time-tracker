@@ -2,7 +2,6 @@ module Utils.Time exposing
     ( fromHhMm
     , fromZoneAndPosix
     , toHhMm
-    , toPosix
     , toStringWithAmPm
     )
 
@@ -36,8 +35,8 @@ fromHhMm string =
 
 toHhMm : Clock.Time -> String
 toHhMm time =
-    [ Clock.getMinutes time
-    , Clock.getHours time
+    [ Clock.getHours time
+    , Clock.getMinutes time
     ]
         |> List.map
             (\n ->
@@ -102,14 +101,3 @@ fromZoneAndPosix zone posix =
     Utils.Date.toZonedPosix zone posix
         |> Clock.fromPosix
 
-
-toPosix :
-    { timeZone : Time.Zone, currentTime : Time.Posix }
-    -> Clock.Time
-    -> Time.Posix
-toPosix { timeZone, currentTime } clockTime =
-    DateTime.fromDateAndTime
-        (Utils.Date.fromZoneAndPosix timeZone currentTime)
-        clockTime
-        |> DateTime.toPosix
-        |> Utils.Date.toZonedPosix timeZone

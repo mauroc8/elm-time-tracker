@@ -85,6 +85,7 @@ type
     | ChangeStartTimeLabel
     | InvalidTime
     | InvalidTimeFormat
+    | InvalidFutureTime
       -- Empty states
     | PressTheStartButtonToCreateARecord
     | NoDescription
@@ -202,10 +203,10 @@ toString lang text =
             "Cambiar tiempo de inicio"
 
         ( ChangeStartTimeLabel, English ) ->
-            "Start time"
+            "new start time"
 
         ( ChangeStartTimeLabel, Spanish ) ->
-            "Tiempo de inicio"
+            "nuevo tiempo de inicio"
 
         ( InvalidTime, English ) ->
             "The time is not valid"
@@ -218,6 +219,12 @@ toString lang text =
 
         ( InvalidTimeFormat, Spanish ) ->
             "La hora debe estar en el formato hh:mm"
+
+        ( InvalidFutureTime, English ) ->
+            "The start time can't be in the future"
+
+        ( InvalidFutureTime, Spanish ) ->
+            "El tiempo de inicio no puede estar en el futuro" -- TODO: Revisar
 
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->
