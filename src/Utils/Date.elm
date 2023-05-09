@@ -2,13 +2,14 @@ module Utils.Date exposing
     ( Notation
     , encodeNotation
     , fromZoneAndPosix
+    , fromZonedPosix
     , notationDecoder
     , relativeDateLabel
     , toLabel
     , toZonedPosix
     , unitedStatesNotation
+    , weekdayToInt
     , westernNotation
-    , fromZonedPosix
     )
 
 import Calendar
@@ -173,8 +174,34 @@ offsetAndMillis zone posix =
         Time.posixToMillis posix
     }
 
+
 {-| I wish this function was part of the Calendar package .\_.
 -}
 fromZoneAndPosix : Time.Zone -> Time.Posix -> Calendar.Date
 fromZoneAndPosix timeZone time =
     Calendar.fromPosix (toZonedPosix timeZone time)
+
+
+weekdayToInt : Time.Weekday -> Int
+weekdayToInt weekday =
+    case weekday of
+        Time.Mon ->
+            0
+
+        Time.Tue ->
+            1
+
+        Time.Wed ->
+            2
+
+        Time.Thu ->
+            3
+
+        Time.Fri ->
+            4
+
+        Time.Sat ->
+            5
+
+        Time.Sun ->
+            6

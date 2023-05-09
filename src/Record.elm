@@ -4,9 +4,11 @@ module Record exposing
     , decoder
     , encode
     , fromCreateForm
+    , startDate
     , view
     )
 
+import Calendar
 import Clock
 import Colors
 import CreateRecord
@@ -85,6 +87,11 @@ fromCreateForm now { description, start } =
 startTime : Time.Zone -> Record -> Clock.Time
 startTime zone record =
     Utils.Time.fromZoneAndPosix zone record.startDateTime
+
+
+startDate : Time.Zone -> Record -> Calendar.Date
+startDate zone record =
+    Utils.Date.fromZoneAndPosix zone record.startDateTime
 
 
 endTime : Time.Zone -> Record -> Clock.Time

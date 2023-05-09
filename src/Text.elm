@@ -116,6 +116,8 @@ type
     | UsaDate Time.Month Int Int
       -- Other
     | CommentAboutStorage
+    | TodaysTotal
+    | ThisWeeksTotal
 
 
 toString : Language -> Text -> String
@@ -224,8 +226,9 @@ toString lang text =
             "The start time can't be in the future"
 
         ( InvalidFutureTime, Spanish ) ->
-            "El tiempo de inicio no puede estar en el futuro" -- TODO: Revisar
+            "El tiempo de inicio no puede estar en el futuro"
 
+        -- TODO: Revisar
         -- Empty states
         ( PressTheStartButtonToCreateARecord, English ) ->
             "Press start to create a record"
@@ -369,6 +372,18 @@ toString lang text =
 
         ( CommentAboutStorage, Spanish ) ->
             "Los datos se guardan en la caché del navegador. Perderás todos los registros al limpiar la caché."
+
+        ( TodaysTotal, English ) ->
+            "today"
+
+        ( TodaysTotal, Spanish ) ->
+            "hoy"
+
+        ( ThisWeeksTotal, English ) ->
+            "this week"
+
+        ( ThisWeeksTotal, Spanish ) ->
+            "esta semana"
 
 
 weekdayToEnglish : Time.Weekday -> String

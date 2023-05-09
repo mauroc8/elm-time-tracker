@@ -8,14 +8,17 @@ module RecordList exposing
     , search
     , toList
     , view
+    , viewSummary
     )
 
+import Calendar
 import Colors
 import Dict exposing (Dict)
 import Element exposing (Element)
 import Element.Background
 import Element.Border
 import Element.Font
+import Icons
 import Json.Decode
 import Json.Encode
 import Levenshtein
@@ -23,6 +26,7 @@ import Record exposing (Record)
 import Text
 import Time
 import Utils.Date
+import Utils.Duration
 import View exposing (Emphasis)
 
 
@@ -189,4 +193,99 @@ emptyBodyLayout =
         [ Element.width Element.fill
         , Element.height Element.fill
         , Element.padding 16
+        ]
+
+
+viewSummary { viewport, clickedSettings, modalIsOpen, records, timeZone, currentTime, language } =
+    let
+        padding =
+            case viewport of
+                View.Mobile ->
+                    Element.padding 16
+
+                View.Desktop ->
+                    Element.paddingXY 0 16
+
+        settingsButton =
+            View.accentButton
+                { onPress =
+                    View.enabled clickedSettings
+                        |> View.disableIf modalIsOpen
+                , label = Icons.options
+                }
+
+        today =
+            Utils.Date.fromZoneAndPosix timeZone currentTime
+
+        todayRecords =
+            records
+                |> toList
+                |> List.filter (\record -> Record.startDate timeZone record == today)
+
+        recordListDuration recordList =
+            recordList
+                |> List.foldl (\record total -> total + record.durationInSeconds) 0
+                |> Utils.Duration.fromSeconds
+
+        todaysTotal =
+            summaryCard language
+                Text.TodaysTotal
+                (Utils.Duration.label (recordListDuration todayRecords))
+
+        todaysWeekday =
+            Calendar.getWeekday today
+                |> Utils.Date.weekdayToInt
+
+        thisWeeksRecords =
+            records
+                |> toList
+                |> List.filter
+                    (\record ->
+                        let
+                            recordDate =
+                                Record.startDate timeZone record
+
+                            dateDiff =
+                                Calendar.getDayDiff recordDate today
+                        in
+                        0
+                            <= dateDiff
+                            && dateDiff
+                            <= todaysWeekday
+                    )
+
+        thisWeeksTotal =
+            summaryCard language
+                Text.ThisWeeksTotal
+                (Utils.Duration.label (recordListDuration thisWeeksRecords))
+    in
+    Element.el
+        [ padding
+        , Element.width Element.fill
+        ]
+        (Element.row
+            [ Element.spacing 16
+            , Element.width Element.fill
+            ]
+            [ todaysTotal
+                |> Element.el [ Element.centerX ]
+            , thisWeeksTotal
+                |> Element.el [ Element.centerX ]
+            , settingsButton
+                |> Element.el [ Element.alignRight ]
+            ]
+        )
+
+
+summaryCard language label value =
+    Element.column
+        [ Element.spacing 8
+        , Element.Background.color Colors.darkGrayBackground
+        , Element.padding 12
+        , Element.Border.rounded 8
+        , Element.width (Element.minimum 160 Element.shrink)
+        ]
+        [ Text.text12 language label
+            |> Element.el [ Element.Font.semiBold ]
+        , Text.text14 language value
         ]

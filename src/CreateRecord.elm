@@ -5,29 +5,29 @@ module CreateRecord exposing
     , descriptionInputId
     , encode
     , new
+    , setStartTime
     , subscriptions
     , view
-    , setStartTime
     )
 
+import Clock
 import Colors
+import DateTime
 import Element exposing (Element)
 import Element.Background
 import Element.Border
-import Element.Input
 import Element.Font
+import Element.Input
 import Html.Attributes
 import Icons
 import Json.Decode
 import Json.Encode
 import Text
-import DateTime
 import Time
-import Clock
-import Utils.Duration
 import Utils.Date
-import Utils.Time
+import Utils.Duration
 import Utils.Events
+import Utils.Time
 import View
 
 
@@ -53,7 +53,8 @@ duration { currentTime } { start } =
     Utils.Duration.fromTimeDifference start currentTime
 
 
-setStartTime : { ctx | currentTime : Time.Posix, timeZone : Time.Zone }
+setStartTime :
+    { ctx | currentTime : Time.Posix, timeZone : Time.Zone }
     -> Clock.Time
     -> CreateRecord
     -> Result Text.Text CreateRecord
@@ -74,6 +75,7 @@ setStartTime { currentTime, timeZone } startTime { start, description } =
 
     else
         Err Text.InvalidFutureTime
+
 
 decoder : Json.Decode.Decoder CreateRecord
 decoder =

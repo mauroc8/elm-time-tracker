@@ -4,9 +4,9 @@ import Clock
 import Colors
 import CreateRecord
 import Element
+import Element.Border
 import Element.Font
 import Element.Input
-import Element.Border
 import Element.Region
 import Text
 import Time

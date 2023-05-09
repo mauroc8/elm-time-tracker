@@ -12,8 +12,8 @@ module View exposing
     , fromScreenWidth
     , grayBackgroundStyles
     , grayGradientBackgroundStyles
-    , input
     , horizontalDivider
+    , input
     , linkLikeButton
     , linkLikeButtonSmall
     , modalContent

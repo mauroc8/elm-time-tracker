@@ -5,10 +5,10 @@ import Browser.Dom
 import Browser.Events
 import ChangeStartTime
 import Clock
-import DateTime
 import Colors
 import ConfirmDeletion
 import CreateRecord exposing (CreateRecord)
+import DateTime
 import Element exposing (Attribute, Element)
 import Element.Font as Font
 import Html exposing (Html)
@@ -642,8 +642,7 @@ rootElement model =
 
         viewRecordListWithHeading =
             [ -- Heading
-              headingSection config
-                |> withHeaderLayout config
+              RecordList.viewSummary config
                 |> withHorizontalDivider emphasis
 
             -- RecordList
@@ -757,51 +756,6 @@ type alias Config msg =
     , clickedDeleteButton : Record.Id -> msg
     , modal : Modal
     }
-
-
-
---- Heading
-
-
-headingSection :
-    { a
-        | clickedSettings : msg
-        , modalIsOpen : Bool
-    }
-    -> Element msg
-headingSection { clickedSettings, modalIsOpen } =
-    let
-        settingsButton =
-            View.accentButton
-                { onPress =
-                    View.enabled clickedSettings
-                        |> View.disableIf modalIsOpen
-                , label = Icons.options
-                }
-    in
-    Element.row
-        [ Element.spacing 16
-        , Element.width Element.fill
-        ]
-        [ settingsButton
-        ]
-
-
-withHeaderLayout : { config | viewport : View.Viewport } -> Element msg -> Element msg
-withHeaderLayout { viewport } =
-    let
-        padding =
-            case viewport of
-                View.Mobile ->
-                    Element.padding 16
-
-                View.Desktop ->
-                    Element.paddingXY 0 16
-    in
-    Element.el
-        [ padding
-        , Element.width Element.fill
-        ]
 
 
 withHorizontalDivider : Emphasis -> Element msg -> Element msg

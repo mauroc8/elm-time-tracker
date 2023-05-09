@@ -100,4 +100,3 @@ fromZoneAndPosix : Time.Zone -> Time.Posix -> Clock.Time
 fromZoneAndPosix zone posix =
     Utils.Date.toZonedPosix zone posix
         |> Clock.fromPosix
-
