@@ -18,7 +18,7 @@ import Json.Decode
 import Json.Encode
 import Text
 import Utils.Date
-import View
+import Ui
 
 
 
@@ -47,7 +47,7 @@ encode { dateNotation, language } =
 
 
 
---- View
+--- Ui
 
 
 type alias Config msg =
@@ -57,14 +57,14 @@ type alias Config msg =
     , changedLanguage : Text.Language -> msg
     , pressedSettingsCancelButton : msg
     , pressedSettingsDoneButton : msg
-    , viewport : View.Viewport
+    , viewport : Ui.Viewport
     , today : Calendar.Date
     }
 
 
 view : Config msg -> Element msg
 view config =
-    View.modalContent
+    Ui.modalContent
         { header = settingsHeader config.language
         , body = [ settingsBody config, aboutLink config ]
         , footer = settingsFooter config
@@ -101,10 +101,10 @@ settingsBody config =
         , let
             label blackText grayText =
                 (case config.viewport of
-                    View.Mobile ->
+                    Ui.Mobile ->
                         Element.column
 
-                    View.Desktop ->
+                    Ui.Desktop ->
                         Element.row
                 )
                     [ Element.spacing 8 ]
@@ -241,7 +241,7 @@ radioInputGroup config =
                         , Element.Border.width 1
                         , Element.Border.color Colors.transparent
                         ]
-                        [ View.horizontalDivider View.Gray
+                        [ Ui.horizontalDivider Ui.Gray
                         , customRadio text optionState
                         ]
 
@@ -263,7 +263,7 @@ radioInputGroup config =
 
 settingsFooter : Config msg -> Element msg
 settingsFooter { pressedSettingsCancelButton, pressedSettingsDoneButton, language, viewport } =
-    View.cancelConfirmButtons
+    Ui.cancelConfirmButtons
         { onCancel = pressedSettingsCancelButton
         , onConfirm = pressedSettingsDoneButton
         , confirmText = Text.Save

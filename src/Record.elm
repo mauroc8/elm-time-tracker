@@ -23,7 +23,7 @@ import Time
 import Utils.Date
 import Utils.Duration
 import Utils.Time
-import View
+import Ui
 
 
 posixDecoder : Json.Decode.Decoder Time.Posix
@@ -130,7 +130,7 @@ view :
         , dateNotation : Utils.Date.Notation
         , timeZone : Time.Zone
         , language : Text.Language
-        , viewport : View.Viewport
+        , viewport : Ui.Viewport
         , modalIsOpen : Bool
     }
     -> Record
@@ -209,10 +209,10 @@ view config record =
                     [ Element.Font.color Colors.grayText ]
 
         deleteButton =
-            View.accentButton
+            Ui.accentButton
                 { onPress =
-                    View.enabled (clickedDeleteButton record.id)
-                        |> View.disableIf config.modalIsOpen
+                    Ui.enabled (clickedDeleteButton record.id)
+                        |> Ui.disableIf config.modalIsOpen
                 , label = Icons.trash
                 }
 
@@ -239,7 +239,7 @@ view config record =
 
         recordElement =
             case viewport of
-                View.Mobile ->
+                Ui.Mobile ->
                     Element.column
                         [ Element.padding 16
                         , Element.spacing 13
@@ -247,7 +247,7 @@ view config record =
                         ]
                         children
 
-                View.Desktop ->
+                Ui.Desktop ->
                     Element.column
                         [ Element.paddingXY 0 16
                         , Element.spacing 13

@@ -28,7 +28,7 @@ import Utils.Date
 import Utils.Duration
 import Utils.Events
 import Utils.Time
-import View
+import Ui
 
 
 
@@ -133,7 +133,7 @@ view config =
             ]
 
         descriptionInput =
-            View.input
+            Ui.input
                 ([ -- Layout
                    Element.width Element.fill
                  , Element.height (Element.px 32)
@@ -168,8 +168,8 @@ view config =
                     ++ font Colors.blackText
                 )
                 { onChange =
-                    View.enabled config.changedDescription
-                        |> View.disableIf config.modalIsOpen
+                    Ui.enabled config.changedDescription
+                        |> Ui.disableIf config.modalIsOpen
                 , text = config.description
                 , placeholder = Just (Text.text16 config.language Text.WhatAreYouWorkingOn)
                 , label =
@@ -184,15 +184,15 @@ view config =
                     ]
 
         stopButton =
-            View.button
+            Ui.button
                 [ Element.Font.color Colors.lightGrayText
                 , Element.focused
                     [ Element.Font.color Colors.accent
                     ]
                 ]
                 { onPress =
-                    View.enabled config.pressedStop
-                        |> View.disableIf config.modalIsOpen
+                    Ui.enabled config.pressedStop
+                        |> Ui.disableIf config.modalIsOpen
                 , label = Icons.stopButton
                 }
     in
@@ -214,10 +214,10 @@ view config =
                     , Element.alignBottom
                     ]
                     (Text.text12 config.language config.elapsedTime)
-                , View.linkLikeButtonSmall
+                , Ui.linkLikeButtonSmall
                     { onPress =
-                        View.enabled config.pressedChangeStartTime
-                            |> View.disableIf config.modalIsOpen
+                        Ui.enabled config.pressedChangeStartTime
+                            |> Ui.disableIf config.modalIsOpen
                     , label = Text.ChangeStartTimeButton
                     , language = config.language
                     }

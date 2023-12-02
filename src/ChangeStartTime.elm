@@ -12,7 +12,7 @@ import Text
 import Time
 import Utils.Date
 import Utils.Time
-import View
+import Ui
 
 
 type alias Model =
@@ -45,7 +45,7 @@ type alias Config msg =
     { onCancel : msg
     , onConfirm : Clock.Time -> msg
     , onChange : Model -> msg
-    , viewport : View.Viewport
+    , viewport : Ui.Viewport
     , language : Text.Language
     }
 
@@ -57,7 +57,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
             Text.text24 language Text.ChangeStartTimeHeading
 
         input =
-            View.input
+            Ui.input
                 [ Element.width (Element.px 150)
                 , Element.Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
                 , Element.Border.color Colors.darkGrayBackground
@@ -68,7 +68,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
                     Element.Input.labelAbove
                         [ Element.Font.semiBold ]
                         (Text.text14 language Text.ChangeStartTimeLabel)
-                , onChange = View.enabled <| \value -> onChange { inputValue = value, inputError = Nothing }
+                , onChange = Ui.enabled <| \value -> onChange { inputValue = value, inputError = Nothing }
                 , placeholder =
                     Just (Text.text16 language <| Text.String "16:45")
                 , text = inputValue
@@ -100,7 +100,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
                     onChange { inputValue = inputValue, inputError = Just errorMessage }
 
         footer =
-            View.cancelConfirmButtons
+            Ui.cancelConfirmButtons
                 { onCancel = onCancel
                 , onConfirm = confirm
                 , confirmText = Text.Confirm
@@ -108,7 +108,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
                 , viewport = viewport
                 }
     in
-    View.modalContent
+    Ui.modalContent
         { header = header
         , body = body
         , footer = footer

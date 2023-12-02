@@ -27,7 +27,7 @@ import Text
 import Time
 import Utils.Date
 import Utils.Duration
-import View exposing (Emphasis)
+import Ui exposing (Emphasis)
 
 
 
@@ -129,7 +129,7 @@ delete id (RecordList records) =
 
 view :
     { a
-        | viewport : View.Viewport
+        | viewport : Ui.Viewport
         , language : Text.Language
         , emphasis : Emphasis
         , records : RecordList
@@ -146,10 +146,10 @@ view ({ emphasis, records } as config) =
             emptyState config
                 { message =
                     case emphasis of
-                        View.RecordList ->
+                        Ui.RecordList ->
                             Text.PressTheStartButtonToCreateARecord
 
-                        View.TopBar ->
+                        Ui.TopBar ->
                             Text.String ""
                 }
                 |> emptyBodyLayout
@@ -158,7 +158,7 @@ view ({ emphasis, records } as config) =
             recordsList
                 |> List.map (Record.view config)
                 |> (\list -> list ++ [ information config ])
-                |> List.intersperse (View.recordListHorizontalDivider emphasis)
+                |> List.intersperse (Ui.recordListHorizontalDivider emphasis)
                 |> Element.column
                     [ Element.width Element.fill
                     , Element.height Element.fill
@@ -200,17 +200,17 @@ viewSummary { viewport, clickedSettings, modalIsOpen, records, timeZone, current
     let
         padding =
             case viewport of
-                View.Mobile ->
+                Ui.Mobile ->
                     Element.padding 16
 
-                View.Desktop ->
+                Ui.Desktop ->
                     Element.paddingXY 0 16
 
         settingsButton =
-            View.accentButton
+            Ui.accentButton
                 { onPress =
-                    View.enabled clickedSettings
-                        |> View.disableIf modalIsOpen
+                    Ui.enabled clickedSettings
+                        |> Ui.disableIf modalIsOpen
                 , label = Icons.options
                 }
 

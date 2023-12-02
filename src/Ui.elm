@@ -1,4 +1,4 @@
-module View exposing
+module Ui exposing
     ( BackgroundColor(..)
     , Emphasis(..)
     , PressEvent

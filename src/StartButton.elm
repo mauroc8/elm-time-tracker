@@ -4,7 +4,7 @@ import Colors
 import Element exposing (Element)
 import Element.Font
 import Icons
-import View
+import Ui
 
 
 
@@ -13,7 +13,7 @@ import View
 
 view : { pressedStart : msg, modalIsOpen : Bool } -> Element msg
 view { pressedStart, modalIsOpen } =
-    View.button
+    Ui.button
         [ Element.centerX
         , Element.Font.color Colors.lightGrayText
         , Element.focused
@@ -21,7 +21,7 @@ view { pressedStart, modalIsOpen } =
             ]
         ]
         { onPress =
-            View.enabled pressedStart
-                |> View.disableIf modalIsOpen
+            Ui.enabled pressedStart
+                |> Ui.disableIf modalIsOpen
         , label = Icons.playButton
         }

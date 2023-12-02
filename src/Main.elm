@@ -29,7 +29,7 @@ import Utils.Date
 import Utils.Duration
 import Utils.Out as Out
 import Utils.Time
-import View exposing (Emphasis)
+import Ui exposing (Emphasis)
 
 
 
@@ -85,7 +85,7 @@ type alias Model =
     , visibility : Browser.Events.Visibility
 
     -- Responsiveness
-    , viewport : View.Viewport
+    , viewport : Ui.Viewport
 
     -- Autosave
     , lastSaved : Time.Posix
@@ -102,7 +102,7 @@ initialModel =
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
     , visibility = Browser.Events.Visible
-    , viewport = View.Mobile
+    , viewport = Ui.Mobile
     , lastSaved = Time.millisToPosix 0
     }
 
@@ -119,7 +119,7 @@ setCurrentTime posixTime model =
 
 setViewport : { screenWidth : Int } -> Model -> Model
 setViewport { screenWidth } model =
-    { model | viewport = View.fromScreenWidth screenWidth }
+    { model | viewport = Ui.fromScreenWidth screenWidth }
 
 
 setModal : Modal -> Model -> Model
@@ -595,10 +595,10 @@ rootElement model =
         emphasis =
             case model.createRecordForm of
                 Just _ ->
-                    View.TopBar
+                    Ui.TopBar
 
                 Nothing ->
-                    View.RecordList
+                    Ui.RecordList
 
         modalIsOpen =
             model.modal /= ClosedModal
@@ -657,7 +657,7 @@ rootElement model =
                     , Element.centerX
                     ]
                 |> Element.el
-                    (Element.width Element.fill :: View.sidebarBackgroundColor emphasis)
+                    (Element.width Element.fill :: Ui.sidebarBackgroundColor emphasis)
             ]
 
         shared =
@@ -676,7 +676,7 @@ rootElement model =
                    )
     in
     ( shared
-        ++ View.recordListBackgroundColor emphasis
+        ++ Ui.recordListBackgroundColor emphasis
     , Element.column
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -688,10 +688,10 @@ rootElement model =
         ]
         (topBarWrapped
             ++ (case config.viewport of
-                    View.Mobile ->
+                    Ui.Mobile ->
                         viewRecordListWithHeading
 
-                    View.Desktop ->
+                    Ui.Desktop ->
                         [ Element.column
                             [ Element.width (Element.fill |> Element.maximum 600)
                             , Element.centerX
@@ -746,7 +746,7 @@ viewModal config modal =
 type alias Config msg =
     { emphasis : Emphasis
     , language : Text.Language
-    , viewport : View.Viewport
+    , viewport : Ui.Viewport
     , currentTime : Time.Posix
     , dateNotation : Utils.Date.Notation
     , timeZone : Time.Zone
@@ -764,5 +764,5 @@ withHorizontalDivider emphasis el =
         [ Element.width Element.fill
         ]
         [ el
-        , View.recordListHorizontalDivider emphasis
+        , Ui.recordListHorizontalDivider emphasis
         ]
