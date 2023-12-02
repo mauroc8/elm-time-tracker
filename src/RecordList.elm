@@ -25,9 +25,9 @@ import Levenshtein
 import Record exposing (Record)
 import Text
 import Time
+import Ui exposing (Emphasis)
 import Utils.Date
 import Utils.Duration
-import Ui exposing (Emphasis)
 
 
 
@@ -106,8 +106,8 @@ toList (RecordList records) =
         -- The dict is ordered by startDateTime. The order should be from latest to earliest startDateTime
         |> List.reverse
         -- The super intelligent garbage collector (for performance reasons there can't be many records)
-        -- Note: If we estimate 20 DOM nodes per record, 500 hits the recommended maximum of 10.000
-        |> List.take 500
+        -- Note: If we estimate 10 DOM nodes per record, 1000 hits the recommended maximum of 10.000
+        |> List.take 1000
 
 
 push : Record -> RecordList -> RecordList

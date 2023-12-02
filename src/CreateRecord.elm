@@ -24,11 +24,11 @@ import Json.Decode
 import Json.Encode
 import Text
 import Time
+import Ui
 import Utils.Date
 import Utils.Duration
 import Utils.Events
 import Utils.Time
-import Ui
 
 
 
@@ -178,9 +178,6 @@ view config =
                 }
                 |> Element.el
                     [ Element.width Element.fill
-
-                    -- A bit of custom CSS adds a running animation on the input's border.
-                    , Element.htmlAttribute (Html.Attributes.class "input-border-animation")
                     ]
 
         stopButton =

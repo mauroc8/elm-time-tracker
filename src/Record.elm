@@ -3,7 +3,7 @@ module Record exposing
     , Record
     , decoder
     , encode
-    , fromCreateForm
+    , fromStartAndCurrentTime
     , startDate
     , view
     )
@@ -20,10 +20,10 @@ import Json.Decode
 import Json.Encode
 import Text
 import Time
+import Ui
 import Utils.Date
 import Utils.Duration
 import Utils.Time
-import Ui
 
 
 posixDecoder : Json.Decode.Decoder Time.Posix
@@ -60,7 +60,6 @@ encodeId (Id id) =
 
 type alias Record =
     { id : Id
-    , description : String
     , startDateTime : Time.Posix
     , durationInSeconds : Int
     }
@@ -68,17 +67,15 @@ type alias Record =
 
 decoder : Json.Decode.Decoder Record
 decoder =
-    Json.Decode.map4 Record
+    Json.Decode.map3 Record
         (Json.Decode.field "id" idDecoder)
-        (Json.Decode.field "description" Json.Decode.string)
         (Json.Decode.field "startDateTime" posixDecoder)
         (Json.Decode.field "durationInSecods" Json.Decode.int)
 
 
-fromCreateForm : Time.Posix -> CreateRecord.CreateRecord -> Record
-fromCreateForm now { description, start } =
+fromStartAndCurrentTime : Time.Posix -> Time.Posix -> Record
+fromStartAndCurrentTime now start =
     { id = Id (Time.posixToMillis now)
-    , description = description
     , startDateTime = start
     , durationInSeconds = (Time.posixToMillis now - Time.posixToMillis start) // 1000
     }
@@ -113,7 +110,6 @@ encode : Record -> Json.Encode.Value
 encode record =
     Json.Encode.object
         [ ( "id", encodeId record.id )
-        , ( "description", Json.Encode.string record.description )
         , ( "startDateTime", decodePosix record.startDateTime )
         , ( "durationInSecods", Json.Encode.int record.durationInSeconds )
         ]
@@ -143,9 +139,6 @@ view config record =
         { timeZone, currentTime, dateNotation } =
             config
 
-        description =
-            record.description
-
         date =
             Utils.Date.relativeDateLabel
                 { today = Utils.Date.fromZoneAndPosix timeZone currentTime
@@ -171,22 +164,6 @@ view config record =
                     record.id
             in
             String.fromInt intId
-
-        descriptionHtml =
-            let
-                ( nonemptyDescription, descriptionColor ) =
-                    if String.trim description == "" then
-                        ( Text.NoDescription, Colors.lighterGrayText )
-
-                    else
-                        ( Text.String description, Colors.blackText )
-            in
-            Text.text16 language nonemptyDescription
-                |> Element.el
-                    [ Element.Font.semiBold
-                    , Element.Font.color descriptionColor
-                    , Element.width Element.fill
-                    ]
 
         dateElement =
             Text.text13 language date
@@ -221,8 +198,7 @@ view config record =
                 [ Element.spacing 10
                 , Element.width Element.fill
                 ]
-                [ descriptionHtml
-                , deleteButton
+                [ deleteButton
                     |> Element.el [ Element.alignRight ]
                 , dateElement
                     |> Element.el [ Element.alignRight ]

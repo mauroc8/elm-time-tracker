@@ -5,9 +5,9 @@ import './styles.css'
 const elm = Elm.Main.init({
     node: document.getElementById("root"),
     flags: {
-        createForm: getItem('createForm'),
-        recordList: getItem('recordList'),
-        settings: getItem('settings')
+        createForm: getItemOrNull('createForm'),
+        recordList: getItemOrNull('recordList'),
+        settings: getItemOrNull('settings')
     }
 })
 
@@ -25,7 +25,7 @@ function setItem(key: string, value: Json): void {
 }
 
 /** Returns a Json value from localStorage, or `null` */
-function getItem(key: string): Json {
+function getItemOrNull(key: string): Json {
     const str = localStorage.getItem(key)
 
     try {
