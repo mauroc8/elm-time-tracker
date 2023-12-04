@@ -127,7 +127,6 @@ view :
         , timeZone : Time.Zone
         , language : Text.Language
         , viewport : Ui.Viewport
-        , modalIsOpen : Bool
     }
     -> Record
     -> Element msg
@@ -187,9 +186,8 @@ view config record =
 
         deleteButton =
             Ui.accentButton
-                { onPress =
-                    Ui.enabled (clickedDeleteButton record.id)
-                        |> Ui.disableIf config.modalIsOpen
+                { color = Colors.accent
+                , onPress = Just (clickedDeleteButton record.id)
                 , label = Icons.trash
                 }
 

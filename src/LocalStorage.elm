@@ -1,21 +1,16 @@
 port module LocalStorage exposing
     ( Store
     , clear
-    , createForm
-    , load
-    , recordList
+    , readFromFlags
     , save
-    , settings
+    , store
     )
 
-import CreateRecord exposing (CreateRecord)
 import Json.Decode
 import Json.Encode
-import RecordList exposing (RecordList)
-import Settings exposing (Settings)
 
 
-{-| Available stores.
+{-| Represents an item in localStorage.
 -}
 type Store a
     = Store
@@ -25,31 +20,14 @@ type Store a
         }
 
 
-createForm : Store CreateRecord
-createForm =
+store :
+    { key : String
+    , encode : a -> Json.Decode.Value
+    , decoder : Json.Decode.Decoder a
+    }
+    -> Store a
+store =
     Store
-        { key = "createForm"
-        , encode = CreateRecord.encode
-        , decoder = CreateRecord.decoder
-        }
-
-
-recordList : Store RecordList
-recordList =
-    Store
-        { key = "recordList"
-        , encode = RecordList.encode
-        , decoder = RecordList.decoder
-        }
-
-
-settings : Store Settings
-settings =
-    Store
-        { key = "settings"
-        , encode = Settings.encode
-        , decoder = Settings.decoder
-        }
 
 
 
@@ -58,11 +36,11 @@ settings =
 
 {-| Overrides the current store value with a new value.
 -}
-save : { store : Store a, value : a } -> Cmd msg
-save { store, value } =
+save : Store a -> a -> Cmd msg
+save store_ value =
     let
         (Store { key, encode }) =
-            store
+            store_
     in
     setItem
         { key = key
@@ -89,11 +67,11 @@ port setItem : { key : String, value : Json.Decode.Value } -> Cmd msg
 
 {-| Loads the initial state from flags
 -}
-load : { store : Store a, flags : Json.Decode.Value } -> Result Json.Decode.Error a
-load { store, flags } =
+readFromFlags : Json.Decode.Value -> Store a -> Result Json.Decode.Error a
+readFromFlags flags store_ =
     let
         (Store { key, decoder }) =
-            store
+            store_
     in
     Json.Decode.decodeValue
         (Json.Decode.field key decoder)

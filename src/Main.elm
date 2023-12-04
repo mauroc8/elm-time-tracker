@@ -6,8 +6,7 @@ import Browser.Events
 import ChangeStartTime
 import Clock
 import Colors
-import ConfirmDeletion
-import CreateRecord exposing (CreateRecord)
+import CreateRecord
 import DateTime
 import Element exposing (Attribute, Element)
 import Element.Font as Font
@@ -24,7 +23,7 @@ import StartButton
 import Task
 import Text exposing (Language)
 import Time
-import Ui exposing (Emphasis)
+import Ui
 import Utils
 import Utils.Date
 import Utils.Duration
@@ -226,20 +225,14 @@ changeCreateFormStartTime newStartTime ({ screen, timeZone, currentTime } as mod
 
 loadCreateForm : Json.Decode.Value -> Model -> Model
 loadCreateForm flags model =
-    LocalStorage.load
-        { store = LocalStorage.createForm
-        , flags = flags
-        }
-        |> Result.map (\createForm -> { model | createRecordForm = Just createForm })
+    LocalStorage.readFromFlags flags CreateRecord.store
+        |> Result.map (\startTime -> { model | screen = runningScreen startTime })
         |> Result.withDefault model
 
 
 loadRecordList : Json.Decode.Value -> Model -> Model
 loadRecordList flags model =
-    LocalStorage.load
-        { store = LocalStorage.recordList
-        , flags = flags
-        }
+    LocalStorage.readFromFlags flags RecordList.store
         |> Result.map (\recordList -> { model | records = recordList })
         |> Result.mapError (Utils.debugError "loadRecordList")
         |> Result.withDefault model
@@ -247,10 +240,7 @@ loadRecordList flags model =
 
 loadSettings : Json.Decode.Value -> Model -> Model
 loadSettings flags model =
-    LocalStorage.load
-        { store = LocalStorage.settings
-        , flags = flags
-        }
+    LocalStorage.readFromFlags flags Settings.store
         |> Result.map (\settings -> setSettings settings model)
         |> Result.mapError (Utils.debugError "loadSettings")
         |> Result.withDefault model
@@ -262,32 +252,22 @@ loadSettings flags model =
 
 saveCreateForm : Model -> Cmd Msg
 saveCreateForm model =
-    case model.createRecordForm of
-        Just createForm ->
-            LocalStorage.save
-                { store = LocalStorage.createForm
-                , value = createForm
-                }
+    case model.screen of
+        RunningScreen { startTime } ->
+            LocalStorage.save CreateRecord.store startTime
 
         _ ->
-            LocalStorage.clear
-                LocalStorage.createForm
+            LocalStorage.clear CreateRecord.store
 
 
 saveRecords : Model -> Cmd msg
 saveRecords model =
-    LocalStorage.save
-        { store = LocalStorage.recordList
-        , value = model.records
-        }
+    LocalStorage.save RecordList.store model.records
 
 
 saveSettings : Model -> Cmd msg
 saveSettings model =
-    LocalStorage.save
-        { store = LocalStorage.settings
-        , value = savedSettings model
-        }
+    LocalStorage.save Settings.store (savedSettings model)
 
 
 {-| Returns the settings saved in the model
@@ -321,14 +301,13 @@ type Msg
     | GotStartButtonPressTime Time.Posix
     | PressedStopButton
     | GotStopTime Time.Posix
-    | ChangedCreateFormDescription String
     | PressedEnterInCreateRecord
     | PressedEscapeInCreateRecord
     | PressedChangeStartTimeInCreateRecord
     | FocusedCreateFormDescriptionInput
       -- Change start time
     | ConfirmStartTime Clock.Time
-    | ChangeStartTime ChangeStartTime.Model
+    | ChangeStartTime String
       -- Record List
     | ClickedDeleteButton Record.Id
 
@@ -406,10 +385,6 @@ update msg model =
                 |> Out.addCmd saveCreateForm
                 |> Out.addCmd saveRecords
 
-        ChangedCreateFormDescription description ->
-            changeCreateFormDescription description model
-                |> Out.withCmd saveCreateForm
-
         PressedEscapeInCreateRecord ->
             case model.screen of
                 RunningScreen { startTime, changeStartTimeInput } ->
@@ -453,18 +428,26 @@ update msg model =
                 |> changeCreateFormStartTime newStartTime
                 |> Out.withNoCmd
 
-        ChangeStartTime changeStartTimeModel ->
-            model
-                |> setModal (ChangeStartTimeModal changeStartTimeModel)
-                |> Out.withNoCmd
+        ChangeStartTime startTimeInput ->
+            case model.screen of
+                RunningScreen { startTime } ->
+                    model
+                        |> setScreen (RunningScreen { startTime = startTime, changeStartTimeInput = Just startTimeInput })
+                        |> Out.withNoCmd
+
+                _ ->
+                    model |> Out.withNoCmd
 
         -- Record List
         ClickedDeleteButton id ->
             let
                 record =
-                    model.records
+                    RecordList.find id model.records
             in
-            { model | screen = historyScreen record }
+            { model
+                | screen = HistoryScreen { justDeleted = record }
+                , records = RecordList.delete id model.records
+            }
                 |> Out.withNoCmd
 
 
@@ -476,13 +459,13 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ if model.visibility == Browser.Events.Visible then
-            case model.createRecordForm of
-                Just createForm ->
+            case model.screen of
+                RunningScreen { startTime } ->
                     CreateRecord.subscriptions
                         { currentTime = model.currentTime
                         , gotCurrentTime = GotCurrentTime
+                        , startTime = startTime
                         }
-                        createForm
 
                 _ ->
                     Sub.none
@@ -533,8 +516,7 @@ rootElement model =
 
 
 type alias Config msg =
-    { emphasis : Emphasis
-    , language : Text.Language
+    { language : Text.Language
     , viewport : Ui.Viewport
     , currentTime : Time.Posix
     , dateNotation : Utils.Date.Notation
@@ -544,13 +526,3 @@ type alias Config msg =
     , clickedSettings : msg
     , clickedDeleteButton : Record.Id -> msg
     }
-
-
-withHorizontalDivider : Emphasis -> Element msg -> Element msg
-withHorizontalDivider emphasis el =
-    Element.column
-        [ Element.width Element.fill
-        ]
-        [ el
-        , Ui.recordListHorizontalDivider emphasis
-        ]

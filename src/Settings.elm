@@ -1,8 +1,7 @@
 module Settings exposing
     ( Config
     , Settings
-    , decoder
-    , encode
+    , store
     , view
     )
 
@@ -16,9 +15,10 @@ import Element.Input
 import Icons
 import Json.Decode
 import Json.Encode
+import LocalStorage
 import Text
-import Utils.Date
 import Ui
+import Utils.Date
 
 
 
@@ -29,6 +29,15 @@ type alias Settings =
     { dateNotation : Utils.Date.Notation
     , language : Text.Language
     }
+
+
+store : LocalStorage.Store Settings
+store =
+    LocalStorage.store
+        { key = "settings"
+        , encode = encode
+        , decoder = decoder
+        }
 
 
 decoder : Json.Decode.Decoder Settings
@@ -241,8 +250,7 @@ radioInputGroup config =
                         , Element.Border.width 1
                         , Element.Border.color Colors.transparent
                         ]
-                        [ Ui.horizontalDivider Ui.Gray
-                        , customRadio text optionState
+                        [ customRadio text optionState
                         ]
 
                 radioWithDividerFromOption option =

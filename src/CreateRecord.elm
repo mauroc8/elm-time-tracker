@@ -1,11 +1,8 @@
 module CreateRecord exposing
     ( Config
-    , CreateRecord
-    , decoder
     , descriptionInputId
-    , encode
-    , new
     , setStartTime
+    , store
     , subscriptions
     , view
     )
@@ -22,6 +19,7 @@ import Html.Attributes
 import Icons
 import Json.Decode
 import Json.Encode
+import LocalStorage
 import Text
 import Time
 import Ui
@@ -31,80 +29,42 @@ import Utils.Events
 import Utils.Time
 
 
-
---- Create Form
-
-
-type alias CreateRecord =
-    { start : Time.Posix
-    , description : String
-    }
-
-
-new : String -> Time.Posix -> CreateRecord
-new description time =
-    { start = time
-    , description = description
-    }
-
-
-duration : { currentTime : Time.Posix } -> CreateRecord -> Utils.Duration.Duration
-duration { currentTime } { start } =
-    Utils.Duration.fromTimeDifference start currentTime
+duration : { a | currentTime : Time.Posix, startTime : Time.Posix } -> Utils.Duration.Duration
+duration config =
+    Utils.Duration.fromTimeDifference config.startTime config.currentTime
 
 
 setStartTime :
-    { ctx | currentTime : Time.Posix, timeZone : Time.Zone }
+    { a | currentTime : Time.Posix, timeZone : Time.Zone }
     -> Clock.Time
-    -> CreateRecord
-    -> Result Text.Text CreateRecord
-setStartTime { currentTime, timeZone } startTime { start, description } =
+    -> Result Text.Text Time.Posix
+setStartTime { currentTime, timeZone } startClockTime =
     let
         newStart =
             DateTime.fromDateAndTime
                 (Utils.Date.fromZoneAndPosix timeZone currentTime)
-                startTime
+                startClockTime
                 |> DateTime.toPosix
                 |> Utils.Date.fromZonedPosix timeZone
     in
     if Time.posixToMillis newStart < Time.posixToMillis currentTime then
-        { description = description
-        , start = newStart
-        }
-            |> Ok
+        Ok newStart
 
     else
         Err Text.InvalidFutureTime
-
-
-decoder : Json.Decode.Decoder CreateRecord
-decoder =
-    Json.Decode.map2 CreateRecord
-        (Json.Decode.field "start" decodePosix)
-        (Json.Decode.field "description" Json.Decode.string)
-
-
-decodePosix : Json.Decode.Decoder Time.Posix
-decodePosix =
-    Json.Decode.int
-        |> Json.Decode.map Time.millisToPosix
 
 
 
 ---
 
 
-encode : CreateRecord -> Json.Encode.Value
-encode createForm =
-    Json.Encode.object
-        [ ( "start", encodePosix createForm.start )
-        , ( "description", Json.Encode.string createForm.description )
-        ]
-
-
-encodePosix : Time.Posix -> Json.Encode.Value
-encodePosix posix =
-    Json.Encode.int (Time.posixToMillis posix)
+store : LocalStorage.Store Time.Posix
+store =
+    LocalStorage.store
+        { key = "createForm"
+        , encode = Utils.Time.encode
+        , decoder = Utils.Time.decoder
+        }
 
 
 
@@ -112,9 +72,7 @@ encodePosix posix =
 
 
 type alias Config msg =
-    { description : String
-    , changedDescription : String -> msg
-    , elapsedTime : Text.Text
+    { elapsedTime : Text.Text
     , pressedStop : msg
     , pressedEnter : msg
     , pressedEscape : msg
@@ -132,64 +90,19 @@ view config =
             , Element.Font.color color
             ]
 
-        descriptionInput =
-            Ui.input
-                ([ -- Layout
-                   Element.width Element.fill
-                 , Element.height (Element.px 32)
-                 , Element.paddingXY 0 6
-
-                 -- Background
-                 , Element.Background.color Colors.transparent
-
-                 -- Border
-                 , Element.Border.widthEach
-                    { bottom = 1
-                    , left = 0
-                    , right = 0
-                    , top = 0
-                    }
-                 , Element.Border.rounded 0
-                 , Element.Border.color Colors.lighterGrayText
-                 , Element.focused
-                    [ Element.Border.color Colors.accent
-                    ]
-
-                 -- Focus
-                 , Element.htmlAttribute <|
-                    Html.Attributes.id descriptionInputId
-
-                 -- Key events
-                 , Utils.Events.onKeyDown
-                    [ ( "Enter", config.pressedEnter )
-                    , ( "Escape", config.pressedEscape )
-                    ]
-                 ]
-                    ++ font Colors.blackText
-                )
-                { onChange =
-                    Ui.enabled config.changedDescription
-                        |> Ui.disableIf config.modalIsOpen
-                , text = config.description
-                , placeholder = Just (Text.text16 config.language Text.WhatAreYouWorkingOn)
-                , label =
-                    Text.toString config.language Text.DescriptionLabel
-                        |> Element.Input.labelHidden
-                }
-                |> Element.el
-                    [ Element.width Element.fill
-                    ]
-
         stopButton =
-            Ui.button
+            Element.Input.button
                 [ Element.Font.color Colors.lightGrayText
                 , Element.focused
                     [ Element.Font.color Colors.accent
                     ]
                 ]
                 { onPress =
-                    Ui.enabled config.pressedStop
-                        |> Ui.disableIf config.modalIsOpen
+                    if config.modalIsOpen then
+                        Nothing
+
+                    else
+                        Just config.pressedStop
                 , label = Icons.stopButton
                 }
     in
@@ -201,8 +114,7 @@ view config =
             [ Element.spacing 9
             , Element.width Element.fill
             ]
-            [ descriptionInput
-            , Element.row
+            [ Element.row
                 [ Element.spacing 10
                 , Element.width Element.fill
                 ]
@@ -213,8 +125,11 @@ view config =
                     (Text.text12 config.language config.elapsedTime)
                 , Ui.linkLikeButtonSmall
                     { onPress =
-                        Ui.enabled config.pressedChangeStartTime
-                            |> Ui.disableIf config.modalIsOpen
+                        if config.modalIsOpen then
+                            Nothing
+
+                        else
+                            Just config.pressedChangeStartTime
                     , label = Text.ChangeStartTimeButton
                     , language = config.language
                     }
@@ -233,14 +148,14 @@ descriptionInputId =
 subscriptions :
     { currentTime : Time.Posix
     , gotCurrentTime : Time.Posix -> msg
+    , startTime : Time.Posix
     }
-    -> CreateRecord
     -> Sub msg
-subscriptions { currentTime, gotCurrentTime } createForm =
+subscriptions config =
     Time.every
-        (duration { currentTime = currentTime } createForm
+        (duration config
             |> Utils.Duration.secondsBeforeTheLabelChanges
             |> toFloat
             |> (*) 1000
         )
-        gotCurrentTime
+        config.gotCurrentTime

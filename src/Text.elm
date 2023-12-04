@@ -368,7 +368,7 @@ toString lang text =
 
         -- Other
         ( CommentAboutStorage, English ) ->
-            "The data is stored on your browser's cache. You'll lose all records if you clear the cache."
+            "The data is stored on your browser's cache. You'll lose all records when you clear the cache."
 
         ( CommentAboutStorage, Spanish ) ->
             "Los datos se guardan en la caché del navegador. Perderás todos los registros al limpiar la caché."

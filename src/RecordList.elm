@@ -1,11 +1,10 @@
 module RecordList exposing
     ( RecordList
-    , decoder
     , delete
     , empty
-    , encode
+    , find
     , push
-    , search
+    , store
     , toList
     , view
     , viewSummary
@@ -22,10 +21,11 @@ import Icons
 import Json.Decode
 import Json.Encode
 import Levenshtein
+import LocalStorage
 import Record exposing (Record)
 import Text
 import Time
-import Ui exposing (Emphasis)
+import Ui
 import Utils.Date
 import Utils.Duration
 
@@ -52,19 +52,13 @@ fromList list =
         |> RecordList
 
 
-search : String -> RecordList -> RecordList
-search query (RecordList records) =
-    if query == "" then
-        RecordList records
-
-    else
-        records
-            |> Dict.filter
-                (\_ record ->
-                    record.description
-                        |> matchesSearchQuery query
-                )
-            |> RecordList
+store : LocalStorage.Store RecordList
+store =
+    LocalStorage.store
+        { key = "recordList"
+        , encode = encode
+        , decoder = decoder
+        }
 
 
 decoder : Json.Decode.Decoder RecordList
@@ -123,6 +117,14 @@ delete id (RecordList records) =
         |> RecordList
 
 
+find : Record.Id -> RecordList -> Maybe Record.Record
+find id recordList =
+    recordList
+        |> toList
+        |> List.filter (\r -> r.id == id)
+        |> List.head
+
+
 
 --- VIEW
 
@@ -131,7 +133,6 @@ view :
     { a
         | viewport : Ui.Viewport
         , language : Text.Language
-        , emphasis : Emphasis
         , records : RecordList
         , clickedDeleteButton : Record.Id -> msg
         , currentTime : Time.Posix
@@ -140,17 +141,11 @@ view :
         , modalIsOpen : Bool
     }
     -> Element msg
-view ({ emphasis, records } as config) =
+view ({ records } as config) =
     case toList records of
         [] ->
             emptyState config
-                { message =
-                    case emphasis of
-                        Ui.RecordList ->
-                            Text.PressTheStartButtonToCreateARecord
-
-                        Ui.TopBar ->
-                            Text.String ""
+                { message = Text.PressTheStartButtonToCreateARecord
                 }
                 |> emptyBodyLayout
 
@@ -158,7 +153,6 @@ view ({ emphasis, records } as config) =
             recordsList
                 |> List.map (Record.view config)
                 |> (\list -> list ++ [ information config ])
-                |> List.intersperse (Ui.recordListHorizontalDivider emphasis)
                 |> Element.column
                     [ Element.width Element.fill
                     , Element.height Element.fill
@@ -196,7 +190,7 @@ emptyBodyLayout =
         ]
 
 
-viewSummary { viewport, clickedSettings, modalIsOpen, records, timeZone, currentTime, language } =
+viewSummary { viewport, clickedSettings, records, timeZone, currentTime, language } =
     let
         padding =
             case viewport of
@@ -208,10 +202,9 @@ viewSummary { viewport, clickedSettings, modalIsOpen, records, timeZone, current
 
         settingsButton =
             Ui.accentButton
-                { onPress =
-                    Ui.enabled clickedSettings
-                        |> Ui.disableIf modalIsOpen
+                { onPress = Just clickedSettings
                 , label = Icons.options
+                , color = Colors.accent
                 }
 
         today =

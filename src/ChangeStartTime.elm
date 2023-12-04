@@ -10,9 +10,9 @@ import Element.Input
 import Element.Region
 import Text
 import Time
+import Ui
 import Utils.Date
 import Utils.Time
-import Ui
 
 
 type alias Model =
@@ -26,11 +26,11 @@ initialModel :
         | timeZone : Time.Zone
         , language : Text.Language
     }
-    -> CreateRecord.CreateRecord
+    -> Time.Posix
     -> Model
-initialModel { timeZone, language } { start } =
+initialModel { timeZone, language } startTime =
     { inputValue =
-        Utils.Time.fromZoneAndPosix timeZone start
+        Utils.Time.fromZoneAndPosix timeZone startTime
             |> Utils.Time.toHhMm
     , inputError = Nothing
     }
@@ -57,7 +57,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
             Text.text24 language Text.ChangeStartTimeHeading
 
         input =
-            Ui.input
+            Element.Input.text
                 [ Element.width (Element.px 150)
                 , Element.Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
                 , Element.Border.color Colors.darkGrayBackground
@@ -68,7 +68,7 @@ view { language, onChange, onCancel, onConfirm, viewport } { inputValue, inputEr
                     Element.Input.labelAbove
                         [ Element.Font.semiBold ]
                         (Text.text14 language Text.ChangeStartTimeLabel)
-                , onChange = Ui.enabled <| \value -> onChange { inputValue = value, inputError = Nothing }
+                , onChange = \value -> onChange { inputValue = value, inputError = Nothing }
                 , placeholder =
                     Just (Text.text16 language <| Text.String "16:45")
                 , text = inputValue

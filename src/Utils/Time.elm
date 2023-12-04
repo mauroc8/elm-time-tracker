@@ -1,5 +1,7 @@
 module Utils.Time exposing
-    ( fromHhMm
+    ( decoder
+    , encode
+    , fromHhMm
     , fromZoneAndPosix
     , toHhMm
     , toStringWithAmPm
@@ -7,6 +9,8 @@ module Utils.Time exposing
 
 import Clock
 import DateTime
+import Json.Decode
+import Json.Encode
 import Text
 import Time
 import Utils.Date
@@ -100,3 +104,14 @@ fromZoneAndPosix : Time.Zone -> Time.Posix -> Clock.Time
 fromZoneAndPosix zone posix =
     Utils.Date.toZonedPosix zone posix
         |> Clock.fromPosix
+
+
+encode : Time.Posix -> Json.Encode.Value
+encode posix =
+    Json.Encode.int (Time.posixToMillis posix)
+
+
+decoder : Json.Decode.Decoder Time.Posix
+decoder =
+    Json.Decode.int
+        |> Json.Decode.map Time.millisToPosix
