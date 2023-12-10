@@ -1,6 +1,5 @@
 module CreateRecord exposing
     ( Config
-    , descriptionInputId
     , setStartTime
     , store
     , subscriptions
@@ -67,11 +66,6 @@ type alias Config msg =
     , language : Text.Language
     , modalIsOpen : Bool
     }
-
-
-descriptionInputId : String
-descriptionInputId =
-    "create-form-description-input"
 
 
 subscriptions :

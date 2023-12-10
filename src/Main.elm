@@ -155,16 +155,11 @@ setLanguage language model =
     { model | language = language }
 
 
-startCreatingRecord : String -> Model -> ( Model, Cmd Msg )
-startCreatingRecord description model =
+startCreatingRecord : Model -> ( Model, Cmd Msg )
+startCreatingRecord model =
     model
         |> setScreen (runningScreen model.currentTime)
-        |> Out.withCmd
-            (\_ ->
-                Browser.Dom.focus CreateRecord.descriptionInputId
-                    |> Task.attempt (\_ -> FocusedCreateFormDescriptionInput)
-            )
-        |> Out.addCmd (\_ -> PreventClose.on)
+        |> Out.withCmd (\_ -> PreventClose.on)
 
 
 stopCreatingRecord : Model -> ( Model, Cmd Msg )
@@ -296,7 +291,6 @@ type Msg
     | PressedEnterInCreateRecord
     | PressedEscapeInCreateRecord
     | PressedChangeStartTimeInCreateRecord
-    | FocusedCreateFormDescriptionInput
       -- Change start time
     | ConfirmStartTime Clock.Time
     | ChangeStartTime String
@@ -359,7 +353,7 @@ update msg model =
         GotStartButtonPressTime time ->
             model
                 |> setCurrentTime time
-                |> startCreatingRecord ""
+                |> startCreatingRecord
                 |> Out.addCmd saveCreateForm
 
         PressedStopButton ->
@@ -409,10 +403,6 @@ update msg model =
 
                 _ ->
                     model |> Out.withNoCmd
-
-        FocusedCreateFormDescriptionInput ->
-            model
-                |> Out.withNoCmd
 
         -- Change start time
         ConfirmStartTime newStartTime ->
@@ -475,4 +465,19 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    Html.text "elm-time-tracker"
+    let
+        { screen } =
+            model
+    in
+    case screen of
+        HomeScreen ->
+            Html.text "play"
+
+        RunningScreen _ ->
+            Html.text "stop"
+
+        SettingsScreen ->
+            Html.text "Settings"
+
+        HistoryScreen _ ->
+            Html.text "history"
