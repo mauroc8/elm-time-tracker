@@ -9,88 +9,79 @@ module Colors exposing
     , lightGrayText
     , lighterGrayText
     , red
-    , toCss
     , transparent
     , whiteBackground
     )
 
-import Element exposing (Color)
 
-
-whiteBackground : Color
-whiteBackground =
-    Element.rgb255 255 255 255
-
-
-grayBackground : Color
-grayBackground =
-    Element.rgb255 240 240 240
-
-
-darkGrayBackground : Color
-darkGrayBackground =
-    Element.rgb255 228 228 228
-
-
-darkerGrayBackground : Color
-darkerGrayBackground =
-    Element.rgb255 215 215 215
-
-
-blackText : Color
-blackText =
-    Element.rgb255 0 0 0
-
-
-blackishText : Color
-blackishText =
-    Element.rgb255 46 46 46
-
-
-grayText : Color
-grayText =
-    Element.rgb255 100 100 100
-
-
-lightGrayText : Color
-lightGrayText =
-    Element.rgb255 140 140 140
-
-
-lighterGrayText : Color
-lighterGrayText =
-    Element.rgb255 170 170 170
-
-
-accent : Color
-accent =
-    Element.rgb255 113 163 240
-
-
-red : Color
-red =
-    Element.rgb255 241 97 97
-
-
-transparent : Color
-transparent =
-    Element.rgba 1 1 1 0
-
-
-toCss : Color -> String
-toCss color =
+rgb255 : Int -> Int -> Int -> String
+rgb255 r g b =
     let
         rgb =
-            Element.toRgb color
-
-        roundFloat n =
-            n |> round |> String.fromInt
+            [ r, g, b ]
+                |> List.map String.fromInt
+                |> String.join ", "
     in
-    "rgba("
-        ++ String.join ","
-            [ rgb.red * 255 |> roundFloat
-            , rgb.green * 255 |> roundFloat
-            , rgb.blue * 255 |> roundFloat
-            , rgb.alpha |> String.fromFloat
-            ]
+    "rgb("
+        ++ rgb
         ++ ")"
+
+
+whiteBackground : String
+whiteBackground =
+    rgb255 255 255 255
+
+
+grayBackground : String
+grayBackground =
+    rgb255 240 240 240
+
+
+darkGrayBackground : String
+darkGrayBackground =
+    rgb255 228 228 228
+
+
+darkerGrayBackground : String
+darkerGrayBackground =
+    rgb255 215 215 215
+
+
+blackText : String
+blackText =
+    rgb255 0 0 0
+
+
+blackishText : String
+blackishText =
+    rgb255 46 46 46
+
+
+grayText : String
+grayText =
+    rgb255 100 100 100
+
+
+lightGrayText : String
+lightGrayText =
+    rgb255 140 140 140
+
+
+lighterGrayText : String
+lighterGrayText =
+    rgb255 170 170 170
+
+
+accent : String
+accent =
+    rgb255 113 163 240
+
+
+red : String
+red =
+    rgb255 241 97 97
+
+
+transparent : String
+transparent =
+    "rgba(1, 1, 1, 0)"

@@ -3,30 +3,22 @@ module Main exposing (Model, Msg, main)
 import Browser
 import Browser.Dom
 import Browser.Events
-import ChangeStartTime
 import Clock
-import Colors
 import CreateRecord
 import DateTime
-import Element exposing (Attribute, Element)
-import Element.Font as Font
 import Html exposing (Html)
-import Html.Attributes
-import Icons
 import Json.Decode
 import LocalStorage
 import PreventClose
 import Record exposing (Record)
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
-import StartButton
 import Task
 import Text exposing (Language)
 import Time
 import Ui
 import Utils
 import Utils.Date
-import Utils.Duration
 import Utils.Out as Out
 import Utils.Time
 
@@ -483,46 +475,4 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    let
-        ( attrs, el ) =
-            rootElement model
-    in
-    Element.layoutWith
-        { options =
-            [ Element.focusStyle focusStyle
-            ]
-        }
-        attrs
-        el
-
-
-focusStyle : Element.FocusStyle
-focusStyle =
-    { borderColor = Just Colors.accent
-    , backgroundColor = Nothing
-    , shadow = Nothing
-    }
-
-
-rootElement : Model -> ( List (Attribute Msg), Element Msg )
-rootElement model =
-    ( []
-    , Element.column
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        ]
-        []
-    )
-
-
-type alias Config msg =
-    { language : Text.Language
-    , viewport : Ui.Viewport
-    , currentTime : Time.Posix
-    , dateNotation : Utils.Date.Notation
-    , timeZone : Time.Zone
-    , records : RecordList.RecordList
-    , topBar : Element.Element msg
-    , clickedSettings : msg
-    , clickedDeleteButton : Record.Id -> msg
-    }
+    Html.text "elm-time-tracker"

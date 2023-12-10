@@ -1,11 +1,8 @@
 module Utils exposing
     ( debugError
     , decodeLiteral
-    , emptyAttribute
     )
 
-import Element
-import Html.Attributes
 import Json.Decode
 
 
@@ -37,8 +34,3 @@ debugLog str value =
     -- I manually toggle these lines to make a build:
     -- value
     Debug.log str value
-
-
-emptyAttribute : Element.Attribute msg
-emptyAttribute =
-    Element.htmlAttribute (Html.Attributes.class "")

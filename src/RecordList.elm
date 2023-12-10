@@ -6,28 +6,15 @@ module RecordList exposing
     , push
     , store
     , toList
-    , view
-    , viewSummary
     )
 
-import Calendar
-import Colors
 import Dict exposing (Dict)
-import Element exposing (Element)
-import Element.Background
-import Element.Border
-import Element.Font
-import Icons
 import Json.Decode
 import Json.Encode
 import Levenshtein
 import LocalStorage
 import Record exposing (Record)
-import Text
 import Time
-import Ui
-import Utils.Date
-import Utils.Duration
 
 
 
@@ -123,162 +110,3 @@ find id recordList =
         |> toList
         |> List.filter (\r -> r.id == id)
         |> List.head
-
-
-
---- VIEW
-
-
-view :
-    { a
-        | viewport : Ui.Viewport
-        , language : Text.Language
-        , records : RecordList
-        , clickedDeleteButton : Record.Id -> msg
-        , currentTime : Time.Posix
-        , dateNotation : Utils.Date.Notation
-        , timeZone : Time.Zone
-        , modalIsOpen : Bool
-    }
-    -> Element msg
-view ({ records } as config) =
-    case toList records of
-        [] ->
-            emptyState config
-                { message = Text.PressTheStartButtonToCreateARecord
-                }
-                |> emptyBodyLayout
-
-        recordsList ->
-            recordsList
-                |> List.map (Record.view config)
-                |> (\list -> list ++ [ information config ])
-                |> Element.column
-                    [ Element.width Element.fill
-                    , Element.height Element.fill
-                    ]
-
-
-information { language } =
-    Element.paragraph
-        [ Element.spacing 8
-        , Element.paddingXY 0 16
-        , Element.width Element.fill
-        , Element.Font.color Colors.grayText
-        ]
-        [ Text.text13 language Text.CommentAboutStorage ]
-
-
-emptyState : { a | language : Text.Language } -> { message : Text.Text } -> Element msg
-emptyState { language } { message } =
-    Element.paragraph
-        [ Element.centerY
-        , Element.width Element.fill
-        , Element.Font.center
-        , Element.Font.color Colors.lighterGrayText
-        , Element.Font.semiBold
-        ]
-        [ Text.text16 language message ]
-
-
-emptyBodyLayout : Element msg -> Element msg
-emptyBodyLayout =
-    Element.el
-        [ Element.width Element.fill
-        , Element.height Element.fill
-        , Element.padding 16
-        ]
-
-
-viewSummary { viewport, clickedSettings, records, timeZone, currentTime, language } =
-    let
-        padding =
-            case viewport of
-                Ui.Mobile ->
-                    Element.padding 16
-
-                Ui.Desktop ->
-                    Element.paddingXY 0 16
-
-        settingsButton =
-            Ui.accentButton
-                { onPress = Just clickedSettings
-                , label = Icons.options
-                , color = Colors.accent
-                }
-
-        today =
-            Utils.Date.fromZoneAndPosix timeZone currentTime
-
-        todayRecords =
-            records
-                |> toList
-                |> List.filter (\record -> Record.startDate timeZone record == today)
-
-        recordListDuration recordList =
-            recordList
-                |> List.foldl (\record total -> total + record.durationInSeconds) 0
-                |> Utils.Duration.fromSeconds
-
-        todaysTotal =
-            summaryCard language
-                Text.TodaysTotal
-                (Utils.Duration.label (recordListDuration todayRecords))
-
-        todaysWeekday =
-            Calendar.getWeekday today
-                |> Utils.Date.weekdayToInt
-
-        thisWeeksRecords =
-            records
-                |> toList
-                |> List.filter
-                    (\record ->
-                        let
-                            recordDate =
-                                Record.startDate timeZone record
-
-                            dateDiff =
-                                Calendar.getDayDiff recordDate today
-                        in
-                        0
-                            <= dateDiff
-                            && dateDiff
-                            <= todaysWeekday
-                    )
-
-        thisWeeksTotal =
-            summaryCard language
-                Text.ThisWeeksTotal
-                (Utils.Duration.label (recordListDuration thisWeeksRecords))
-    in
-    Element.el
-        [ padding
-        , Element.width Element.fill
-        ]
-        (Element.row
-            [ Element.spacing 16
-            , Element.width Element.fill
-            ]
-            [ todaysTotal
-                |> Element.el [ Element.centerX ]
-            , thisWeeksTotal
-                |> Element.el [ Element.centerX ]
-            , settingsButton
-                |> Element.el [ Element.alignRight ]
-            ]
-        )
-
-
-summaryCard language label value =
-    Element.column
-        [ Element.spacing 8
-        , Element.Background.color Colors.darkGrayBackground
-        , Element.padding 12
-        , Element.Border.rounded 8
-        , Element.width (Element.minimum 160 Element.shrink)
-        ]
-        [ Text.text12 language label
-            |> Element.el [ Element.Font.semiBold ]
-        , Text.text14 language value
-        ]

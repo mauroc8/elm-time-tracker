@@ -4,16 +4,12 @@ module Text exposing
     , defaultLanguage
     , encodeLanguage
     , languageDecoder
-    , text12
-    , text13
-    , text14
-    , text16
-    , text24
+    , textWith
     , toString
     )
 
-import Element exposing (Element)
-import Element.Font as Font
+import Html exposing (Html)
+import Html.Attributes
 import Json.Decode
 import Json.Encode
 import Time
@@ -476,53 +472,14 @@ monthToString month =
             "12"
 
 
-
---- FONT SIZE
-
-
-text12 : Language -> Text -> Element msg
-text12 =
-    textWith
-        { fontSize = 12
-        }
-
-
-text13 : Language -> Text -> Element msg
-text13 =
-    textWith
-        { fontSize = 13
-        }
-
-
-text14 : Language -> Text -> Element msg
-text14 =
-    textWith
-        { fontSize = 14
-        }
-
-
-text16 : Language -> Text -> Element msg
-text16 =
-    textWith
-        { fontSize = 16
-        }
-
-
-text24 : Language -> Text -> Element msg
-text24 =
-    textWith
-        { fontSize = 24
-        }
-
-
 textWith :
     { fontSize : Int
     }
     -> Language
     -> Text
-    -> Element msg
+    -> Html msg
 textWith { fontSize } language text =
-    Element.el
-        [ Font.size fontSize
+    Html.span
+        [ Html.Attributes.style "font-size" (String.fromInt fontSize)
         ]
-        (Element.text (toString language text))
+        [ Html.text (toString language text) ]

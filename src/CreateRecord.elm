@@ -4,28 +4,15 @@ module CreateRecord exposing
     , setStartTime
     , store
     , subscriptions
-    , view
     )
 
 import Clock
-import Colors
 import DateTime
-import Element exposing (Element)
-import Element.Background
-import Element.Border
-import Element.Font
-import Element.Input
-import Html.Attributes
-import Icons
-import Json.Decode
-import Json.Encode
 import LocalStorage
 import Text
 import Time
-import Ui
 import Utils.Date
 import Utils.Duration
-import Utils.Events
 import Utils.Time
 
 
@@ -80,64 +67,6 @@ type alias Config msg =
     , language : Text.Language
     , modalIsOpen : Bool
     }
-
-
-view : Config msg -> Element msg
-view config =
-    let
-        font color =
-            [ Element.Font.semiBold
-            , Element.Font.color color
-            ]
-
-        stopButton =
-            Element.Input.button
-                [ Element.Font.color Colors.lightGrayText
-                , Element.focused
-                    [ Element.Font.color Colors.accent
-                    ]
-                ]
-                { onPress =
-                    if config.modalIsOpen then
-                        Nothing
-
-                    else
-                        Just config.pressedStop
-                , label = Icons.stopButton
-                }
-    in
-    Element.row
-        [ Element.spacing 24
-        , Element.width Element.fill
-        ]
-        [ Element.column
-            [ Element.spacing 9
-            , Element.width Element.fill
-            ]
-            [ Element.row
-                [ Element.spacing 10
-                , Element.width Element.fill
-                ]
-                [ Element.el
-                    [ Element.Font.color Colors.blackishText
-                    , Element.alignBottom
-                    ]
-                    (Text.text12 config.language config.elapsedTime)
-                , Ui.linkLikeButtonSmall
-                    { onPress =
-                        if config.modalIsOpen then
-                            Nothing
-
-                        else
-                            Just config.pressedChangeStartTime
-                    , label = Text.ChangeStartTimeButton
-                    , language = config.language
-                    }
-                    |> Element.el [ Element.alignRight ]
-                ]
-            ]
-        , stopButton
-        ]
 
 
 descriptionInputId : String
