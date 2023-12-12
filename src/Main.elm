@@ -14,9 +14,10 @@ import Record exposing (Record)
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
 import Task
-import Text exposing (Language)
+import Text exposing (Language, Text)
 import Time
 import Ui
+import Ui.Input
 import Utils
 import Utils.Date
 import Utils.Out as Out
@@ -75,6 +76,11 @@ runningScreen currentTime =
     RunningScreen { startTime = currentTime, changeStartTimeInput = Nothing }
 
 
+historyScreen : Screen
+historyScreen =
+    HistoryScreen { justDeleted = Nothing }
+
+
 
 --- Model
 
@@ -107,7 +113,7 @@ initialModel : Model
 initialModel =
     { records = RecordList.empty
     , screen = homeScreen
-    , dateNotation = Utils.Date.westernNotation
+    , dateNotation = Utils.Date.defaultNotation
     , language = Text.defaultLanguage
     , currentTime = Time.millisToPosix 0
     , timeZone = Time.utc
@@ -279,6 +285,7 @@ type Msg
     | ViewportWidthChanged Int
       -- Heading
     | PressedSettingsButton
+    | PressedHistoryButton
       -- Settings
     | PressedSettingsBackButton
     | ChangedDateNotation Utils.Date.Notation
@@ -330,6 +337,9 @@ update msg model =
         -- Heading
         PressedSettingsButton ->
             setScreen SettingsScreen model |> Out.withNoCmd
+
+        PressedHistoryButton ->
+            setScreen historyScreen model |> Out.withNoCmd
 
         -- Settings
         PressedSettingsBackButton ->
@@ -468,16 +478,34 @@ view model =
     let
         { screen } =
             model
+
+        text =
+            Text.toHtml model.language
+
+        breakpoints =
+            Ui.breakpoints model.viewport
     in
-    case screen of
-        HomeScreen ->
-            Html.text "play"
+    Ui.column
+        [ Ui.fillWidth
+        , Ui.fillHeight
+        , Ui.paddingXY ( breakpoints 40 32 24, breakpoints 32 24 16 )
+        , Ui.spacing (breakpoints 32 24 16)
+        , Ui.spaceBetween
+        ]
+    <|
+        case screen of
+            HomeScreen ->
+                [ Ui.row [ Ui.fillWidth, Ui.alignRight, Ui.spacing 12 ]
+                    [ Ui.Input.button PressedSettingsButton [] [ text Text.Settings ]
+                    , Ui.Input.button PressedHistoryButton [] [ text Text.History ]
+                    ]
+                ]
 
-        RunningScreen _ ->
-            Html.text "stop"
+            RunningScreen _ ->
+                [ Html.text "stop" ]
 
-        SettingsScreen ->
-            Html.text "Settings"
+            SettingsScreen ->
+                [ Html.text "Settings" ]
 
-        HistoryScreen _ ->
-            Html.text "history"
+            HistoryScreen _ ->
+                [ Html.text "history" ]

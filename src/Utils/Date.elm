@@ -1,5 +1,6 @@
 module Utils.Date exposing
     ( Notation
+    , defaultNotation
     , encodeNotation
     , fromZoneAndPosix
     , fromZonedPosix
@@ -7,9 +8,8 @@ module Utils.Date exposing
     , relativeDateLabel
     , toLabel
     , toZonedPosix
-    , unitedStatesNotation
+    , usaNotation
     , weekdayToInt
-    , westernNotation
     )
 
 import Calendar
@@ -25,47 +25,42 @@ import Utils
 ---
 
 
-{-| The UnitedStates date notation is MM/DD/YYYY, while the "western" date notation
+{-| The UnitedStates date notation is MM/DD/YYYY, while the default date notation
 is DD/MM/YYYY.
 
 Note: I'm sorry for not supporting other date notations
-(I don't even know what other date notations there are) :(
 
 -}
 type Notation
     = UnitedStates
-    | Western
+    | Default
 
 
-westernNotation : Notation
-westernNotation =
-    Western
-
-
-notationToString : Notation -> String
-notationToString notation =
-    case notation of
-        UnitedStates ->
-            "UnitedStates"
-
-        Western ->
-            "Western"
+defaultNotation : Notation
+defaultNotation =
+    Default
 
 
 notationDecoder : Json.Decode.Decoder Notation
 notationDecoder =
-    [ UnitedStates, Western ]
-        |> List.map (\lang -> Utils.decodeLiteral lang (notationToString lang))
-        |> Json.Decode.oneOf
+    Json.Decode.oneOf
+        [ Utils.decodeLiteral UnitedStates "UnitedStates"
+        , Utils.decodeLiteral Default "Default"
+        ]
 
 
 encodeNotation : Notation -> Json.Encode.Value
 encodeNotation notation =
-    Json.Encode.string (notationToString notation)
+    case notation of
+        UnitedStates ->
+            Json.Encode.string "UnitedStates"
+
+        Default ->
+            Json.Encode.string "Default"
 
 
-unitedStatesNotation : Notation
-unitedStatesNotation =
+usaNotation : Notation
+usaNotation =
     UnitedStates
 
 
@@ -82,7 +77,7 @@ toLabel notation date =
                 (Calendar.getDay date)
                 (Calendar.getYear date)
 
-        Western ->
+        Default ->
             Text.InternationalDate
                 (Calendar.getDay date)
                 (Calendar.getMonth date)
@@ -133,7 +128,7 @@ relativeDateLabel { today, date, dateNotation } =
             UnitedStates ->
                 Text.UsaDate month day year
 
-            Western ->
+            Default ->
                 Text.InternationalDate day month year
 
 

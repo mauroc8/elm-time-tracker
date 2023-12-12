@@ -4,7 +4,7 @@ module Text exposing
     , defaultLanguage
     , encodeLanguage
     , languageDecoder
-    , textWith
+    , toHtml
     , toString
     )
 
@@ -62,7 +62,7 @@ languageDecoder =
 type
     Text
     -- Settings
-    = SettingsHeading
+    = Settings
     | DateNotationLabel
     | InternationalDateNotation
     | UsaDateNotation
@@ -82,8 +82,9 @@ type
     | InvalidTime
     | InvalidTimeFormat
     | InvalidFutureTime
-      -- Empty states
-    | PressTheStartButtonToCreateARecord
+      -- History
+    | History
+    | PressStartToCreateARecord
     | NoDescription
       -- Confirm deletion
     | ConfirmDeletionHeading
@@ -120,10 +121,10 @@ toString : Language -> Text -> String
 toString lang text =
     case ( text, lang ) of
         -- Settings
-        ( SettingsHeading, English ) ->
+        ( Settings, English ) ->
             "Settings"
 
-        ( SettingsHeading, Spanish ) ->
+        ( Settings, Spanish ) ->
             "Opciones"
 
         ( DateNotationLabel, English ) ->
@@ -224,12 +225,17 @@ toString lang text =
         ( InvalidFutureTime, Spanish ) ->
             "El tiempo de inicio no puede estar en el futuro"
 
-        -- TODO: Revisar
-        -- Empty states
-        ( PressTheStartButtonToCreateARecord, English ) ->
+        -- History
+        ( History, English ) ->
+            "History"
+
+        ( History, Spanish ) ->
+            "Historial"
+
+        ( PressStartToCreateARecord, English ) ->
             "Press start to create a record"
 
-        ( PressTheStartButtonToCreateARecord, Spanish ) ->
+        ( PressStartToCreateARecord, Spanish ) ->
             "Presiona play para crear una entrada"
 
         ( NoDescription, English ) ->
@@ -472,14 +478,6 @@ monthToString month =
             "12"
 
 
-textWith :
-    { fontSize : Int
-    }
-    -> Language
-    -> Text
-    -> Html msg
-textWith { fontSize } language text =
-    Html.span
-        [ Html.Attributes.style "font-size" (String.fromInt fontSize)
-        ]
-        [ Html.text (toString language text) ]
+toHtml : Language -> Text -> Html msg
+toHtml language text =
+    Html.text (toString language text)
