@@ -496,6 +496,7 @@ view model =
                 , Ui.paddingXY ( breakpoints 40 32 24, breakpoints 32 24 16 )
                 , Ui.spacing (breakpoints 32 24 16)
                 , Ui.spaceBetween
+                , Ui.style "transition" "background 0.25s ease-out"
                 ]
 
         { timezone, currentTime, records } =
@@ -516,9 +517,13 @@ view model =
                         [ Icons.settings 16, text Text.Settings ]
 
                 historyButton =
-                    Ui.Component.button PressedHistoryButton
-                        []
-                        [ text Text.History ]
+                    if records == RecordList.empty then
+                        Html.text ""
+
+                    else
+                        Ui.Component.button PressedHistoryButton
+                            []
+                            [ text Text.History ]
 
                 startButton =
                     Ui.button PressedStartButton
