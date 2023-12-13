@@ -1,5 +1,6 @@
 module Colors exposing
-    ( accent
+    ( accentBlue
+    , black
     , blackText
     , blackishText
     , darkGrayBackground
@@ -7,11 +8,24 @@ module Colors exposing
     , grayBackground
     , grayText
     , lightGrayText
+    , lightGreen
     , lighterGrayText
     , red
     , transparent
-    , whiteBackground
+    , white
     )
+
+
+lightGreen =
+    "#4DED83"
+
+
+black =
+    "#000"
+
+
+red =
+    "#FD3407"
 
 
 rgb255 : Int -> Int -> Int -> String
@@ -27,9 +41,9 @@ rgb255 r g b =
         ++ ")"
 
 
-whiteBackground : String
-whiteBackground =
-    rgb255 255 255 255
+white : String
+white =
+    "#FFFFFF"
 
 
 grayBackground : String
@@ -72,14 +86,9 @@ lighterGrayText =
     rgb255 170 170 170
 
 
-accent : String
-accent =
-    rgb255 113 163 240
-
-
-red : String
-red =
-    rgb255 241 97 97
+accentBlue : String
+accentBlue =
+    "#2C3BC1"
 
 
 transparent : String

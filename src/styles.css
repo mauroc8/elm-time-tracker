@@ -1,8 +1,10 @@
-/** remove some annoying defaults */
+/* --- Reset defaults --- */
+
 html, body {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
+    font-family: 'DM Sans', sans-serif;
 }
 
 * {
@@ -10,9 +12,15 @@ html, body {
     padding: 0;
     margin: 0;
     font-size: inherit;
+    font-family: inherit;
+    color: inherit;
+    background-color: transparent;
+    border: 0;
+    outline: 0;
 }
 
-/** Layout definitions from the Ui module */
+/* --- Layout --- */
+
 .column {
     display: flex;
     flex-direction: column;
@@ -26,23 +34,14 @@ html, body {
     display: flex;
     flex-direction: row;
     align-items: start;
+    transition: gap 0.2s ease-out, padding 0.2s ease-out;
 }
 
-.row > .fill-width {
-    flex-grow: 1;
-}
+.row > .fill-width { flex-grow: 1; }
+:not(.row) > .fill-width { width: 100%; }
 
-:not(.row) > .fill-width {
-    width: 100%;
-}
-
-.column > .fill-height {
-    flex-grow: 1;
-}
-
-:not(.column) > .fill-height {
-    height: 100%;
-}
+.column > .fill-height { flex-grow: 1; }
+:not(.column) > .fill-height { height: 100%; }
 
 .column.align-left { align-items: start; }
 .column.center-x { align-items: center; }

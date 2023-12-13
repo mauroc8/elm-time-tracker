@@ -63,6 +63,7 @@ type
     Text
     -- Settings
     = Settings
+    | Back
     | DateNotationLabel
     | InternationalDateNotation
     | UsaDateNotation
@@ -72,9 +73,9 @@ type
     | Cancel
     | Save
     | AboutThisWebsite
-      -- Create Form
-    | WhatAreYouWorkingOn
-    | DescriptionLabel
+      -- Running screen
+    | Start
+    | Stop
     | ChangeStartTimeButton
       -- Change Start Time
     | ChangeStartTimeHeading
@@ -96,13 +97,9 @@ type
     | Integer Int
     | Words (List Text)
       -- Duration
-    | Second
     | Seconds
-    | Hour
     | Hours
-    | Minute
     | Minutes
-    | Day
     | Days
       -- Date
     | Today
@@ -126,6 +123,12 @@ toString lang text =
 
         ( Settings, Spanish ) ->
             "Opciones"
+
+        ( Back, English ) ->
+            "Back"
+
+        ( Back, Spanish ) ->
+            "Volver"
 
         ( DateNotationLabel, English ) ->
             "Date notation"
@@ -176,17 +179,17 @@ toString lang text =
             "Acerca de este sitio"
 
         -- Create Form
-        ( WhatAreYouWorkingOn, English ) ->
-            "what are you working on?"
+        ( Start, English ) ->
+            "Start"
 
-        ( WhatAreYouWorkingOn, Spanish ) ->
-            "en qué estás trabajando?"
+        ( Start, Spanish ) ->
+            "Iniciar"
 
-        ( DescriptionLabel, English ) ->
-            "Description"
+        ( Stop, English ) ->
+            "Stop"
 
-        ( DescriptionLabel, Spanish ) ->
-            "Descripción"
+        ( Stop, Spanish ) ->
+            "Parar"
 
         ( ChangeStartTimeButton, English ) ->
             "change start time"
@@ -281,53 +284,17 @@ toString lang text =
                 (List.map (toString lang) words)
 
         -- Duration
-        ( Second, English ) ->
-            "second"
+        ( Seconds, _ ) ->
+            "s"
 
-        ( Second, Spanish ) ->
-            "segundo"
+        ( Hours, _ ) ->
+            "h"
 
-        ( Seconds, English ) ->
-            "seconds"
+        ( Minutes, _ ) ->
+            "m"
 
-        ( Seconds, Spanish ) ->
-            "segundos"
-
-        ( Hour, English ) ->
-            "hour"
-
-        ( Hours, English ) ->
-            "hours"
-
-        ( Hour, Spanish ) ->
-            "hora"
-
-        ( Hours, Spanish ) ->
-            "horas"
-
-        ( Minute, English ) ->
-            "minute"
-
-        ( Minutes, English ) ->
-            "minutes"
-
-        ( Minute, Spanish ) ->
-            "minuto"
-
-        ( Minutes, Spanish ) ->
-            "minutos"
-
-        ( Day, English ) ->
-            "day"
-
-        ( Day, Spanish ) ->
-            "día"
-
-        ( Days, English ) ->
-            "days"
-
-        ( Days, Spanish ) ->
-            "días"
+        ( Days, _ ) ->
+            "d"
 
         -- Date
         ( Today, English ) ->

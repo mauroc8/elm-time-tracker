@@ -1,20 +1,20 @@
 module Ui exposing
     ( Attribute
-    , Viewport(..)
     , alignBottom
     , alignLeft
     , alignRight
     , alignTop
     , attribute
     , attributesToHtml
-    , breakpoints
+    , batch
+    , button
     , centerX
     , centerY
     , class
     , column
     , fillHeight
     , fillWidth
-    , fromScreenWidth
+    , filler
     , htmlTag
     , padding
     , paddingXY
@@ -22,47 +22,15 @@ module Ui exposing
     , row
     , spaceBetween
     , spacing
+    , square
     , style
     , styles
     )
 
 import Html exposing (Html)
 import Html.Attributes
-
-
-
---- Viewport
-
-
-type Viewport
-    = Desktop
-    | Tablet
-    | Mobile
-
-
-fromScreenWidth : Int -> Viewport
-fromScreenWidth screenWidth =
-    if screenWidth >= 1024 then
-        Desktop
-
-    else if screenWidth >= 768 then
-        Tablet
-
-    else
-        Mobile
-
-
-breakpoints : Viewport -> c -> c -> c -> c
-breakpoints vwpt desktop tablet mobile =
-    case vwpt of
-        Desktop ->
-            desktop
-
-        Tablet ->
-            tablet
-
-        Mobile ->
-            mobile
+import Html.Events
+import Maybe.Extra
 
 
 
@@ -70,18 +38,29 @@ breakpoints vwpt desktop tablet mobile =
 
 
 type Attribute msg
-    = HtmlAttributes (List (Html.Attribute msg))
+    = HtmlAttribute (Html.Attribute msg)
     | TagName String
+    | Batch (List (Attribute msg))
 
 
 attribute : Html.Attribute msg -> Attribute msg
 attribute attr =
-    HtmlAttributes [ attr ]
+    HtmlAttribute attr
+
+
+batch : List (Attribute msg) -> Attribute msg
+batch attrs =
+    Batch attrs
 
 
 htmlTag : String -> Attribute msg
 htmlTag =
     TagName
+
+
+and : Attribute msg -> Attribute msg -> Attribute msg
+and second first =
+    batch [ first, second ]
 
 
 attributesToHtml : List (Attribute msg) -> List (Html.Attribute msg)
@@ -90,43 +69,52 @@ attributesToHtml attrs =
         |> List.concatMap
             (\attr ->
                 case attr of
-                    HtmlAttributes htmlAttrs ->
-                        htmlAttrs
+                    HtmlAttribute htmlAttr ->
+                        [ htmlAttr ]
 
                     TagName _ ->
                         []
+
+                    Batch innerAttrs ->
+                        attributesToHtml innerAttrs
             )
 
 
 attributesToTagName : List (Attribute msg) -> String
 attributesToTagName attrs =
-    attrs
-        |> List.filterMap
-            (\attr ->
-                case attr of
-                    HtmlAttributes _ ->
-                        Nothing
+    let
+        getTagName attributes =
+            case attributes of
+                (TagName tagName) :: _ ->
+                    Just tagName
 
-                    TagName tagName ->
-                        Just tagName
-            )
-        |> List.head
+                (HtmlAttribute _) :: otherAttributes ->
+                    getTagName otherAttributes
+
+                (Batch innerAttributes) :: otherAttributes ->
+                    getTagName innerAttributes
+                        |> Maybe.Extra.orElse (getTagName otherAttributes)
+
+                [] ->
+                    Nothing
+    in
+    getTagName attrs
         |> Maybe.withDefault "div"
 
 
 class : String -> Attribute msg
 class className =
-    HtmlAttributes [ Html.Attributes.class className ]
+    attribute (Html.Attributes.class className)
 
 
 style : String -> String -> Attribute msg
 style prop value =
-    HtmlAttributes [ Html.Attributes.style prop value ]
+    attribute (Html.Attributes.style prop value)
 
 
 styles : List ( String, String ) -> Attribute msg
 styles styleList =
-    HtmlAttributes (List.map (\( prop, value ) -> Html.Attributes.style prop value) styleList)
+    batch (List.map (\( prop, value ) -> style prop value) styleList)
 
 
 fillWidth : Attribute msg
@@ -156,7 +144,7 @@ px value =
 
 spacing : Int -> Attribute msg
 spacing value =
-    HtmlAttributes [ Html.Attributes.style "gap" (px value) ]
+    style "gap" (px value)
 
 
 alignLeft : Attribute msg
@@ -224,4 +212,38 @@ row : List (Attribute msg) -> List (Html msg) -> Html msg
 row attrs children =
     Html.node (attributesToTagName attrs)
         (Html.Attributes.class "row" :: attributesToHtml attrs)
+        children
+
+
+
+---
+
+
+square : Int -> List (Attribute msg) -> Html msg
+square size attrs =
+    column
+        [ style "width" (px size)
+        , style "height" (px size)
+        , batch attrs
+        ]
+        [ Html.text " " ]
+
+
+filler : List (Attribute msg) -> Html msg
+filler attrs =
+    column
+        [ fillWidth
+        , fillHeight
+        , batch attrs
+        ]
+        [ Html.text " " ]
+
+
+button : msg -> List (Attribute msg) -> List (Html msg) -> Html msg
+button onClick attrs children =
+    row
+        [ htmlTag "button"
+        , attribute (Html.Events.onClick onClick)
+        , batch attrs
+        ]
         children

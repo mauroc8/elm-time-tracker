@@ -21,17 +21,17 @@ duration config =
 
 
 setStartTime :
-    { a | currentTime : Time.Posix, timeZone : Time.Zone }
+    { a | currentTime : Time.Posix, timezone : Time.Zone }
     -> Clock.Time
     -> Result Text.Text Time.Posix
-setStartTime { currentTime, timeZone } startClockTime =
+setStartTime { currentTime, timezone } startClockTime =
     let
         newStart =
             DateTime.fromDateAndTime
-                (Utils.Date.fromZoneAndPosix timeZone currentTime)
+                (Utils.Date.fromZoneAndPosix timezone currentTime)
                 startClockTime
                 |> DateTime.toPosix
-                |> Utils.Date.fromZonedPosix timeZone
+                |> Utils.Date.fromZonedPosix timezone
     in
     if Time.posixToMillis newStart < Time.posixToMillis currentTime then
         Ok newStart

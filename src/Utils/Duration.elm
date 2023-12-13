@@ -1,5 +1,6 @@
 module Utils.Duration exposing
     ( Duration
+    , add
     , fromSeconds
     , fromTimeDifference
     , label
@@ -35,6 +36,11 @@ fromMillis ms =
 fromSeconds : Int -> Duration
 fromSeconds s =
     DurationInSeconds s
+
+
+add : Duration -> Duration -> Duration
+add (DurationInSeconds a) (DurationInSeconds b) =
+    DurationInSeconds (a + b)
 
 
 
@@ -83,13 +89,6 @@ daysToText days =
         0 ->
             Nothing
 
-        1 ->
-            Text.Words
-                [ Text.Integer 1
-                , Text.Day
-                ]
-                |> Just
-
         _ ->
             Text.Words
                 [ Text.Integer days
@@ -103,13 +102,6 @@ hoursToText h =
     case h of
         0 ->
             Nothing
-
-        1 ->
-            Text.Words
-                [ Text.Integer 1
-                , Text.Hour
-                ]
-                |> Just
 
         _ ->
             Text.Words
@@ -125,13 +117,6 @@ minutesToText m =
         0 ->
             Nothing
 
-        1 ->
-            Text.Words
-                [ Text.Integer 1
-                , Text.Minute
-                ]
-                |> Just
-
         _ ->
             Text.Words
                 [ Text.Integer m
@@ -142,18 +127,10 @@ minutesToText m =
 
 secondsToText : Int -> Text.Text
 secondsToText s =
-    case s of
-        1 ->
-            Text.Words
-                [ Text.Integer 1
-                , Text.Second
-                ]
-
-        _ ->
-            Text.Words
-                [ Text.Integer s
-                , Text.Seconds
-                ]
+    Text.Words
+        [ Text.Integer s
+        , Text.Seconds
+        ]
 
 
 {-| Given a `duration`, this function returns the amount of seconds that need to be added

@@ -173,8 +173,8 @@ offsetAndMillis zone posix =
 {-| I wish this function was part of the Calendar package .\_.
 -}
 fromZoneAndPosix : Time.Zone -> Time.Posix -> Calendar.Date
-fromZoneAndPosix timeZone time =
-    Calendar.fromPosix (toZonedPosix timeZone time)
+fromZoneAndPosix timezone time =
+    Calendar.fromPosix (toZonedPosix timezone time)
 
 
 weekdayToInt : Time.Weekday -> Int

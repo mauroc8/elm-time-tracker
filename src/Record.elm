@@ -5,14 +5,19 @@ module Record exposing
     , encode
     , fromStartAndCurrentTime
     , startDate
+    , view
     )
 
 import Calendar
 import Clock
+import Html exposing (Html)
 import Json.Decode
 import Json.Encode
+import Text
 import Time
+import Ui
 import Utils.Date
+import Utils.Duration
 import Utils.Time
 
 
@@ -102,4 +107,29 @@ encode record =
         [ ( "id", encodeId record.id )
         , ( "startDateTime", decodePosix record.startDateTime )
         , ( "durationInSecods", Json.Encode.int record.durationInSeconds )
+        ]
+
+
+view config record =
+    let
+        { language, dateNotation, timezone } =
+            config
+
+        text =
+            Text.toHtml language
+
+        startTimeString =
+            Utils.Time.fromZoneAndPosix timezone record.startDateTime
+    in
+    Ui.row
+        [ Ui.fillWidth, Ui.spaceBetween, Ui.spacing 40 ]
+        [ Ui.row []
+            [ Utils.Time.toStringWithAmPm startTimeString
+                |> Html.text
+            ]
+        , Ui.row []
+            [ Utils.Duration.fromSeconds record.durationInSeconds
+                |> Utils.Duration.label
+                |> text
+            ]
         ]

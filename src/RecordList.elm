@@ -1,20 +1,29 @@
 module RecordList exposing
     ( RecordList
     , delete
+    , duration
     , empty
     , find
+    , fromDate
     , push
     , store
     , toList
+    , view
     )
 
 import Dict exposing (Dict)
+import Html exposing (Html)
 import Json.Decode
 import Json.Encode
 import Levenshtein
 import LocalStorage
 import Record exposing (Record)
+import Text exposing (Language)
 import Time
+import Ui
+import Utils.Date
+import Utils.Duration
+import Utils.Time
 
 
 
@@ -110,3 +119,107 @@ find id recordList =
         |> toList
         |> List.filter (\r -> r.id == id)
         |> List.head
+
+
+splitFromDate : Time.Zone -> Time.Posix -> RecordList -> ( RecordList, RecordList )
+splitFromDate timezone timestamp (RecordList records) =
+    let
+        today =
+            Utils.Date.fromZoneAndPosix timezone timestamp
+    in
+    Dict.partition (\_ record -> Record.startDate timezone record == today)
+        records
+        |> Tuple.mapBoth RecordList RecordList
+
+
+{-| Filters the records by date
+-}
+fromDate : Time.Zone -> Time.Posix -> RecordList -> RecordList
+fromDate timezone timestamp recordList =
+    splitFromDate timezone timestamp recordList |> Tuple.first
+
+
+duration : RecordList -> Utils.Duration.Duration
+duration recordList =
+    recordList
+        |> toList
+        |> List.foldl (\record total -> total + record.durationInSeconds) 0
+        |> Utils.Duration.fromSeconds
+
+
+
+---
+
+
+view ({ timezone, currentTime } as config) records =
+    Ui.column
+        [ Ui.fillHeight, Ui.spacing 16 ]
+        (viewRecordsSplitByDate config records)
+
+
+viewRecordsSplitByDate ({ timezone } as config) records =
+    let
+        mostRecentRecord =
+            records |> toList |> List.reverse |> List.head
+    in
+    case mostRecentRecord of
+        Just record ->
+            let
+                ( recordsFromDate, recordsFromOtherDates ) =
+                    splitFromDate timezone record.startDateTime records
+            in
+            viewRecordsFromDate config recordsFromDate
+                :: viewRecordsSplitByDate config recordsFromOtherDates
+
+        Nothing ->
+            []
+
+
+viewRecordsFromDate ({ timezone, currentTime, language, dateNotation } as config) records =
+    let
+        timestamp =
+            records
+                |> toList
+                |> List.head
+                |> Maybe.map .startDateTime
+                |> Maybe.withDefault currentTime
+
+        date =
+            Utils.Date.fromZoneAndPosix timezone
+
+        text =
+            Text.toHtml language
+
+        label =
+            Utils.Date.relativeDateLabel
+                { today = date currentTime
+                , dateNotation = dateNotation
+                , date = date timestamp
+                }
+
+        totalDuration =
+            duration records
+                |> Utils.Duration.label
+    in
+    Ui.column
+        [ Ui.fillWidth
+        , Ui.spaceBetween
+        , Ui.spacing 12
+        , Ui.style "font-size" "1.25rem"
+        ]
+        ([ Ui.row
+            [ Ui.fillWidth
+            , Ui.spaceBetween
+            , Ui.spacing 40
+            , Ui.style "font-weight" "bold"
+            , Ui.style "font-size" "1rem"
+            ]
+            [ Ui.column [ Ui.style "text-transform" "uppercase" ] [ text label ]
+            , Ui.column [] [ text totalDuration ]
+            ]
+         ]
+            ++ (records
+                    |> toList
+                    |> List.map (\record -> Record.view config record)
+               )
+        )
