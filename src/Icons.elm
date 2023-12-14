@@ -1,4 +1,4 @@
-module Icons exposing (chevronLeft, externalLink, play, playButton, settings, stopButton, trash)
+module Icons exposing (chevronLeft, edit, externalLink, play, playButton, settings, stopButton, trash)
 
 import Colors
 import Html exposing (Html)
@@ -35,6 +35,39 @@ chevronLeft size =
             , fill "currentColor"
             ]
             []
+        ]
+
+
+edit : Int -> Html msg
+edit size =
+    svg
+        [ width (String.fromInt size)
+        , height (String.fromInt size)
+        , viewBox "0 0 16 16"
+        , fill "none"
+        ]
+        [ Svg.g
+            [ Svg.Attributes.clipPath "url(#clip0_1002_19)"
+            ]
+            [ Svg.path
+                [ d "M2 12V14.5H4.5L11.8733 7.12665L9.37333 4.62666L2 12ZM13.8067 5.19332C14.0667 4.93332 14.0667 4.51332 13.8067 4.25332L12.2467 2.69332C11.9867 2.43332 11.5667 2.43332 11.3067 2.69332L10.0867 3.91332L12.5867 6.41332L13.8067 5.19332Z"
+                , fill "#7785FF"
+                ]
+                []
+            ]
+        , Svg.defs []
+            [ Svg.clipPath
+                [ id "clip0_1002_19"
+                ]
+                [ Svg.rect
+                    [ width "16"
+                    , height "16"
+                    , fill "white"
+                    , transform "translate(0 0.5)"
+                    ]
+                    []
+                ]
+            ]
         ]
 
 

@@ -160,7 +160,7 @@ view ({ timezone, currentTime } as config) records =
 viewRecordsSplitByDate ({ timezone } as config) records =
     let
         mostRecentRecord =
-            records |> toList |> List.reverse |> List.head
+            records |> toList |> List.head
     in
     case mostRecentRecord of
         Just record ->
@@ -175,6 +175,15 @@ viewRecordsSplitByDate ({ timezone } as config) records =
             []
 
 
+viewRecordsFromDate :
+    { a
+        | timezone : Time.Zone
+        , currentTime : Time.Posix
+        , language : Language
+        , dateNotation : Utils.Date.Notation
+    }
+    -> RecordList
+    -> Html msg
 viewRecordsFromDate ({ timezone, currentTime, language, dateNotation } as config) records =
     let
         timestamp =
@@ -190,7 +199,7 @@ viewRecordsFromDate ({ timezone, currentTime, language, dateNotation } as config
         text =
             Text.toHtml language
 
-        label =
+        dateLabel =
             Utils.Date.relativeDateLabel
                 { today = date currentTime
                 , dateNotation = dateNotation
@@ -214,12 +223,13 @@ viewRecordsFromDate ({ timezone, currentTime, language, dateNotation } as config
             , Ui.style "font-weight" "bold"
             , Ui.style "font-size" "1rem"
             ]
-            [ Ui.column [ Ui.style "text-transform" "uppercase" ] [ text label ]
+            [ Ui.column [ Ui.style "text-transform" "uppercase" ] [ text dateLabel ]
             , Ui.column [] [ text totalDuration ]
             ]
          ]
             ++ (records
                     |> toList
+                    |> List.reverse
                     |> List.map (\record -> Record.view config record)
                )
         )

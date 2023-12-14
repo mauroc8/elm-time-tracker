@@ -19,7 +19,7 @@ import Task
 import Text exposing (Language, Text)
 import Time
 import Ui
-import Ui.Component
+import Ui.Button
 import Utils
 import Utils.Date
 import Utils.Duration
@@ -65,7 +65,7 @@ init flags =
 
 type Screen
     = HomeScreen
-    | RunningScreen { startTime : Time.Posix, changeStartTimeInput : Maybe String }
+    | RunningScreen RunningData
     | HistoryScreen { justDeleted : Maybe Record }
     | SettingsScreen
 
@@ -77,7 +77,7 @@ homeScreen =
 
 runningScreen : Time.Posix -> Screen
 runningScreen currentTime =
-    RunningScreen { startTime = currentTime, changeStartTimeInput = Nothing }
+    RunningScreen { startTime = currentTime, startTimeInput = Nothing, startTimeError = Nothing }
 
 
 historyScreen : Screen
@@ -197,24 +197,52 @@ pushRecord record model =
     }
 
 
-changeCreateFormStartTime : Clock.Time -> Model -> Model
-changeCreateFormStartTime newStartTime ({ screen, timezone, currentTime } as model) =
+changeStartTime : String -> Model -> Model
+changeStartTime newStartTimeInput ({ screen, timezone, currentTime } as model) =
     case screen of
-        RunningScreen { startTime, changeStartTimeInput } ->
+        RunningScreen { startTime } ->
             let
-                newStart =
-                    DateTime.fromDateAndTime
-                        (Utils.Date.fromZoneAndPosix timezone currentTime)
-                        newStartTime
-                        |> DateTime.toPosix
-                        |> Utils.Date.fromZonedPosix timezone
-            in
-            if Time.posixToMillis newStart < Time.posixToMillis currentTime then
-                model
-                    |> setScreen (runningScreen newStart)
+                parsedStartTime =
+                    Utils.Time.fromHhMm newStartTimeInput
 
-            else
-                model |> setScreen (runningScreen startTime)
+                newStartTimestamp =
+                    parsedStartTime
+                        |> Result.toMaybe
+                        |> Maybe.map
+                            (\time ->
+                                DateTime.fromDateAndTime
+                                    (Utils.Date.fromZoneAndPosix timezone startTime)
+                                    time
+                                    |> DateTime.toPosix
+                                    |> Utils.Date.fromZonedPosix timezone
+                            )
+
+                newStartTime =
+                    case newStartTimestamp of
+                        Just newStart ->
+                            if Time.posixToMillis newStart < Time.posixToMillis currentTime then
+                                newStart
+
+                            else
+                                startTime
+
+                        Nothing ->
+                            startTime
+            in
+            model
+                |> setScreen
+                    (RunningScreen
+                        { startTime = newStartTime
+                        , startTimeInput = Just newStartTimeInput
+                        , startTimeError =
+                            case parsedStartTime of
+                                Err error ->
+                                    Just error
+
+                                Ok _ ->
+                                    Nothing
+                        }
+                    )
 
         _ ->
             model
@@ -301,9 +329,8 @@ type Msg
     | GotStopTime Time.Posix
     | PressedEnterInCreateRecord
     | PressedEscapeInCreateRecord
-    | PressedChangeStartTimeInCreateRecord
+    | PressedChangeStartTime
       -- Change start time
-    | ConfirmStartTime Clock.Time
     | ChangeStartTime String
       -- Record List
     | ClickedDeleteButton Record.Id
@@ -347,8 +374,21 @@ update msg model =
 
         -- Settings
         PressedBackButton ->
-            setScreen homeScreen model
-                |> Out.withCmd saveSettings
+            case model.screen of
+                SettingsScreen ->
+                    setScreen homeScreen model
+                        |> Out.withCmd saveSettings
+
+                HistoryScreen _ ->
+                    setScreen homeScreen model
+                        |> Out.withCmd saveSettings
+
+                RunningScreen { startTime } ->
+                    setScreen (runningScreen startTime) model
+                        |> Out.withCmd saveSettings
+
+                HomeScreen ->
+                    model |> Out.withNoCmd
 
         ChangedDateNotation dateNotation ->
             model
@@ -387,8 +427,8 @@ update msg model =
 
         PressedEscapeInCreateRecord ->
             case model.screen of
-                RunningScreen { startTime, changeStartTimeInput } ->
-                    case changeStartTimeInput of
+                RunningScreen { startTime, startTimeInput } ->
+                    case startTimeInput of
                         Just _ ->
                             model
                                 |> setScreen (runningScreen startTime)
@@ -400,7 +440,7 @@ update msg model =
                 _ ->
                     model |> Out.withNoCmd
 
-        PressedChangeStartTimeInCreateRecord ->
+        PressedChangeStartTime ->
             case model.screen of
                 RunningScreen { startTime } ->
                     let
@@ -412,27 +452,21 @@ update msg model =
                                 |> Utils.Time.toHhMm
                     in
                     model
-                        |> setScreen (RunningScreen { startTime = startTime, changeStartTimeInput = Just changeStartTimeInput })
+                        |> setScreen
+                            (RunningScreen
+                                { startTime = startTime
+                                , startTimeInput = Just changeStartTimeInput
+                                , startTimeError = Nothing
+                                }
+                            )
                         |> Out.withNoCmd
 
                 _ ->
                     model |> Out.withNoCmd
 
         -- Change start time
-        ConfirmStartTime newStartTime ->
-            model
-                |> changeCreateFormStartTime newStartTime
-                |> Out.withNoCmd
-
         ChangeStartTime startTimeInput ->
-            case model.screen of
-                RunningScreen { startTime } ->
-                    model
-                        |> setScreen (RunningScreen { startTime = startTime, changeStartTimeInput = Just startTimeInput })
-                        |> Out.withNoCmd
-
-                _ ->
-                    model |> Out.withNoCmd
+            changeStartTime startTimeInput model |> Out.withNoCmd
 
         -- Record List
         ClickedDeleteButton id ->
@@ -489,14 +523,15 @@ view model =
         breakpoints =
             Viewport.breakpoints viewport
 
-        sharedLayout =
+        sharedStyles =
             Ui.batch
                 [ Ui.fillWidth
                 , Ui.fillHeight
-                , Ui.paddingXY ( breakpoints 40 32 24, breakpoints 32 24 16 )
+                , Ui.paddingXY (breakpoints 40 32 24) (breakpoints 32 24 16)
                 , Ui.spacing (breakpoints 32 24 16)
                 , Ui.spaceBetween
                 , Ui.style "transition" "background 0.25s ease-out"
+                , Ui.centerX
                 ]
 
         { timezone, currentTime, records } =
@@ -510,95 +545,38 @@ view model =
     in
     case screen of
         HomeScreen ->
-            let
-                settingsButton =
-                    Ui.Component.button PressedSettingsButton
-                        [ Ui.spacing 4 ]
-                        [ Icons.settings 16, text Text.Settings ]
-
-                historyButton =
-                    if records == RecordList.empty then
-                        Html.text ""
-
-                    else
-                        Ui.Component.button PressedHistoryButton
-                            []
-                            [ text Text.History ]
-
-                startButton =
-                    Ui.button PressedStartButton
-                        [ Ui.style "width" (Ui.px 102)
-                        , Ui.style "height" (Ui.px 102)
-                        , Ui.style "background-color" Colors.lightGreen
-                        , Ui.style "border" (String.join " " [ Ui.px 4, "solid", Colors.black ])
-                        , Ui.style "border-radius" "50%"
-                        , Ui.centerX
-                        , Ui.centerY
-                        , Ui.style "text-transform" "uppercase"
-                        , Ui.style "font-size" "24px"
-                        , Ui.style "font-weight" "bold"
-                        ]
-                        [ text Text.Start ]
-            in
             Ui.column
-                [ sharedLayout, Ui.centerX ]
-                [ Ui.row [ Ui.fillWidth, Ui.alignRight, Ui.spacing 12 ]
-                    [ settingsButton
-                    , historyButton
-                    ]
-                , Ui.filler []
-                , startButton
-                , if todaysTotal /= Utils.Duration.fromSeconds 0 then
-                    Ui.row [ Ui.style "font-weight" "bold" ]
-                        [ text (Utils.Duration.label todaysTotal) ]
+                [ sharedStyles ]
+                (viewHomeScreen
+                    { language = language
+                    , todaysTotal = todaysTotal
+                    , records = records
+                    , viewport = viewport
+                    }
+                )
 
-                  else
-                    Html.text ""
-                , Ui.filler []
-                , Ui.square 21 []
-                ]
-
-        RunningScreen { startTime } ->
-            let
-                duration =
-                    Utils.Duration.fromTimeDifference startTime currentTime
-
-                stopButton =
-                    Ui.button PressedStopButton
-                        [ Ui.style "width" (Ui.px 102)
-                        , Ui.style "height" (Ui.px 102)
-                        , Ui.style "background-color" Colors.red
-                        , Ui.style "border" (String.join " " [ Ui.px 4, "solid", Colors.white ])
-                        , Ui.style "border-radius" "50%"
-                        , Ui.centerX
-                        , Ui.centerY
-                        , Ui.style "font-size" "24px"
-                        , Ui.style "font-weight" "bold"
-                        ]
-                        [ text (Utils.Duration.label duration) ]
-            in
+        RunningScreen data ->
             Ui.column
-                [ sharedLayout
-                , Ui.centerX
+                [ sharedStyles
                 , Ui.style "background-color" Colors.black
                 , Ui.style "color" Colors.white
-                , Ui.style "position" "relative"
                 ]
-                [ Ui.filler []
-                , stopButton
-                , if todaysTotal /= Utils.Duration.fromSeconds 0 then
-                    Ui.row [ Ui.style "font-weight" "bold" ]
-                        [ text (Utils.Duration.label (Utils.Duration.add todaysTotal duration)) ]
-
-                  else
-                    Html.text ""
-                , Ui.filler []
-                ]
+                (viewRunningScreen
+                    { currentTime = currentTime
+                    , language = language
+                    , todaysTotal = todaysTotal
+                    , viewport = viewport
+                    }
+                    data
+                )
 
         SettingsScreen ->
             Ui.column
-                [ sharedLayout ]
-                [ Ui.Component.biggerButton PressedBackButton [] [ Icons.chevronLeft 20, text Text.Back ] ]
+                [ sharedStyles ]
+                [ Ui.Button.button PressedBackButton
+                    [ Ui.Button.bigger ]
+                    [ Icons.chevronLeft 20, text Text.Back ]
+                ]
 
         HistoryScreen _ ->
             let
@@ -606,9 +584,11 @@ view model =
                     model
             in
             Ui.column
-                [ sharedLayout, Ui.centerX ]
+                [ sharedStyles ]
                 [ Ui.row [ Ui.fillWidth ]
-                    [ Ui.Component.biggerButton PressedBackButton [] [ Icons.chevronLeft 20, text Text.Back ]
+                    [ Ui.Button.button PressedBackButton
+                        [ Ui.Button.bigger ]
+                        [ Icons.chevronLeft 20, text Text.Back ]
                     ]
                 , RecordList.view
                     { currentTime = currentTime
@@ -618,3 +598,165 @@ view model =
                     }
                     records
                 ]
+
+
+
+--- Home screen
+
+
+viewHomeScreen :
+    { a
+        | language : Language
+        , records : RecordList
+        , todaysTotal : Utils.Duration.Duration
+        , viewport : Viewport.Viewport
+    }
+    -> List (Html Msg)
+viewHomeScreen { language, records, todaysTotal, viewport } =
+    let
+        text =
+            Text.toHtml language
+
+        settingsButton =
+            Ui.Button.button PressedSettingsButton [] [ Icons.settings 16, text Text.Settings ]
+
+        historyButton =
+            if records == RecordList.empty then
+                Html.text ""
+
+            else
+                Ui.Button.button PressedHistoryButton [] [ text Text.History ]
+
+        startButton =
+            circularButton [ Ui.style "text-transform" "uppercase" ]
+                { viewport = viewport
+                , language = language
+                , label = Text.Start
+                , backgroundColor = Colors.lightGreen
+                , borderColor = Colors.black
+                , onClick = PressedStartButton
+                }
+    in
+    [ Ui.row [ Ui.fillWidth, Ui.alignRight, Ui.spacing 12 ]
+        [ settingsButton
+        , historyButton
+        ]
+    , Ui.filler []
+    , startButton
+    , if todaysTotal /= Utils.Duration.fromSeconds 0 then
+        Ui.row [ Ui.style "font-weight" "bold" ]
+            [ text (Utils.Duration.label todaysTotal) ]
+
+      else
+        Html.text ""
+    , Ui.filler []
+    , Ui.square 21 []
+    ]
+
+
+{-| start and stop button base
+-}
+circularButton :
+    List (Ui.Attribute msg)
+    ->
+        { a
+            | viewport : Viewport.Viewport
+            , language : Language
+            , label : Text
+            , backgroundColor : String
+            , borderColor : String
+            , onClick : msg
+        }
+    -> Html msg
+circularButton attributes { onClick, viewport, language, label, backgroundColor, borderColor } =
+    let
+        text =
+            Text.toHtml language
+
+        breakpoints =
+            Viewport.breakpoints viewport
+    in
+    Ui.button onClick
+        [ Ui.style "width" (Ui.px <| breakpoints 124 102 102)
+        , Ui.style "height" (Ui.px <| breakpoints 124 102 102)
+        , Ui.style "transition" "all 0.2s ease-out"
+        , Ui.style "background-color" backgroundColor
+        , Ui.style "border" (String.join " " [ Ui.px <| breakpoints 6 4 4, "solid", borderColor ])
+        , Ui.style "border-radius" "50%"
+        , Ui.centerX
+        , Ui.centerY
+        , Ui.style "font-size" "24px"
+        , Ui.style "font-weight" "bold"
+        , Ui.batch attributes
+        ]
+        [ text label ]
+
+
+
+--- Running Screen
+
+
+type alias RunningData =
+    { startTime : Time.Posix
+    , startTimeInput : Maybe String
+    , startTimeError : Maybe Text.Text
+    }
+
+
+viewRunningScreen :
+    { a
+        | currentTime : Time.Posix
+        , language : Language
+        , todaysTotal : Utils.Duration.Duration
+        , viewport : Viewport.Viewport
+    }
+    -> RunningData
+    -> List (Html Msg)
+viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, startTimeInput, startTimeError } =
+    let
+        text =
+            Text.toHtml language
+
+        duration =
+            Utils.Duration.fromTimeDifference startTime currentTime
+
+        stopButton =
+            circularButton []
+                { viewport = viewport
+                , language = language
+                , label = Utils.Duration.label duration
+                , backgroundColor = Colors.red
+                , borderColor = Colors.white
+                , onClick = PressedStopButton
+                }
+    in
+    case startTimeInput of
+        Nothing ->
+            [ Ui.filler []
+            , stopButton
+            , if todaysTotal /= Utils.Duration.fromSeconds 0 then
+                Ui.row [ Ui.style "font-weight" "bold" ]
+                    [ text (Utils.Duration.label (Utils.Duration.add todaysTotal duration)) ]
+
+              else
+                Html.text ""
+            , Ui.filler []
+            , Ui.row [ Ui.fillWidth, Ui.alignRight ]
+                [ Ui.Button.button PressedChangeStartTime
+                    [ Ui.Button.lighter ]
+                    [ Icons.edit 16
+                    , text Text.ChangeStartTimeButton
+                    ]
+                ]
+            ]
+
+        Just inputValue ->
+            [ Ui.row [ Ui.fillWidth ]
+                [ Ui.Button.button PressedBackButton
+                    [ Ui.Button.bigger, Ui.Button.lighter ]
+                    [ Icons.chevronLeft 20, text Text.Back ]
+                ]
+            , Ui.filler []
+            , Html.text "TODO: Change start time" -- change start time input
+            , Ui.filler []
+            ]

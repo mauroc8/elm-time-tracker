@@ -7,6 +7,7 @@ module Colors exposing
     , darkerGrayBackground
     , grayBackground
     , grayText
+    , lightAccentBlue
     , lightGrayText
     , lightGreen
     , lighterGrayText
@@ -16,14 +17,17 @@ module Colors exposing
     )
 
 
+lightGreen : String
 lightGreen =
     "#4DED83"
 
 
+black : String
 black =
     "#000"
 
 
+red : String
 red =
     "#FD3407"
 
@@ -94,3 +98,8 @@ accentBlue =
 transparent : String
 transparent =
     "rgba(1, 1, 1, 0)"
+
+
+lightAccentBlue : String
+lightAccentBlue =
+    "#7785FF"

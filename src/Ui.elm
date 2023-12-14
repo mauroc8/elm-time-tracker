@@ -5,7 +5,6 @@ module Ui exposing
     , alignRight
     , alignTop
     , attribute
-    , attributesToHtml
     , batch
     , button
     , centerX
@@ -132,8 +131,8 @@ padding value =
     style "padding" (px value)
 
 
-paddingXY : ( Int, Int ) -> Attribute msg
-paddingXY ( x, y ) =
+paddingXY : Int -> Int -> Attribute msg
+paddingXY x y =
     style "padding" (px y ++ " " ++ px x)
 
 
