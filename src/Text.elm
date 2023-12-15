@@ -205,10 +205,10 @@ toString lang text =
             "Cambiar tiempo de inicio"
 
         ( ChangeStartTimeLabel, English ) ->
-            "new start time"
+            "Start time"
 
         ( ChangeStartTimeLabel, Spanish ) ->
-            "nuevo tiempo de inicio"
+            "Tiempo de inicio"
 
         ( InvalidTime, English ) ->
             "The time is not valid"

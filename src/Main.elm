@@ -20,6 +20,7 @@ import Text exposing (Language, Text)
 import Time
 import Ui
 import Ui.Button
+import Ui.TextField
 import Utils
 import Utils.Date
 import Utils.Duration
@@ -757,6 +758,22 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
                     [ Icons.chevronLeft 20, text Text.Back ]
                 ]
             , Ui.filler []
-            , Html.text "TODO: Change start time" -- change start time input
+            , Ui.column [ Ui.spacing 24 ]
+                [ Ui.row
+                    [ Ui.htmlTag "h1"
+                    , Ui.style "text-transform" "uppercase"
+                    , Ui.style "font-size" "1.25rem"
+                    , Ui.style "font-weight" "bold"
+                    ]
+                    [ text Text.ChangeStartTimeHeading ]
+                , Ui.TextField.field [ Ui.spacing 8 ]
+                    { id = "change-start-time"
+                    , value = inputValue
+                    , onChange = ChangeStartTime
+                    , label = text Text.ChangeStartTimeLabel
+                    , error = Maybe.map text startTimeError
+                    }
+                ]
             , Ui.filler []
+            , Ui.square 26 []
             ]

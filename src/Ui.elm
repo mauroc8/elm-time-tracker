@@ -15,6 +15,7 @@ module Ui exposing
     , fillWidth
     , filler
     , htmlTag
+    , label
     , padding
     , paddingXY
     , px
@@ -243,6 +244,16 @@ button onClick attrs children =
     row
         [ htmlTag "button"
         , attribute (Html.Events.onClick onClick)
+        , batch attrs
+        ]
+        children
+
+
+label : { for : String } -> List (Attribute msg) -> List (Html msg) -> Html msg
+label { for } attrs children =
+    column
+        [ htmlTag "label"
+        , attribute (Html.Attributes.for for)
         , batch attrs
         ]
         children
