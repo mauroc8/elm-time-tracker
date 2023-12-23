@@ -586,7 +586,7 @@ view model =
             in
             Ui.column
                 [ sharedStyles ]
-                [ Ui.row [ Ui.fillWidth ]
+                [ Ui.row [ Ui.fillWidth, breakpoints (Ui.style "width" "400px") Ui.fillWidth Ui.fillWidth ]
                     [ Ui.Button.button PressedBackButton
                         [ Ui.Button.bigger ]
                         [ Icons.chevronLeft 20, text Text.Back ]
@@ -730,6 +730,9 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
                 , borderColor = Colors.white
                 , onClick = PressedStopButton
                 }
+
+        breakpoints =
+            Viewport.breakpoints viewport
     in
     case startTimeInput of
         Nothing ->
@@ -752,13 +755,22 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
             ]
 
         Just inputValue ->
-            [ Ui.row [ Ui.fillWidth ]
+            [ Ui.row [ breakpoints (Ui.style "width" "500px") Ui.fillWidth Ui.fillWidth, Ui.spacing 12, Ui.spaceBetween ]
                 [ Ui.Button.button PressedBackButton
                     [ Ui.Button.bigger, Ui.Button.lighter ]
                     [ Icons.chevronLeft 20, text Text.Back ]
+                , Ui.row
+                    [ Ui.style "background-color" Colors.red
+                    , Ui.style "color" Colors.white
+                    , Ui.paddingXY 8 6
+                    , Ui.style "border-radius" "16px"
+                    , Ui.style "font-size" "0.8125rem"
+                    , Ui.style "border" "1px solid white"
+                    ]
+                    [ text (Utils.Duration.label duration) ]
                 ]
-            , Ui.filler []
-            , Ui.column [ Ui.spacing 24 ]
+            , breakpoints (Html.text "") (Ui.filler []) (Ui.filler [])
+            , Ui.column [ Ui.spacing 24, breakpoints (Ui.style "width" "500px") (Ui.class "") (Ui.class "") ]
                 [ Ui.row
                     [ Ui.htmlTag "h1"
                     , Ui.style "text-transform" "uppercase"
@@ -766,7 +778,7 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
                     , Ui.style "font-weight" "bold"
                     ]
                     [ text Text.ChangeStartTimeHeading ]
-                , Ui.TextField.field [ Ui.spacing 8 ]
+                , Ui.TextField.field [ Ui.spacing 8, Ui.fillWidth ]
                     { id = "change-start-time"
                     , value = inputValue
                     , onChange = ChangeStartTime

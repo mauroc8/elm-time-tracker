@@ -153,7 +153,7 @@ duration recordList =
 
 view ({ timezone, currentTime } as config) records =
     Ui.column
-        [ Ui.fillHeight, Ui.spacing 16 ]
+        [ Ui.style "max-width" "400px", Ui.fillWidth, Ui.fillHeight, Ui.spacing 32 ]
         (viewRecordsSplitByDate config records)
 
 

@@ -93,7 +93,7 @@ type
     | Delete
     | Confirm
       -- Operators
-    | String String
+    | Constant String
     | Integer Int
     | Words (List Text)
       -- Duration
@@ -273,7 +273,7 @@ toString lang text =
             "Confirmar"
 
         -- Operators
-        ( String str, _ ) ->
+        ( Constant str, _ ) ->
             str
 
         ( Integer int, _ ) ->
