@@ -3,15 +3,19 @@ module Main exposing (Model, Msg, main)
 import Browser
 import Browser.Dom
 import Browser.Events
+import Calendar
 import Clock
 import Colors
 import CreateRecord
 import DateTime
 import Html exposing (Html)
+import Html.Attributes
+import Html.Events
 import Icons
 import Json.Decode
 import LocalStorage
 import PreventClose
+import Process
 import Record exposing (Record)
 import RecordList exposing (RecordList)
 import Settings exposing (Settings)
@@ -20,7 +24,9 @@ import Text exposing (Language, Text)
 import Time
 import Ui
 import Ui.Button
+import Ui.RadioButtonFieldSet
 import Ui.TextField
+import Ui.Toast
 import Utils
 import Utils.Date
 import Utils.Duration
@@ -272,8 +278,18 @@ loadSettings flags model =
         |> Result.withDefault model
 
 
+getJustDeletedRecord : Model -> Maybe Record.Record
+getJustDeletedRecord model =
+    case model.screen of
+        HistoryScreen { justDeleted } ->
+            justDeleted
 
----
+        _ ->
+            Nothing
+
+
+
+--- CMDS
 
 
 saveCreateForm : Model -> Cmd Msg
@@ -291,6 +307,17 @@ saveRecords model =
     LocalStorage.save RecordList.store model.records
 
 
+closeToastAfterFiveSeconds : Model -> Cmd Msg
+closeToastAfterFiveSeconds model =
+    case getJustDeletedRecord model of
+        Just deletedRecord ->
+            Process.sleep 5000
+                |> Task.perform (\_ -> FiveSecondsAfterDeletingARecord deletedRecord.id)
+
+        Nothing ->
+            Cmd.none
+
+
 saveSettings : Model -> Cmd msg
 saveSettings model =
     LocalStorage.save Settings.store (savedSettings model)
@@ -302,6 +329,18 @@ savedSettings : Model -> Settings
 savedSettings model =
     { dateNotation = model.dateNotation
     , language = model.language
+    }
+
+
+undoDeleteRecord : Record.Record -> Model -> Model
+undoDeleteRecord deletedRecord model =
+    let
+        { records } =
+            model
+    in
+    { model
+        | records = RecordList.push deletedRecord records
+        , screen = HistoryScreen { justDeleted = Nothing }
     }
 
 
@@ -335,6 +374,8 @@ type Msg
     | ChangeStartTime String
       -- Record List
     | ClickedDeleteButton Record.Id
+    | PressedUndoDeleteRecord
+    | FiveSecondsAfterDeletingARecord Record.Id
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -467,7 +508,8 @@ update msg model =
 
         -- Change start time
         ChangeStartTime startTimeInput ->
-            changeStartTime startTimeInput model |> Out.withNoCmd
+            changeStartTime startTimeInput model
+                |> Out.withCmd saveCreateForm
 
         -- Record List
         ClickedDeleteButton id ->
@@ -479,7 +521,31 @@ update msg model =
                 | screen = HistoryScreen { justDeleted = record }
                 , records = RecordList.delete id model.records
             }
-                |> Out.withNoCmd
+                |> Out.withCmd saveRecords
+                |> Out.addCmd closeToastAfterFiveSeconds
+
+        PressedUndoDeleteRecord ->
+            case getJustDeletedRecord model of
+                Just deletedRecord ->
+                    undoDeleteRecord deletedRecord model
+                        |> Out.withCmd saveRecords
+
+                Nothing ->
+                    model |> Out.withNoCmd
+
+        FiveSecondsAfterDeletingARecord deletedRecordId ->
+            case getJustDeletedRecord model of
+                Just deletedRecord ->
+                    if deletedRecord.id == deletedRecordId then
+                        model
+                            |> setScreen (HistoryScreen { justDeleted = Nothing })
+                            |> Out.withCmd saveRecords
+
+                    else
+                        model |> Out.withNoCmd
+
+                Nothing ->
+                    model |> Out.withNoCmd
 
 
 
@@ -528,8 +594,8 @@ view model =
             Ui.batch
                 [ Ui.fillWidth
                 , Ui.fillHeight
-                , Ui.paddingXY (breakpoints 40 32 24) (breakpoints 32 24 16)
-                , Ui.spacing (breakpoints 32 24 16)
+                , Ui.paddingXY 40 32
+                , Ui.spacing 32
                 , Ui.spaceBetween
                 , Ui.style "transition" "background 0.25s ease-out"
                 , Ui.centerX
@@ -543,6 +609,9 @@ view model =
 
         todaysTotal =
             RecordList.duration todayRecords
+
+        { dateNotation } =
+            model
     in
     case screen of
         HomeScreen ->
@@ -574,20 +643,20 @@ view model =
         SettingsScreen ->
             Ui.column
                 [ sharedStyles ]
-                [ Ui.Button.button PressedBackButton
-                    [ Ui.Button.bigger ]
-                    [ Icons.chevronLeft 20, text Text.Back ]
-                ]
+                (viewSettingsScreen
+                    { currentTime = currentTime
+                    , timezone = timezone
+                    , language = language
+                    , viewport = viewport
+                    , dateNotation = dateNotation
+                    }
+                )
 
-        HistoryScreen _ ->
-            let
-                { dateNotation } =
-                    model
-            in
+        HistoryScreen { justDeleted } ->
             Ui.column
                 [ sharedStyles ]
-                [ Ui.row [ Ui.fillWidth, breakpoints (Ui.style "width" "400px") Ui.fillWidth Ui.fillWidth ]
-                    [ Ui.Button.button PressedBackButton
+                [ Ui.row [ breakpoints (Ui.style "width" "400px") Ui.fillWidth Ui.fillWidth ]
+                    [ Ui.Button.render PressedBackButton
                         [ Ui.Button.bigger ]
                         [ Icons.chevronLeft 20, text Text.Back ]
                     ]
@@ -596,8 +665,18 @@ view model =
                     , language = language
                     , dateNotation = dateNotation
                     , timezone = timezone
+                    , onDelete = ClickedDeleteButton
                     }
                     records
+                , Ui.filler []
+                , Ui.row [ Ui.style "max-width" "400px", Ui.style "color" Colors.grayText ] [ text Text.CommentAboutStorage ]
+                , Ui.Toast.render { visible = justDeleted /= Nothing }
+                    []
+                    [ Ui.row []
+                        [ text Text.YouDeletedARecord
+                        ]
+                    , Ui.Button.render PressedUndoDeleteRecord [] [ Icons.undo, text Text.Undo ]
+                    ]
                 ]
 
 
@@ -619,14 +698,14 @@ viewHomeScreen { language, records, todaysTotal, viewport } =
             Text.toHtml language
 
         settingsButton =
-            Ui.Button.button PressedSettingsButton [] [ Icons.settings 16, text Text.Settings ]
+            Ui.Button.render PressedSettingsButton [] [ Icons.settings 16, text Text.Settings ]
 
         historyButton =
             if records == RecordList.empty then
                 Html.text ""
 
             else
-                Ui.Button.button PressedHistoryButton [] [ text Text.History ]
+                Ui.Button.render PressedHistoryButton [] [ text Text.History ]
 
         startButton =
             circularButton [ Ui.style "text-transform" "uppercase" ]
@@ -644,14 +723,14 @@ viewHomeScreen { language, records, todaysTotal, viewport } =
         ]
     , Ui.filler []
     , startButton
-    , if todaysTotal /= Utils.Duration.fromSeconds 0 then
+    , if Utils.Duration.toSeconds todaysTotal > 59 then
         Ui.row [ Ui.style "font-weight" "bold" ]
             [ text (Utils.Duration.label todaysTotal) ]
 
       else
         Html.text ""
     , Ui.filler []
-    , Ui.square 21 []
+    , Ui.box 21 []
     ]
 
 
@@ -705,11 +784,10 @@ type alias RunningData =
 
 
 viewRunningScreen :
-    { a
-        | currentTime : Time.Posix
-        , language : Language
-        , todaysTotal : Utils.Duration.Duration
-        , viewport : Viewport.Viewport
+    { currentTime : Time.Posix
+    , language : Language
+    , todaysTotal : Utils.Duration.Duration
+    , viewport : Viewport.Viewport
     }
     -> RunningData
     -> List (Html Msg)
@@ -738,7 +816,7 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
         Nothing ->
             [ Ui.filler []
             , stopButton
-            , if todaysTotal /= Utils.Duration.fromSeconds 0 then
+            , if Utils.Duration.toSeconds todaysTotal > 59 then
                 Ui.row [ Ui.style "font-weight" "bold" ]
                     [ text (Utils.Duration.label (Utils.Duration.add todaysTotal duration)) ]
 
@@ -746,7 +824,7 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
                 Html.text ""
             , Ui.filler []
             , Ui.row [ Ui.fillWidth, Ui.alignRight ]
-                [ Ui.Button.button PressedChangeStartTime
+                [ Ui.Button.render PressedChangeStartTime
                     [ Ui.Button.lighter ]
                     [ Icons.edit 16
                     , text Text.ChangeStartTimeButton
@@ -756,7 +834,7 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
 
         Just inputValue ->
             [ Ui.row [ breakpoints (Ui.style "width" "500px") Ui.fillWidth Ui.fillWidth, Ui.spacing 12, Ui.spaceBetween ]
-                [ Ui.Button.button PressedBackButton
+                [ Ui.Button.render PressedBackButton
                     [ Ui.Button.bigger, Ui.Button.lighter ]
                     [ Icons.chevronLeft 20, text Text.Back ]
                 , Ui.row
@@ -765,7 +843,6 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
                     , Ui.paddingXY 8 6
                     , Ui.style "border-radius" "16px"
                     , Ui.style "font-size" "0.8125rem"
-                    , Ui.style "border" "1px solid white"
                     ]
                     [ text (Utils.Duration.label duration) ]
                 ]
@@ -787,5 +864,88 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
                     }
                 ]
             , Ui.filler []
-            , Ui.square 26 []
+            , Ui.box 26 []
             ]
+
+
+
+--- Settings screen
+
+
+viewSettingsScreen :
+    { timezone : Time.Zone
+    , currentTime : Time.Posix
+    , language : Text.Language
+    , viewport : Viewport.Viewport
+    , dateNotation : Utils.Date.Notation
+    }
+    -> List (Html Msg)
+viewSettingsScreen { currentTime, timezone, language, viewport, dateNotation } =
+    let
+        text =
+            Text.toHtml language
+
+        breakpoints =
+            Viewport.breakpoints viewport
+    in
+    [ Ui.row [ breakpoints (Ui.style "width" "500px") Ui.fillWidth Ui.fillWidth, Ui.spacing 12, Ui.spaceBetween ]
+        [ Ui.Button.render PressedBackButton
+            [ Ui.Button.bigger, Ui.Button.lighter ]
+            [ Icons.chevronLeft 20, text Text.Back ]
+        ]
+    , breakpoints (Html.text "") (Ui.filler []) (Ui.filler [])
+    , Ui.column
+        [ breakpoints (Ui.style "width" "500px") Ui.fillWidth Ui.fillWidth
+        , Ui.spacing 24
+        ]
+        [ Ui.row [ Ui.htmlTag "b", Ui.style "font-size" "1.25rem", Ui.style "text-transform" "uppercase" ]
+            [ text Text.Settings ]
+        , Ui.RadioButtonFieldSet.render
+            { id = "language"
+            , legend = text Text.LanguageLabel
+            , value = language
+            , onChange = ChangedLanguage
+            , caption = Nothing
+            }
+            [ ( text Text.EnglishLanguage, Text.English )
+            , ( text Text.SpanishLanguage, Text.Spanish )
+            ]
+        , let
+            today =
+                Utils.Date.fromZoneAndPosix timezone currentTime
+
+            todayInUsaDate =
+                Utils.Date.toLabel Utils.Date.usaNotation today
+
+            todayInInternationalDate =
+                Utils.Date.toLabel Utils.Date.defaultNotation today
+
+            captionText =
+                if Text.toString language todayInUsaDate == Text.toString language todayInInternationalDate then
+                    Text.Words
+                        [ Text.YesterdayWas
+                        , Utils.Date.toLabel dateNotation (Calendar.decrementDay today)
+                        ]
+
+                else
+                    Text.Words
+                        [ Text.TodayIs
+                        , Utils.Date.toLabel dateNotation today
+                        ]
+          in
+          Ui.RadioButtonFieldSet.render
+            { id = "dateNotation"
+            , legend = text Text.DateNotationLabel
+            , value = dateNotation
+            , onChange = ChangedDateNotation
+            , caption = Just (text captionText)
+            }
+            [ ( text Text.InternationalDateNotation, Utils.Date.defaultNotation )
+            , ( text Text.UsaDateNotation, Utils.Date.usaNotation )
+            ]
+        , Ui.row [ Ui.htmlTag "a", Ui.attribute (Html.Attributes.attribute "href" "https://github.com/mauroc8/elm-time-tracker#readme") ]
+            [ text Text.AboutThisWebsite ]
+        ]
+    , Ui.filler []
+    , Ui.box 26 []
+    ]

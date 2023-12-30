@@ -77,7 +77,7 @@ blackishText =
 
 grayText : String
 grayText =
-    rgb255 100 100 100
+    "#333333"
 
 
 lightGrayText : String

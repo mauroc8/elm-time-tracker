@@ -6,6 +6,7 @@ module Ui exposing
     , alignTop
     , attribute
     , batch
+    , box
     , button
     , centerX
     , centerY
@@ -15,6 +16,7 @@ module Ui exposing
     , fillWidth
     , filler
     , htmlTag
+    , id
     , label
     , padding
     , paddingXY
@@ -22,7 +24,6 @@ module Ui exposing
     , row
     , spaceBetween
     , spacing
-    , square
     , style
     , styles
     )
@@ -219,8 +220,8 @@ row attrs children =
 ---
 
 
-square : Int -> List (Attribute msg) -> Html msg
-square size attrs =
+box : Int -> List (Attribute msg) -> Html msg
+box size attrs =
     column
         [ style "width" (px size)
         , style "height" (px size)
@@ -257,3 +258,8 @@ label { for } attrs children =
         , batch attrs
         ]
         children
+
+
+id : String -> Attribute msg
+id value_ =
+    attribute (Html.Attributes.id value_)

@@ -73,6 +73,8 @@ type
     | Cancel
     | Save
     | AboutThisWebsite
+    | YesterdayWas
+    | TodayIs
       -- Running screen
     | Start
     | Stop
@@ -87,6 +89,8 @@ type
     | History
     | PressStartToCreateARecord
     | NoDescription
+    | YouDeletedARecord
+    | Undo
       -- Confirm deletion
     | ConfirmDeletionHeading
     | ConfirmDeletionBody
@@ -178,6 +182,18 @@ toString lang text =
         ( AboutThisWebsite, Spanish ) ->
             "Acerca de este sitio"
 
+        ( YesterdayWas, English ) ->
+            "Yesterday was"
+
+        ( YesterdayWas, Spanish ) ->
+            "Ayer fue"
+
+        ( TodayIs, English ) ->
+            "Today is"
+
+        ( TodayIs, Spanish ) ->
+            "Hoy es"
+
         -- Create Form
         ( Start, English ) ->
             "Start"
@@ -246,6 +262,18 @@ toString lang text =
 
         ( NoDescription, Spanish ) ->
             "sin descripción"
+
+        ( YouDeletedARecord, English ) ->
+            "You deleted a record"
+
+        ( YouDeletedARecord, Spanish ) ->
+            "Borraste un registro"
+
+        ( Undo, English ) ->
+            "Undo"
+
+        ( Undo, Spanish ) ->
+            "Deshacer"
 
         -- Confirm deletion
         ( ConfirmDeletionHeading, English ) ->

@@ -13,6 +13,7 @@ module RecordList exposing
 
 import Dict exposing (Dict)
 import Html exposing (Html)
+import Html.Attributes
 import Json.Decode
 import Json.Encode
 import Levenshtein
@@ -21,6 +22,7 @@ import Record exposing (Record)
 import Text exposing (Language)
 import Time
 import Ui
+import Ui.HorizontalSeparator
 import Utils.Date
 import Utils.Duration
 import Utils.Time
@@ -181,6 +183,7 @@ viewRecordsFromDate :
         , currentTime : Time.Posix
         , language : Language
         , dateNotation : Utils.Date.Notation
+        , onDelete : Record.Id -> msg
     }
     -> RecordList
     -> Html msg
@@ -213,18 +216,20 @@ viewRecordsFromDate ({ timezone, currentTime, language, dateNotation } as config
     Ui.column
         [ Ui.fillWidth
         , Ui.spaceBetween
-        , Ui.spacing 12
+        , Ui.spacing 6
         , Ui.style "font-size" "1.25rem"
         ]
         ([ Ui.row
             [ Ui.fillWidth
-            , Ui.spaceBetween
-            , Ui.spacing 40
+            , Ui.spacing 16
+            , Ui.centerY
             , Ui.style "font-weight" "bold"
             , Ui.style "font-size" "1rem"
             ]
             [ Ui.column [ Ui.style "text-transform" "uppercase" ] [ text dateLabel ]
+            , Ui.filler []
             , Ui.column [] [ text totalDuration ]
+            , Ui.box 12 []
             ]
          ]
             ++ (records
@@ -232,4 +237,10 @@ viewRecordsFromDate ({ timezone, currentTime, language, dateNotation } as config
                     |> List.reverse
                     |> List.map (\record -> Record.view config record)
                )
+            |> List.intersperse
+                (Ui.row [ Ui.spacing 16, Ui.fillWidth, Ui.centerY ]
+                    [ Ui.HorizontalSeparator.render
+                    , Html.div [ Html.Attributes.style "width" "12px" ] []
+                    ]
+                )
         )

@@ -5,6 +5,7 @@ module Utils.Duration exposing
     , fromTimeDifference
     , label
     , secondsBeforeTheLabelChanges
+    , toSeconds
     )
 
 import Text
@@ -36,6 +37,11 @@ fromMillis ms =
 fromSeconds : Int -> Duration
 fromSeconds s =
     DurationInSeconds s
+
+
+toSeconds : Duration -> Int
+toSeconds (DurationInSeconds s) =
+    s
 
 
 add : Duration -> Duration -> Duration

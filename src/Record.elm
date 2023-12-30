@@ -10,7 +10,11 @@ module Record exposing
 
 import Calendar
 import Clock
+import Colors
 import Html exposing (Html)
+import Html.Attributes
+import Html.Events
+import Icons
 import Json.Decode
 import Json.Encode
 import Text
@@ -110,9 +114,17 @@ encode record =
         ]
 
 
+view :
+    { a
+        | language : Text.Language
+        , timezone : Time.Zone
+        , onDelete : Id -> msg
+    }
+    -> Record
+    -> Html msg
 view config record =
     let
-        { language, dateNotation, timezone } =
+        { language, timezone, onDelete } =
             config
 
         text =
@@ -122,14 +134,23 @@ view config record =
             Utils.Time.fromZoneAndPosix timezone record.startDateTime
     in
     Ui.row
-        [ Ui.fillWidth, Ui.spaceBetween, Ui.spacing 40 ]
+        [ Ui.fillWidth, Ui.spacing 16, Ui.centerY ]
         [ Ui.row []
             [ Utils.Time.toStringWithAmPm startTimeString
                 |> Html.text
             ]
+        , Ui.filler []
         , Ui.row []
             [ Utils.Duration.fromSeconds record.durationInSeconds
                 |> Utils.Duration.label
                 |> text
             ]
+        , Ui.row
+            [ Ui.htmlTag "button"
+            , Ui.attribute (Html.Events.onClick (onDelete record.id))
+            , Ui.attribute (Html.Attributes.attribute "aria-label" (Text.toString language Text.Delete))
+            , Ui.style "color" Colors.accentBlue
+            , Ui.style "cursor" "pointer"
+            ]
+            [ Icons.trash ]
         ]

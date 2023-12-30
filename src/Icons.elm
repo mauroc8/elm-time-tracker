@@ -1,4 +1,4 @@
-module Icons exposing (chevronLeft, edit, externalLink, play, playButton, settings, stopButton, trash)
+module Icons exposing (chevronLeft, edit, externalLink, play, playButton, settings, stopButton, trash, undo)
 
 import Colors
 import Html exposing (Html)
@@ -120,6 +120,22 @@ stopButton =
             , height "22"
             , rx "2"
             , fill Colors.red
+            ]
+            []
+        ]
+
+
+undo : Html msg
+undo =
+    svg
+        [ width "16"
+        , height "17"
+        , viewBox "0 0 16 17"
+        , fill "none"
+        ]
+        [ Svg.path
+            [ d "M4.66669 13.1667V11.8334H9.40002C10.1 11.8334 10.7084 11.6111 11.225 11.1667C11.7417 10.7222 12 10.1667 12 9.50002C12 8.83335 11.7417 8.2778 11.225 7.83335C10.7084 7.38891 10.1 7.16669 9.40002 7.16669H5.20002L6.93335 8.90002L6.00002 9.83335L2.66669 6.50002L6.00002 3.16669L6.93335 4.10002L5.20002 5.83335H9.40002C10.4778 5.83335 11.4028 6.18335 12.175 6.88335C12.9472 7.58335 13.3334 8.45558 13.3334 9.50002C13.3334 10.5445 12.9472 11.4167 12.175 12.1167C11.4028 12.8167 10.4778 13.1667 9.40002 13.1667H4.66669Z"
+            , fill "#2C3BC1"
             ]
             []
         ]
