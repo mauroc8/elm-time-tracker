@@ -101,7 +101,7 @@ meridiemToString amPm =
 
 fromZoneAndPosix : Time.Zone -> Time.Posix -> Clock.Time
 fromZoneAndPosix zone posix =
-    Utils.Date.toZonedPosix zone posix
+    Utils.Date.toUtc0Posix zone posix
         |> Clock.fromPosix
 
 

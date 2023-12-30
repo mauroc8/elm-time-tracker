@@ -3,11 +3,11 @@ module Utils.Date exposing
     , defaultNotation
     , encodeNotation
     , fromZoneAndPosix
-    , fromZonedPosix
     , notationDecoder
     , relativeDateLabel
     , toLabel
-    , toZonedPosix
+    , toPosix
+    , toUtc0Posix
     , usaNotation
     , weekdayToInt
     )
@@ -136,45 +136,57 @@ relativeDateLabel { today, date, dateNotation } =
 ---
 
 
-{-| Shifts a date's hour relative to the time zone.
+{-| Shifts a date relative to the current timezone.
 
-Converts a posix time to a "zoned" posix, where getting
-the hour, for example, will behave like javascript's `Date#getHour`, rather
-than `Date#getUTCHour`.
+Example: If the current timezone is UTC -3 and the input timestamp is `2020-01-01 12:00:00 UTC -3`,
+then the output would be `2020-01-01 12:00:00 UTC 0`. It preserves the calendar date and clock time but changes the timezone to UTC 0.
+
+Notice that the input timestamp is equivalent to `2020-01-01 15:00 UTC 0`, so it returned a different timestamp.
+
+However, using the output, we can read the _current_ calendar date and clock time without needing to keep the current timezone
+around: we always assume UTC 0.
+
+This is actually the assumption that the `PanagiotisGeorgiadis/elm-datetime` package makes.
+The functions `Calendar.fromPosix`, `Clock.fromPosix` and `DateTime.fromPosix` all assume its `Time.Posix` argument
+is a UTC 0 timestamp.
+
+We need this function to interface with that package.
 
 -}
-toZonedPosix : Time.Zone -> Time.Posix -> Time.Posix
-toZonedPosix zone posix =
-    let
-        { offset, millis } =
-            offsetAndMillis zone posix
-    in
-    Time.millisToPosix (millis + offset)
+toUtc0Posix : Time.Zone -> Time.Posix -> Time.Posix
+toUtc0Posix zone posix =
+    Time.millisToPosix (Time.posixToMillis posix + DateTime.getTimezoneOffset zone posix)
 
 
-fromZonedPosix : Time.Zone -> Time.Posix -> Time.Posix
-fromZonedPosix zone posix =
-    let
-        { offset, millis } =
-            offsetAndMillis zone posix
-    in
-    Time.millisToPosix (millis - offset)
+{-| This is how I'd need `DateTime.toPosix` to be implemented by default.
+-}
+toPosix : Time.Zone -> DateTime.DateTime -> Time.Posix
+toPosix timezone date =
+    date
+        |> DateTime.toPosix
+        |> fromUtc0Posix timezone
 
 
-offsetAndMillis : Time.Zone -> Time.Posix -> { offset : Int, millis : Int }
-offsetAndMillis zone posix =
-    { offset =
-        DateTime.getTimezoneOffset zone posix
-    , millis =
-        Time.posixToMillis posix
-    }
+{-| The package `PanagiotisGeorgiadis/elm-datetime` returns timestamps that assume we're in UTC 0 and
+represent certain calendar dates and clock times.
+
+A calendar date and clock time has a different timestamp if we read it in the _current_ timezone or in _UTC 0_ timezone.
+
+This function converts a timestamp that was generated based on some calendar date and clock time assuming
+_UTC 0_ timezone (like the package does) to a timestamp that assumes the _current_ timezone (like we need,
+for example, to store it accurately in the localStorage).
+
+-}
+fromUtc0Posix : Time.Zone -> Time.Posix -> Time.Posix
+fromUtc0Posix zone posix =
+    Time.millisToPosix (Time.posixToMillis posix - DateTime.getTimezoneOffset zone posix)
 
 
 {-| I wish this function was part of the Calendar package .\_.
 -}
 fromZoneAndPosix : Time.Zone -> Time.Posix -> Calendar.Date
 fromZoneAndPosix timezone time =
-    Calendar.fromPosix (toZonedPosix timezone time)
+    Calendar.fromPosix (toUtc0Posix timezone time)
 
 
 weekdayToInt : Time.Weekday -> Int

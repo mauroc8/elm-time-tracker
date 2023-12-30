@@ -30,8 +30,7 @@ setStartTime { currentTime, timezone } startClockTime =
             DateTime.fromDateAndTime
                 (Utils.Date.fromZoneAndPosix timezone currentTime)
                 startClockTime
-                |> DateTime.toPosix
-                |> Utils.Date.fromZonedPosix timezone
+                |> Utils.Date.toPosix timezone
     in
     if Time.posixToMillis newStart < Time.posixToMillis currentTime then
         Ok newStart

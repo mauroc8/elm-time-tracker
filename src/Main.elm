@@ -218,8 +218,7 @@ changeStartTime newStartTimeInput ({ screen, timezone, currentTime } as model) =
                                 DateTime.fromDateAndTime
                                     (Utils.Date.fromZoneAndPosix timezone startTime)
                                     time
-                                    |> DateTime.toPosix
-                                    |> Utils.Date.fromZonedPosix timezone
+                                    |> Utils.Date.toPosix timezone
                             )
 
                 newStartTime =
