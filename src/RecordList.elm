@@ -1,5 +1,6 @@
 module RecordList exposing
-    ( RecordList
+    ( Config
+    , RecordList
     , delete
     , duration
     , empty
@@ -16,7 +17,6 @@ import Html exposing (Html)
 import Html.Attributes
 import Json.Decode
 import Json.Encode
-import Levenshtein
 import LocalStorage
 import Record exposing (Record)
 import Text exposing (Language)
@@ -25,7 +25,6 @@ import Ui
 import Ui.HorizontalSeparator
 import Utils.Date
 import Utils.Duration
-import Utils.Time
 
 
 
@@ -74,21 +73,6 @@ encode recordList =
 
 
 ---
-
-
-matchesSearchQuery : String -> String -> Bool
-matchesSearchQuery query str =
-    let
-        queryLength =
-            String.length query
-    in
-    Levenshtein.distance
-        query
-        (String.left
-            queryLength
-            str
-        )
-        <= (queryLength // 3)
 
 
 toList : RecordList -> List Record
@@ -153,12 +137,26 @@ duration recordList =
 ---
 
 
-view ({ timezone, currentTime } as config) records =
+type alias Config msg =
+    { timezone : Time.Zone
+    , currentTime : Time.Posix
+    , language : Language
+    , dateNotation : Utils.Date.Notation
+    , onDelete : Record.Id -> msg
+    }
+
+
+view :
+    Config msg
+    -> RecordList
+    -> Html msg
+view config records =
     Ui.column
         [ Ui.style "max-width" "400px", Ui.fillWidth, Ui.fillHeight, Ui.spacing 32 ]
         (viewRecordsSplitByDate config records)
 
 
+viewRecordsSplitByDate : Config msg -> RecordList -> List (Html msg)
 viewRecordsSplitByDate ({ timezone } as config) records =
     let
         mostRecentRecord =

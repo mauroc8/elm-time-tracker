@@ -1,16 +1,14 @@
-module Main exposing (Model, Msg, main)
+module Main exposing (Model, Msg, Screen, main)
 
 import Browser
 import Browser.Dom
 import Browser.Events
 import Calendar
-import Clock
 import Colors
 import CreateRecord
 import DateTime
 import Html exposing (Html)
 import Html.Attributes
-import Html.Events
 import Icons
 import Json.Decode
 import LocalStorage
@@ -367,8 +365,6 @@ type Msg
     | GotStartButtonPressTime Time.Posix
     | PressedStopButton
     | GotStopTime Time.Posix
-    | PressedEnterInCreateRecord
-    | PressedEscapeInCreateRecord
     | PressedChangeStartTime
       -- Change start time
     | ChangeStartTime String
@@ -456,31 +452,12 @@ update msg model =
             stop
                 |> Out.withModel model
 
-        PressedEnterInCreateRecord ->
-            stop
-                |> Out.withModel model
-
         GotStopTime time ->
             model
                 |> setCurrentTime time
                 |> stopCreatingRecord
                 |> Out.addCmd saveCreateForm
                 |> Out.addCmd saveRecords
-
-        PressedEscapeInCreateRecord ->
-            case model.screen of
-                RunningScreen { startTime, startTimeInput } ->
-                    case startTimeInput of
-                        Just _ ->
-                            model
-                                |> setScreen (runningScreen startTime)
-                                |> Out.withCmd saveCreateForm
-
-                        Nothing ->
-                            model |> Out.withNoCmd
-
-                _ ->
-                    model |> Out.withNoCmd
 
         PressedChangeStartTime ->
             case model.screen of

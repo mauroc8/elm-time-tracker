@@ -9,7 +9,6 @@ module Text exposing
     )
 
 import Html exposing (Html)
-import Html.Attributes
 import Json.Decode
 import Json.Encode
 import Time
@@ -70,14 +69,11 @@ type
     | LanguageLabel
     | EnglishLanguage
     | SpanishLanguage
-    | Cancel
-    | Save
     | AboutThisWebsite
     | YesterdayWas
     | TodayIs
       -- Running screen
     | Start
-    | Stop
     | ChangeStartTimeButton
       -- Change Start Time
     | ChangeStartTimeHeading
@@ -87,17 +83,9 @@ type
     | InvalidFutureTime
       -- History
     | History
-    | PressStartToCreateARecord
-    | NoDescription
     | YouDeletedARecord
     | Undo
-      -- Confirm deletion
-    | ConfirmDeletionHeading
-    | ConfirmDeletionBody
     | Delete
-    | Confirm
-      -- Operators
-    | Constant String
     | Integer Int
     | Words (List Text)
       -- Duration
@@ -114,8 +102,6 @@ type
     | UsaDate Time.Month Int Int
       -- Other
     | CommentAboutStorage
-    | TodaysTotal
-    | ThisWeeksTotal
 
 
 toString : Language -> Text -> String
@@ -164,18 +150,6 @@ toString lang text =
         ( SpanishLanguage, _ ) ->
             "Español"
 
-        ( Cancel, English ) ->
-            "Cancel"
-
-        ( Cancel, Spanish ) ->
-            "Cancelar"
-
-        ( Save, English ) ->
-            "Save"
-
-        ( Save, Spanish ) ->
-            "Guardar"
-
         ( AboutThisWebsite, English ) ->
             "About this website"
 
@@ -200,12 +174,6 @@ toString lang text =
 
         ( Start, Spanish ) ->
             "Iniciar"
-
-        ( Stop, English ) ->
-            "Stop"
-
-        ( Stop, Spanish ) ->
-            "Parar"
 
         ( ChangeStartTimeButton, English ) ->
             "change start time"
@@ -251,18 +219,6 @@ toString lang text =
         ( History, Spanish ) ->
             "Historial"
 
-        ( PressStartToCreateARecord, English ) ->
-            "Press start to create a record"
-
-        ( PressStartToCreateARecord, Spanish ) ->
-            "Presiona play para crear una entrada"
-
-        ( NoDescription, English ) ->
-            "no description"
-
-        ( NoDescription, Spanish ) ->
-            "sin descripción"
-
         ( YouDeletedARecord, English ) ->
             "You deleted a record"
 
@@ -275,34 +231,11 @@ toString lang text =
         ( Undo, Spanish ) ->
             "Deshacer"
 
-        -- Confirm deletion
-        ( ConfirmDeletionHeading, English ) ->
-            "Delete record"
-
-        ( ConfirmDeletionHeading, Spanish ) ->
-            "Eliminar registro"
-
-        ( ConfirmDeletionBody, English ) ->
-            "Are you sure you want to delete this entry? This action can't be undone."
-
-        ( ConfirmDeletionBody, Spanish ) ->
-            "¿Estás seguro que quieres eliminar esta entrada? Esta acción no se puede deshacer."
-
         ( Delete, English ) ->
             "Delete"
 
         ( Delete, Spanish ) ->
             "Eliminar"
-
-        ( Confirm, English ) ->
-            "Confirm"
-
-        ( Confirm, Spanish ) ->
-            "Confirmar"
-
-        -- Operators
-        ( Constant str, _ ) ->
-            str
 
         ( Integer int, _ ) ->
             String.fromInt int
@@ -369,18 +302,6 @@ toString lang text =
 
         ( CommentAboutStorage, Spanish ) ->
             "Los datos se guardan en la caché del navegador. Perderás todos los registros al limpiar la caché."
-
-        ( TodaysTotal, English ) ->
-            "today"
-
-        ( TodaysTotal, Spanish ) ->
-            "hoy"
-
-        ( ThisWeeksTotal, English ) ->
-            "this week"
-
-        ( ThisWeeksTotal, Spanish ) ->
-            "esta semana"
 
 
 weekdayToEnglish : Time.Weekday -> String

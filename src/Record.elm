@@ -9,7 +9,6 @@ module Record exposing
     )
 
 import Calendar
-import Clock
 import Colors
 import Html exposing (Html)
 import Html.Attributes
@@ -80,29 +79,9 @@ fromStartAndCurrentTime now start =
     }
 
 
-startTime : Time.Zone -> Record -> Clock.Time
-startTime zone record =
-    Utils.Time.fromZoneAndPosix zone record.startDateTime
-
-
 startDate : Time.Zone -> Record -> Calendar.Date
 startDate zone record =
     Utils.Date.fromZoneAndPosix zone record.startDateTime
-
-
-endTime : Time.Zone -> Record -> Clock.Time
-endTime zone record =
-    let
-        zonedStartTime =
-            Utils.Date.toZonedPosix zone record.startDateTime
-    in
-    Clock.fromPosix
-        (Time.millisToPosix
-            (Time.posixToMillis zonedStartTime
-                + record.durationInSeconds
-                * 1000
-            )
-        )
 
 
 encode : Record -> Json.Encode.Value

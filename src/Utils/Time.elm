@@ -8,7 +8,6 @@ module Utils.Time exposing
     )
 
 import Clock
-import DateTime
 import Json.Decode
 import Json.Encode
 import Text

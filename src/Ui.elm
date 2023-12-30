@@ -59,11 +59,6 @@ htmlTag =
     TagName
 
 
-and : Attribute msg -> Attribute msg -> Attribute msg
-and second first =
-    batch [ first, second ]
-
-
 attributesToHtml : List (Attribute msg) -> List (Html.Attribute msg)
 attributesToHtml attrs =
     attrs
