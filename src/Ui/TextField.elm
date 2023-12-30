@@ -1,4 +1,4 @@
-module Ui.TextField exposing (field, input)
+module Ui.TextField exposing (field)
 
 import Colors
 import Html exposing (Html)

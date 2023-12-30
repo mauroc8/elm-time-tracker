@@ -80,7 +80,6 @@ type
     | ChangeStartTimeLabel
     | InvalidTime
     | InvalidTimeFormat
-    | InvalidFutureTime
       -- History
     | History
     | YouDeletedARecord
@@ -205,12 +204,6 @@ toString lang text =
 
         ( InvalidTimeFormat, Spanish ) ->
             "La hora debe estar en el formato hh:mm"
-
-        ( InvalidFutureTime, English ) ->
-            "The start time can't be in the future"
-
-        ( InvalidFutureTime, Spanish ) ->
-            "El tiempo de inicio no puede estar en el futuro"
 
         -- History
         ( History, English ) ->

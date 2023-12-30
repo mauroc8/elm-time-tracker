@@ -1,6 +1,5 @@
-module Icons exposing (chevronLeft, edit, externalLink, play, playButton, settings, stopButton, trash, undo)
+module Icons exposing (chevronLeft, edit, settings, trash, undo)
 
-import Colors
 import Html exposing (Html)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
@@ -71,60 +70,6 @@ edit size =
         ]
 
 
-playButton : Int -> Html msg
-playButton size =
-    svg
-        [ width (String.fromInt size)
-        , height (String.fromInt size)
-        , viewBox "0 0 52 52"
-        , fill "none"
-        ]
-        [ circle
-            [ cx "26"
-            , cy "26"
-            , r "25"
-            , fill "white"
-            , stroke "currentColor"
-            , strokeWidth "2"
-            ]
-            []
-        , Svg.path
-            [ d "M40.5333 24.2876L22.5369 13.3009C22.2371 13.1109 21.8909 13.0069 21.5361 13.0003C21.1813 12.9937 20.8314 13.0847 20.5248 13.2634C20.2136 13.4342 19.9542 13.6856 19.7739 13.9914C19.5935 14.2971 19.4989 14.6458 19.5 15.0008V36.9992C19.4989 37.3542 19.5935 37.7029 19.7739 38.0086C19.9542 38.3144 20.2136 38.5658 20.5248 38.7366C20.8314 38.9153 21.1813 39.0063 21.5361 38.9997C21.8909 38.9931 22.2371 38.8891 22.5369 38.6991L40.5333 27.7124C40.8283 27.5344 41.0723 27.2832 41.2416 26.9832C41.411 26.6832 41.5 26.3445 41.5 26C41.5 25.6555 41.411 25.3168 41.2416 25.0168C41.0723 24.7168 40.8283 24.4656 40.5333 24.2876Z"
-            , fill Colors.red
-            ]
-            []
-        ]
-
-
-stopButton : Html msg
-stopButton =
-    svg
-        [ width "53"
-        , height "52"
-        , viewBox "0 0 53 52"
-        , fill "none"
-        ]
-        [ circle
-            [ cx "26.5"
-            , cy "26"
-            , r "25"
-            , fill "white"
-            , stroke "currentColor"
-            , strokeWidth "2"
-            ]
-            []
-        , rect
-            [ x "16"
-            , y "15"
-            , width "22"
-            , height "22"
-            , rx "2"
-            , fill Colors.red
-            ]
-            []
-        ]
-
-
 undo : Html msg
 undo =
     svg
@@ -136,24 +81,6 @@ undo =
         [ Svg.path
             [ d "M4.66669 13.1667V11.8334H9.40002C10.1 11.8334 10.7084 11.6111 11.225 11.1667C11.7417 10.7222 12 10.1667 12 9.50002C12 8.83335 11.7417 8.2778 11.225 7.83335C10.7084 7.38891 10.1 7.16669 9.40002 7.16669H5.20002L6.93335 8.90002L6.00002 9.83335L2.66669 6.50002L6.00002 3.16669L6.93335 4.10002L5.20002 5.83335H9.40002C10.4778 5.83335 11.4028 6.18335 12.175 6.88335C12.9472 7.58335 13.3334 8.45558 13.3334 9.50002C13.3334 10.5445 12.9472 11.4167 12.175 12.1167C11.4028 12.8167 10.4778 13.1667 9.40002 13.1667H4.66669Z"
             , fill "#2C3BC1"
-            ]
-            []
-        ]
-
-
-play : Html msg
-play =
-    svg
-        [ width "12"
-        , height "14"
-        , viewBox "0 0 12 14"
-        , fill "none"
-        ]
-        [ Svg.path
-            [ d "M10.7563 6.57445L1.7625 1.07445C1.68679 1.02775 1.59999 1.00209 1.51106 1.00012C1.42212 0.998155 1.33427 1.01995 1.25657 1.06326C1.17887 1.10657 1.11413 1.16982 1.06903 1.2465C1.02393 1.32317 1.0001 1.41049 1 1.49945V12.4995C1.0001 12.5884 1.02393 12.6757 1.06903 12.7524C1.11413 12.8291 1.17887 12.8923 1.25657 12.9356C1.33427 12.979 1.42212 13.0007 1.51106 12.9988C1.59999 12.9968 1.68679 12.9712 1.7625 12.9245L10.7563 7.42445C10.8301 7.38078 10.8913 7.31862 10.9338 7.24409C10.9763 7.16957 10.9987 7.08525 10.9987 6.99945C10.9987 6.91365 10.9763 6.82934 10.9338 6.75481C10.8913 6.68028 10.8301 6.61812 10.7563 6.57445V6.57445Z"
-            , stroke "currentColor"
-            , strokeLinecap "round"
-            , strokeLinejoin "round"
             ]
             []
         ]
@@ -192,38 +119,6 @@ trash =
             []
         , Svg.path
             [ d "M8.5 2.5V1.5C8.5 1.23478 8.39464 0.98043 8.20711 0.792893C8.01957 0.605357 7.76522 0.5 7.5 0.5H4.5C4.23478 0.5 3.98043 0.605357 3.79289 0.792893C3.60536 0.98043 3.5 1.23478 3.5 1.5V2.5"
-            , stroke "currentColor"
-            , strokeLinecap "round"
-            , strokeLinejoin "round"
-            ]
-            []
-        ]
-
-
-externalLink : Html msg
-externalLink =
-    svg
-        [ width "14"
-        , height "14"
-        , viewBox "0 0 14 14"
-        , fill "none"
-        ]
-        [ Svg.path
-            [ d "M13.375 5.21875V1H9.15625"
-            , stroke "currentColor"
-            , strokeLinecap "round"
-            , strokeLinejoin "round"
-            ]
-            []
-        , Svg.path
-            [ d "M8.3125 6.0625L13.375 1"
-            , stroke "currentColor"
-            , strokeLinecap "round"
-            , strokeLinejoin "round"
-            ]
-            []
-        , Svg.path
-            [ d "M11.125 8.3125V12.8125C11.125 12.9617 11.0657 13.1048 10.9602 13.2102C10.8548 13.3157 10.7117 13.375 10.5625 13.375H1.5625C1.41332 13.375 1.27024 13.3157 1.16475 13.2102C1.05926 13.1048 1 12.9617 1 12.8125V3.8125C1 3.66332 1.05926 3.52024 1.16475 3.41475C1.27024 3.30926 1.41332 3.25 1.5625 3.25H6.0625"
             , stroke "currentColor"
             , strokeLinecap "round"
             , strokeLinejoin "round"

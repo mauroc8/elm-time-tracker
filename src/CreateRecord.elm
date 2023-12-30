@@ -1,16 +1,10 @@
 module CreateRecord exposing
-    ( Config
-    , setStartTime
-    , store
+    ( store
     , subscriptions
     )
 
-import Clock
-import DateTime
 import LocalStorage
-import Text
 import Time
-import Utils.Date
 import Utils.Duration
 import Utils.Time
 
@@ -18,25 +12,6 @@ import Utils.Time
 duration : { a | currentTime : Time.Posix, startTime : Time.Posix } -> Utils.Duration.Duration
 duration config =
     Utils.Duration.fromTimeDifference config.startTime config.currentTime
-
-
-setStartTime :
-    { a | currentTime : Time.Posix, timezone : Time.Zone }
-    -> Clock.Time
-    -> Result Text.Text Time.Posix
-setStartTime { currentTime, timezone } startClockTime =
-    let
-        newStart =
-            DateTime.fromDateAndTime
-                (Utils.Date.fromZoneAndPosix timezone currentTime)
-                startClockTime
-                |> Utils.Date.toPosix timezone
-    in
-    if Time.posixToMillis newStart < Time.posixToMillis currentTime then
-        Ok newStart
-
-    else
-        Err Text.InvalidFutureTime
 
 
 
@@ -54,17 +29,6 @@ store =
 
 
 --- VIEW
-
-
-type alias Config msg =
-    { elapsedTime : Text.Text
-    , pressedStop : msg
-    , pressedEnter : msg
-    , pressedEscape : msg
-    , pressedChangeStartTime : msg
-    , language : Text.Language
-    , modalIsOpen : Bool
-    }
 
 
 subscriptions :

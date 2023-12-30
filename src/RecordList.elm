@@ -8,7 +8,6 @@ module RecordList exposing
     , fromDate
     , push
     , store
-    , toList
     , view
     )
 
