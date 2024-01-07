@@ -49,3 +49,26 @@ elm.ports.setPreventClose.subscribe((preventClose: boolean) => {
         : null;
 });
 
+// --- Favicon
+
+elm.ports.setFavicon.subscribe((favicon: 'play' | 'stop') => {
+    const node = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
+
+    console.log({ node });
+
+    if (node) switch (favicon) {
+        case 'play':
+            node.href = "/static/play.svg";
+            break;
+
+        case 'stop':
+            node.href = "/static/stop.svg";
+            break;
+
+        default: {
+            const _: never = favicon;
+            
+            console.error('setFavicon received invalid input', { favicon });
+        }
+    }
+});

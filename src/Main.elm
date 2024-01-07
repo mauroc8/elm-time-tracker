@@ -7,6 +7,7 @@ import Calendar
 import Colors
 import CreateRecord
 import DateTime
+import Favicon
 import Html exposing (Html)
 import Html.Attributes
 import Icons
@@ -62,6 +63,7 @@ init flags =
             |> Task.perform GotViewport
         ]
     )
+        |> Out.addCmd updateFavicon
 
 
 
@@ -285,6 +287,27 @@ getJustDeletedRecord model =
             Nothing
 
 
+{-| Returns the settings saved in the model
+-}
+savedSettings : Model -> Settings
+savedSettings model =
+    { dateNotation = model.dateNotation
+    , language = model.language
+    }
+
+
+undoDeleteRecord : Record.Record -> Model -> Model
+undoDeleteRecord deletedRecord model =
+    let
+        { records } =
+            model
+    in
+    { model
+        | records = RecordList.push deletedRecord records
+        , screen = HistoryScreen { justDeleted = Nothing }
+    }
+
+
 
 --- CMDS
 
@@ -320,25 +343,14 @@ saveSettings model =
     LocalStorage.save Settings.store (savedSettings model)
 
 
-{-| Returns the settings saved in the model
--}
-savedSettings : Model -> Settings
-savedSettings model =
-    { dateNotation = model.dateNotation
-    , language = model.language
-    }
+updateFavicon : Model -> Cmd msg
+updateFavicon model =
+    case model.screen of
+        RunningScreen _ ->
+            Favicon.stop
 
-
-undoDeleteRecord : Record.Record -> Model -> Model
-undoDeleteRecord deletedRecord model =
-    let
-        { records } =
-            model
-    in
-    { model
-        | records = RecordList.push deletedRecord records
-        , screen = HistoryScreen { justDeleted = Nothing }
-    }
+        _ ->
+            Favicon.play
 
 
 
@@ -446,6 +458,7 @@ update msg model =
                 |> setCurrentTime time
                 |> startCreatingRecord
                 |> Out.addCmd saveCreateForm
+                |> Out.addCmd updateFavicon
 
         PressedStopButton ->
             stop
@@ -457,6 +470,7 @@ update msg model =
                 |> stopCreatingRecord
                 |> Out.addCmd saveCreateForm
                 |> Out.addCmd saveRecords
+                |> Out.addCmd updateFavicon
 
         PressedChangeStartTime ->
             case model.screen of
