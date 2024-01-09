@@ -52,17 +52,16 @@ elm.ports.setPreventClose.subscribe((preventClose: boolean) => {
 // --- Favicon
 
 elm.ports.setFavicon.subscribe((favicon: 'play' | 'stop') => {
-    const node = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
-
-    console.log({ node });
+    const node = (document.querySelector('link[rel="icon"]')
+        || document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'icon' }))) as HTMLLinkElement;
 
     if (node) switch (favicon) {
         case 'play':
-            node.href = "/static/play.svg";
+            node.href = "/play.svg";
             break;
 
         case 'stop':
-            node.href = "/static/stop.svg";
+            node.href = "/stop.svg";
             break;
 
         default: {

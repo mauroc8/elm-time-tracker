@@ -7,7 +7,7 @@
     "elm": "^0.19.1-5",
     "elm-review": "^2.7.0",
     "parcel": "^2.2.1",
-    "parcel-plugin-static-files-copy": "^2.6.0"
+    "parcel-reporter-static-files-copy": "^1.5.3"
   },
   "scripts": {
     "start": "parcel src/index.html",
