@@ -749,7 +749,7 @@ circularButton attributes { onClick, viewport, language, label, backgroundColor,
     Ui.button onClick
         [ Ui.style "width" (Ui.px <| breakpoints 124 102 102)
         , Ui.style "height" (Ui.px <| breakpoints 124 102 102)
-        , Ui.style "transition" "all 0.2s ease-out"
+        , Ui.style "transition" "all 0.25s ease-out"
         , Ui.style "background-color" backgroundColor
         , Ui.style "border" (String.join " " [ Ui.px <| breakpoints 6 4 4, "solid", borderColor ])
         , Ui.style "border-radius" "50%"
