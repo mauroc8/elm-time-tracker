@@ -57,11 +57,11 @@ elm.ports.setFavicon.subscribe((favicon: 'play' | 'stop') => {
 
     if (node) switch (favicon) {
         case 'play':
-            node.href = "/play.ico";
+            node.href = "./play.ico";
             break;
 
         case 'stop':
-            node.href = "/stop.ico";
+            node.href = "./stop.ico";
             break;
 
         default: {
