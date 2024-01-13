@@ -804,7 +804,8 @@ viewRunningScreen { currentTime, language, todaysTotal, viewport } { startTime, 
     in
     case startTimeInput of
         Nothing ->
-            [ Ui.filler []
+            [ Ui.box 21 []
+            , Ui.filler []
             , stopButton
             , if Utils.Duration.toSeconds todaysTotal > 59 then
                 Ui.row [ Ui.style "font-weight" "bold" ]
